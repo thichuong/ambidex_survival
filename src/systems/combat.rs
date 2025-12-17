@@ -555,7 +555,7 @@ fn fire_weapon(
                             // Shattered Visuals
                             let mut rng = rand::thread_rng();
                             for _ in 0..40 {
-                                let dist = rng.gen_range(50.0..350.0);
+                                let dist = rng.gen_range(50.0..sword::SHATTERED_RANGE);
                                 let jitter_y = rng.gen_range(-15.0..15.0);
                                 parent.spawn(MaterialMesh2dBundle {
                                     mesh: params
