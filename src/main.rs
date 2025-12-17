@@ -27,10 +27,8 @@ fn main() {
         })
         //.add_plugins(RapierDebugRenderPlugin::default()) // Debug physics
         .init_state::<GameState>()
-        .add_systems(
-            Startup,
-            (setup_camera, spawn_player, systems::enemy::spawn_test_enemy),
-        )
+        .init_resource::<resources::round::RoundManager>()
+        .add_systems(Startup, (setup_camera, spawn_player))
         .add_systems(
             Update,
             (
@@ -40,6 +38,7 @@ fn main() {
                 systems::combat::manage_lifetime,
                 systems::combat::resolve_damage,
                 systems::enemy::enemy_chase_player,
+                systems::enemy::spawn_waves,
                 systems::ui::weapon_button_interaction,
             )
                 .run_if(in_state(GameState::AssetLoading)),

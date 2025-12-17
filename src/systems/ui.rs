@@ -52,6 +52,8 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                     spawn_weapon_button(panel, HandType::Left, WeaponType::Shuriken, "Shuriken");
                     spawn_weapon_button(panel, HandType::Left, WeaponType::Sword, "Sword");
                     spawn_weapon_button(panel, HandType::Left, WeaponType::Bow, "Bow");
+                    spawn_weapon_button(panel, HandType::Left, WeaponType::Shield, "Shield");
+                    spawn_weapon_button(panel, HandType::Left, WeaponType::Magic, "Magic");
 
                     // Spacer
                     panel.spawn(NodeBundle {
@@ -76,6 +78,8 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Shuriken, "Shuriken");
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Sword, "Sword");
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Bow, "Bow");
+                    spawn_weapon_button(panel, HandType::Right, WeaponType::Shield, "Shield");
+                    spawn_weapon_button(panel, HandType::Right, WeaponType::Magic, "Magic");
                 });
         });
 }

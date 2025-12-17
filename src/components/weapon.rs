@@ -30,6 +30,64 @@ impl Default for Weapon {
     }
 }
 
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+#[allow(dead_code)]
+pub enum ShieldMode {
+    Absorb,
+    Reflect,
+}
+
+#[derive(Component)]
+#[allow(dead_code)]
+pub struct ShieldState {
+    pub is_active: bool,
+    pub mode: ShieldMode,
+    pub accumulated_damage: f32,
+    pub shield_entity: Option<Entity>,
+}
+
+#[derive(Component)]
+pub struct ShieldCollider {
+    pub owner_hand: Entity, // Link back to Hand to check ShieldState
+}
+
+impl Default for ShieldState {
+    fn default() -> Self {
+        Self {
+            is_active: false,
+            mode: ShieldMode::Absorb,
+            accumulated_damage: 0.0,
+            shield_entity: None,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[allow(dead_code)]
+pub enum SpellType {
+    EnergyBolt,
+    Laser,
+    Nova,
+    Blink,
+    Global,
+}
+
+#[derive(Component)]
+#[allow(dead_code)]
+pub struct MagicLoadout {
+    pub primary: SpellType,
+    pub secondary: SpellType,
+}
+
+impl Default for MagicLoadout {
+    fn default() -> Self {
+        Self {
+            primary: SpellType::EnergyBolt,
+            secondary: SpellType::Blink,
+        }
+    }
+}
+
 #[derive(Component)]
 #[allow(dead_code)]
 pub struct Projectile {

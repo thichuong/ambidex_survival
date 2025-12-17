@@ -4,7 +4,7 @@ use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
 
 use crate::components::player::{GameCamera, Hand, HandType, Player};
-use crate::components::weapon::WeaponType;
+use crate::components::weapon::{MagicLoadout, ShieldState, WeaponType};
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -49,6 +49,8 @@ pub fn spawn_player(
                 offset: Vec3::new(25.0, 10.0, 0.0),
                 equipped_weapon: Some(WeaponType::Shuriken),
             },
+            ShieldState::default(),
+            MagicLoadout::default(),
         ))
         .id();
 
@@ -67,6 +69,8 @@ pub fn spawn_player(
                 offset: Vec3::new(25.0, -10.0, 0.0),
                 equipped_weapon: Some(WeaponType::Shuriken),
             },
+            ShieldState::default(),
+            MagicLoadout::default(),
         ))
         .id();
 
