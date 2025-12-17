@@ -266,7 +266,7 @@ fn cast_spell(
                 },
                 ExplodingProjectile {
                     radius: 40.0,
-                    damage: 20.0,
+                    damage: 25.0,
                 },
             ));
         }
@@ -285,7 +285,7 @@ fn cast_spell(
                 Sensor,
                 Collider::cuboid(500.0, 2.0),
                 Projectile {
-                    damage: 10.0,
+                    damage: 30.0,
                     speed: 0.0,
                     direction,
                     owner_entity: player_entity,
@@ -333,7 +333,7 @@ fn cast_spell(
                 Sensor,
                 Collider::ball(800.0),
                 Projectile {
-                    damage: 4.0,
+                    damage: 15.0, // Back to reasonable damage (single hit)
                     speed: 0.0,
                     direction: Vec2::ZERO,
                     owner_entity: player_entity,
@@ -655,9 +655,11 @@ pub fn resolve_damage(
                     ));
                 }
 
-                if projectile.speed > 0.0 {
-                    commands.entity(proj_entity).despawn();
-                }
+                // Despawn projectile after hit (even stationary ones like Nova/Global)
+                // This prevents them from dealing damage every frame of their lifetime.
+                // Commands are deferred, so it will still finish colliding with other enemies in this frame.
+                commands.entity(proj_entity).despawn();
+
                 if enemy.health <= 0.0 {
                     commands.entity(enemy_entity).despawn_recursive();
                     shake.add_trauma(0.3); // Big shake on kill
