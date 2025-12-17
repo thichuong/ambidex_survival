@@ -89,7 +89,6 @@ pub struct Lifetime {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum SwingState {
-    Windup,
     Swinging,
     Recover,
 }
@@ -103,6 +102,8 @@ pub struct SwordSwing {
     pub owner_entity: Entity,
     pub damage: f32,
     pub range: f32,
+    pub damage_dealt: bool,
+    pub hand_entity: Entity,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -82,7 +82,7 @@ pub fn handle_combat_input(
     let e_just_pressed = params.key_input.just_pressed(KeyCode::KeyE);
 
     for (
-        _hand_entity,
+        hand_entity,
         hand_transform,
         hand,
         mut magic_loadout,
@@ -161,6 +161,7 @@ pub fn handle_combat_input(
                             player_entity,
                             sword_state.mode,
                             gun_state.mode,
+                            hand_entity, // Pass Hand Entity
                         );
                         weapon_data.last_shot = params.time.elapsed_seconds();
                     }
@@ -197,6 +198,7 @@ pub fn handle_combat_input(
                             player_entity,
                             sword_state.mode, // Pass Mode
                             gun_state.mode,   // Pass Gun Mode
+                            hand_entity,      // Pass Hand Entity
                         );
                         weapon_data.last_shot = now;
                     }
@@ -459,6 +461,7 @@ fn perform_skill(
 }
 
 #[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_arguments)]
 fn fire_weapon(
     params: &mut CombatInputParams,
     weapon_type: WeaponType,
@@ -467,6 +470,7 @@ fn fire_weapon(
     owner: Entity,
     sword_mode: SwordMode, // Added mode
     gun_mode: GunMode,     // Added Gun Mode
+    hand_entity: Entity,   // Added Hand Entity
 ) {
     let direction = (target_pos - spawn_pos).normalize_or_zero();
     match weapon_type {
@@ -513,12 +517,14 @@ fn fire_weapon(
                                 ..default()
                             },
                             SwordSwing {
-                                state: SwingState::Windup,
+                                state: SwingState::Swinging,
                                 timer: Timer::from_seconds(sword::NORMAL_TIMER, TimerMode::Once),
                                 base_angle: start_angle,
                                 owner_entity: owner,
                                 damage: sword::NORMAL_DAMAGE,
                                 range: sword::NORMAL_RANGE,
+                                damage_dealt: false,
+                                hand_entity,
                             },
                         ))
                         .with_children(|parent| {
@@ -543,12 +549,14 @@ fn fire_weapon(
                                 ..default()
                             },
                             SwordSwing {
-                                state: SwingState::Windup,
+                                state: SwingState::Swinging,
                                 timer: Timer::from_seconds(sword::SHATTERED_TIMER, TimerMode::Once),
                                 base_angle: start_angle,
                                 owner_entity: owner,
                                 damage: sword::SHATTERED_DAMAGE,
                                 range: sword::SHATTERED_RANGE,
+                                damage_dealt: false,
+                                hand_entity,
                             },
                         ))
                         .with_children(|parent| {
@@ -740,23 +748,22 @@ pub fn update_sword_mechanics(
     time: Res<Time>,
     mut sword_query: Query<(Entity, &mut SwordSwing, &mut Transform)>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<SwordSwing>>,
+    hand_query: Query<&GlobalTransform, With<Hand>>,
     mut res: CombatResources,
     mut damage_events: EventWriter<DamageEvent>,
 ) {
     for (entity, mut swing, mut transform) in &mut sword_query {
+        // Sync Position with Hand
+        if let Ok(hand_transform) = hand_query.get(swing.hand_entity) {
+            transform.translation = hand_transform.translation().truncate().extend(0.0);
+        }
+
         swing.timer.tick(time.delta());
 
         match swing.state {
-            SwingState::Windup => {
-                let start_idx = -std::f32::consts::FRAC_PI_2; // -90 deg
-                let current_angle = swing.base_angle + start_idx;
-                transform.rotation = Quat::from_rotation_z(current_angle);
-
-                if swing.timer.finished() {
-                    swing.state = SwingState::Swinging;
-                    swing.timer = Timer::from_seconds(0.2, TimerMode::Once);
-
-                    // Damage Scan
+            SwingState::Swinging => {
+                // Damage Scan (First Frame)
+                if !swing.damage_dealt {
                     let sweep_radius = swing.range;
                     let sweep_arc = std::f32::consts::PI; // 180 degrees
 
@@ -817,9 +824,10 @@ pub fn update_sword_mechanics(
                             }
                         }
                     }
+                    swing.damage_dealt = true;
                 }
-            }
-            SwingState::Swinging => {
+
+                // Animation
                 let progress = 1.0 - swing.timer.fraction_remaining();
                 let start_angle = -std::f32::consts::FRAC_PI_2;
                 let end_angle = std::f32::consts::FRAC_PI_2;
