@@ -308,9 +308,26 @@ fn cast_spell(
         }
         SpellType::Global => {
             println!("Global Spell Used!");
-            for (_, _, mut enemy) in enemy_query.iter_mut() {
-                enemy.health -= 5.0; // Low damage to all
-            }
+            // Global is now a massive Nova
+            commands.spawn((
+                MaterialMesh2dBundle {
+                    mesh: meshes.add(Mesh::from(Circle::new(800.0))).into(),
+                    material: materials.add(Color::srgb(1.0, 1.0, 1.0).with_alpha(0.1)), // White flash
+                    transform: Transform::from_translation(player_transform.translation),
+                    ..default()
+                },
+                Sensor,
+                Collider::ball(800.0),
+                Projectile {
+                    damage: 4.0,
+                    speed: 0.0,
+                    direction: Vec2::ZERO,
+                    owner_entity: player_entity,
+                },
+                Lifetime {
+                    timer: Timer::from_seconds(0.2, TimerMode::Once),
+                },
+            ));
         }
     }
 }
@@ -450,7 +467,7 @@ fn fire_weapon(
                     angvel: 10.0,
                 },
                 Projectile {
-                    damage: 10.0,
+                    damage: 20.0,
                     speed: 600.0,
                     direction,
                     owner_entity: owner,
@@ -502,8 +519,8 @@ fn fire_weapon(
                                 timer: Timer::from_seconds(0.2, TimerMode::Once),
                                 base_angle: start_angle,
                                 owner_entity: owner,
-                                damage: 60.0, // Double damage
-                                range: 350.0, // High range
+                                damage: 15.0, // Reduced damage (vs 30.0 normal)
+                                range: 400.0, // Significantly increased range (vs 200.0 normal)
                             },
                         ))
                         .with_children(|parent| {

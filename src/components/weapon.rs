@@ -6,7 +6,6 @@ pub enum WeaponType {
     Shuriken,
     Sword,
     Bow,
-
     Magic,
 }
 
