@@ -11,13 +11,14 @@ pub fn handle_combat_input(
     mut commands: Commands,
     _time: Res<Time>,
     mouse_input: Res<ButtonInput<MouseButton>>,
-    _key_input: Res<ButtonInput<KeyCode>>,
+    key_input: Res<ButtonInput<KeyCode>>,
     window_query: Query<&Window, With<bevy::window::PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
-    player_query: Query<(Entity, &GlobalTransform), With<Player>>,
+    mut player_query: Query<(Entity, &mut Transform), With<Player>>,
     hand_query: Query<(&GlobalTransform, &Hand)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    projectile_query: Query<(Entity, &Transform, &Projectile), Without<Player>>,
 ) {
     let (camera, camera_transform) = if let Ok(res) = camera_query.get_single() {
         res
@@ -40,19 +41,25 @@ pub fn handle_combat_input(
         return;
     };
 
-    let (player_entity, _player_transform) = if let Ok(p) = player_query.get_single() {
+    let (player_entity, mut player_transform) = if let Ok(p) = player_query.get_single_mut() {
         p
     } else {
         return;
     };
 
-    let left_attack = mouse_input.just_pressed(MouseButton::Left);
-    let right_attack = mouse_input.just_pressed(MouseButton::Right);
+    let left_click = mouse_input.just_pressed(MouseButton::Left);
+    let right_click = mouse_input.just_pressed(MouseButton::Right);
+
+    let q_key = key_input.just_pressed(KeyCode::KeyQ);
+    let e_key = key_input.just_pressed(KeyCode::KeyE);
 
     for (hand_transform, hand) in hand_query.iter() {
+        let hand_pos = hand_transform.translation().truncate();
+
+        // --- Basic Attacks (Mouse) ---
         let should_attack = match hand.hand_type {
-            HandType::Left => left_attack,
-            HandType::Right => right_attack,
+            HandType::Left => left_click,
+            HandType::Right => right_click,
         };
 
         if should_attack {
@@ -60,7 +67,7 @@ pub fn handle_combat_input(
                 fire_weapon(
                     &mut commands,
                     weapon_type,
-                    hand_transform.translation().truncate(),
+                    hand_pos,
                     cursor_pos,
                     player_entity,
                     &mut meshes,
@@ -68,6 +75,140 @@ pub fn handle_combat_input(
                 );
             }
         }
+
+        // --- Skills (Q/E) ---
+        let should_use_skill = match hand.hand_type {
+            HandType::Left => q_key,
+            HandType::Right => e_key,
+        };
+
+        if should_use_skill {
+            if let Some(weapon_type) = hand.equipped_weapon {
+                perform_skill(
+                    &mut commands,
+                    weapon_type,
+                    player_entity,
+                    &mut player_transform,
+                    cursor_pos,
+                    hand_pos,
+                    &mut meshes,
+                    &mut materials,
+                    &projectile_query,
+                );
+            }
+        }
+    }
+}
+
+fn perform_skill(
+    commands: &mut Commands,
+    weapon_type: WeaponType,
+    player_entity: Entity,
+    player_transform: &mut Transform,
+    cursor_pos: Vec2,
+    spawn_pos: Vec2,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    projectile_query: &Query<(Entity, &Transform, &Projectile), Without<Player>>,
+) {
+    match weapon_type {
+        WeaponType::Shuriken => {
+            // Skill: Teleport to nearest projectile
+            let mut closest_proj: Option<(Entity, Vec3)> = None;
+            let mut min_dist_sq = f32::MAX;
+
+            for (entity, proj_tf, proj) in projectile_query.iter() {
+                // Ideally check if projectile is a Shuriken (need Projectile data for this later)
+                if proj.owner_entity == player_entity {
+                    let dist_sq = proj_tf.translation.truncate().distance_squared(cursor_pos);
+                    if dist_sq < min_dist_sq {
+                        min_dist_sq = dist_sq;
+                        closest_proj = Some((entity, proj_tf.translation));
+                    }
+                }
+            }
+
+            if let Some((entity, location)) = closest_proj {
+                player_transform.translation = location;
+                commands.entity(entity).despawn_recursive();
+                println!("Skill: Shuriken Teleport!");
+            }
+        }
+        WeaponType::Sword => {
+            // Skill: Spin Attack (360 degrees)
+            println!("Skill: Sword Spin!");
+            for i in 0..8 {
+                let angle = (i as f32) * (std::f32::consts::PI * 2.0 / 8.0);
+                let dir = Vec2::new(angle.cos(), angle.sin());
+
+                // Reuse fire logic or custom spawn
+                commands.spawn((
+                    MaterialMesh2dBundle {
+                        mesh: meshes.add(Mesh::from(Rectangle::new(40.0, 60.0))).into(),
+                        material: materials.add(Color::Srgba(Srgba::new(1.0, 1.0, 1.0, 0.5))),
+                        transform: Transform::from_translation(spawn_pos.extend(1.0))
+                            .with_rotation(Quat::from_rotation_z(angle)),
+                        ..default()
+                    },
+                    Sensor,
+                    Collider::cuboid(20.0, 30.0),
+                    Projectile {
+                        damage: 10.0,
+                        speed: 200.0, // Moving slash
+                        direction: dir,
+                        owner_entity: player_entity,
+                    },
+                    Velocity {
+                        linvel: dir * 200.0,
+                        angvel: 0.0,
+                    },
+                    Lifetime {
+                        timer: Timer::from_seconds(0.3, TimerMode::Once),
+                    },
+                ));
+            }
+        }
+        WeaponType::Bow => {
+            // Skill: Multishot (Spread)
+            println!("Skill: Bow Multishot!");
+            let base_dir = (cursor_pos - spawn_pos).normalize_or_zero();
+            let base_angle = base_dir.y.atan2(base_dir.x);
+
+            let spread_angles = [-0.3, 0.0, 0.3]; // Radians offset
+
+            for offset in spread_angles.iter() {
+                let angle = base_angle + offset;
+                let dir = Vec2::new(angle.cos(), angle.sin());
+
+                commands.spawn((
+                    MaterialMesh2dBundle {
+                        mesh: meshes.add(Mesh::from(Rectangle::new(20.0, 5.0))).into(),
+                        material: materials.add(Color::from(YELLOW)),
+                        transform: Transform::from_translation(spawn_pos.extend(0.0))
+                            .with_rotation(Quat::from_rotation_z(angle)),
+                        ..default()
+                    },
+                    RigidBody::Dynamic,
+                    Collider::cuboid(10.0, 2.5),
+                    Sensor,
+                    GravityScale(0.0),
+                    Velocity {
+                        linvel: dir * 800.0,
+                        angvel: 0.0,
+                    },
+                    Projectile {
+                        damage: 15.0,
+                        speed: 800.0,
+                        direction: dir,
+                        owner_entity: player_entity,
+                    },
+                    Lifetime {
+                        timer: Timer::from_seconds(3.0, TimerMode::Once),
+                    },
+                ));
+            }
+        }
+        _ => {}
     }
 }
 
@@ -84,18 +225,17 @@ fn fire_weapon(
 
     match weapon_type {
         WeaponType::Shuriken => {
-            // Shuriken is square or diamond
-            // Mesh::from(Rectangle::new(10.0, 10.0))
             commands.spawn((
                 MaterialMesh2dBundle {
                     mesh: meshes.add(Mesh::from(Rectangle::new(10.0, 10.0))).into(),
-                    material: materials.add(Color::from(AZURE)), // Light Blue
+                    material: materials.add(Color::from(AZURE)),
                     transform: Transform::from_translation(spawn_pos.extend(0.0)),
                     ..default()
                 },
                 RigidBody::Dynamic,
                 Collider::ball(5.0),
                 Sensor,
+                GravityScale(0.0),
                 Velocity {
                     linvel: direction * 600.0,
                     angvel: 10.0,
@@ -112,20 +252,17 @@ fn fire_weapon(
             ));
         }
         WeaponType::Sword => {
-            // Sword Slash Visual
-            // Use a Rectangle or Ellipse to approximate slash arc? Or just a Rectangle.
             let angle = direction.y.atan2(direction.x);
-
             commands.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Rectangle::new(40.0, 60.0))).into(), // Slash area
+                    mesh: meshes.add(Mesh::from(Rectangle::new(40.0, 60.0))).into(),
                     material: materials.add(Color::Srgba(Srgba::new(1.0, 1.0, 1.0, 0.5))),
                     transform: Transform::from_translation(spawn_pos.extend(1.0))
-                        .with_rotation(Quat::from_rotation_z(angle)), // Align with direction
+                        .with_rotation(Quat::from_rotation_z(angle)),
                     ..default()
                 },
                 Sensor,
-                Collider::cuboid(20.0, 30.0), // Half extents
+                Collider::cuboid(20.0, 30.0),
                 Projectile {
                     damage: 20.0,
                     speed: 0.0,
@@ -134,6 +271,35 @@ fn fire_weapon(
                 },
                 Lifetime {
                     timer: Timer::from_seconds(0.2, TimerMode::Once),
+                },
+            ));
+        }
+        WeaponType::Bow => {
+            let angle = direction.y.atan2(direction.x);
+            commands.spawn((
+                MaterialMesh2dBundle {
+                    mesh: meshes.add(Mesh::from(Rectangle::new(20.0, 5.0))).into(),
+                    material: materials.add(Color::from(YELLOW)),
+                    transform: Transform::from_translation(spawn_pos.extend(0.0))
+                        .with_rotation(Quat::from_rotation_z(angle)),
+                    ..default()
+                },
+                RigidBody::Dynamic,
+                Collider::cuboid(10.0, 2.5),
+                Sensor,
+                GravityScale(0.0),
+                Velocity {
+                    linvel: direction * 800.0,
+                    angvel: 0.0,
+                },
+                Projectile {
+                    damage: 15.0,
+                    speed: 800.0,
+                    direction,
+                    owner_entity: owner,
+                },
+                Lifetime {
+                    timer: Timer::from_seconds(3.0, TimerMode::Once),
                 },
             ));
         }
@@ -152,7 +318,6 @@ pub fn resolve_damage(
             if rapier_context.intersection_pair(proj_entity, enemy_entity) == Some(true) {
                 // Hit!
                 enemy.health -= projectile.damage;
-                println!("Hit! Enemy HP: {}", enemy.health);
 
                 if projectile.speed > 0.0 {
                     commands.entity(proj_entity).despawn();

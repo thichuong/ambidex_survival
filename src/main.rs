@@ -21,6 +21,10 @@ fn main() {
             ..default()
         }))
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+        .insert_resource(RapierConfiguration {
+            gravity: Vec2::ZERO,
+            ..RapierConfiguration::new(100.0)
+        })
         //.add_plugins(RapierDebugRenderPlugin::default()) // Debug physics
         .init_state::<GameState>()
         .add_systems(
@@ -36,9 +40,11 @@ fn main() {
                 systems::combat::manage_lifetime,
                 systems::combat::resolve_damage,
                 systems::enemy::enemy_chase_player,
+                systems::ui::weapon_button_interaction,
             )
                 .run_if(in_state(GameState::AssetLoading)),
         ) // TEMPORARY
+        .add_systems(Startup, systems::ui::setup_ui)
         .run();
 }
 

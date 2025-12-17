@@ -65,7 +65,7 @@ pub fn spawn_player(
             Hand {
                 hand_type: HandType::Right,
                 offset: Vec3::new(25.0, -10.0, 0.0),
-                equipped_weapon: Some(WeaponType::Sword),
+                equipped_weapon: Some(WeaponType::Shuriken),
             },
         ))
         .id();
