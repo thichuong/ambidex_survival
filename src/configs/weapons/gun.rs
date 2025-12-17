@@ -13,7 +13,7 @@ pub const SINGLE_SPREAD: &[f32] = &[0.0];
 // Shotgun Mode
 pub const SHOTGUN_DAMAGE: f32 = 15.0;
 pub const SHOTGUN_SPEED: f32 = 800.0;
-pub const SHOTGUN_SPREAD: &[f32] = &[-0.2, 0.0, 0.2];
+pub const SHOTGUN_SPREAD: &[f32] = &[-0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3];
 
 // Rapid Mode
 pub const RAPID_DAMAGE: f32 = 8.0;
