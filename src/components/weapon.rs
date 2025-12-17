@@ -101,3 +101,39 @@ pub struct Projectile {
 pub struct Lifetime {
     pub timer: Timer,
 }
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum SwingState {
+    Windup,
+    Swinging,
+    Recover,
+}
+
+#[derive(Component)]
+pub struct SwordSwing {
+    pub state: SwingState,
+    pub timer: Timer,
+    pub base_angle: f32,
+    pub owner_entity: Entity,
+    pub damage: f32,
+    pub range: f32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SwordMode {
+    Normal,
+    Shattered,
+}
+
+#[derive(Component)]
+pub struct SwordState {
+    pub mode: SwordMode,
+}
+
+impl Default for SwordState {
+    fn default() -> Self {
+        Self {
+            mode: SwordMode::Normal,
+        }
+    }
+}

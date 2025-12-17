@@ -40,6 +40,7 @@ fn main() {
                 systems::combat::handle_combat_input,
                 systems::combat::manage_lifetime,
                 systems::combat::resolve_damage,
+                systems::combat::update_sword_mechanics,
                 systems::enemy::enemy_chase_player,
                 systems::enemy::spawn_waves,
                 systems::ui::weapon_button_interaction,

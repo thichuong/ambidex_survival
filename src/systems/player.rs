@@ -4,14 +4,14 @@ use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
 
 use crate::components::player::{GameCamera, Hand, HandType, Player};
-use crate::components::weapon::{MagicLoadout, ShieldState, WeaponType};
+use crate::components::weapon::{MagicLoadout, ShieldState, SwordState, Weapon, WeaponType};
 
 pub fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let player_id = commands
+    commands
         .spawn((
             MaterialMesh2dBundle {
                 mesh: meshes.add(Mesh::from(Circle::new(20.0))).into(),
@@ -29,54 +29,41 @@ pub fn spawn_player(
             },
             Player::default(),
         ))
-        .id();
+        .with_children(|parent| {
+            // Left Hand
+            parent.spawn((
+                Hand {
+                    hand_type: HandType::Left,
+                    offset: Vec3::new(-20.0, 20.0, 1.0),
+                    equipped_weapon: Some(WeaponType::Shuriken), // Default Left
+                },
+                Weapon {
+                    weapon_type: WeaponType::Shuriken,
+                    ..default()
+                },
+                ShieldState::default(),
+                MagicLoadout::default(),
+                SwordState::default(),
+                SpatialBundle::default(),
+            ));
 
-    // Spawn Hands
-    let hand_mesh = meshes.add(Mesh::from(Circle::new(5.0)));
-
-    // Left Hand - YELLOW
-    let left_hand_mat = materials.add(Color::from(YELLOW));
-    let left_hand = commands
-        .spawn((
-            MaterialMesh2dBundle {
-                mesh: hand_mesh.clone().into(),
-                material: left_hand_mat,
-                transform: Transform::from_xyz(25.0, 10.0, -0.1), // Child transform relative to parent
-                ..default()
-            },
-            Hand {
-                hand_type: HandType::Left,
-                offset: Vec3::new(25.0, 10.0, 0.0),
-                equipped_weapon: Some(WeaponType::Shuriken),
-            },
-            ShieldState::default(),
-            MagicLoadout::default(),
-        ))
-        .id();
-
-    // Right Hand - ORANGE
-    let right_hand_mat = materials.add(Color::from(ORANGE));
-    let right_hand = commands
-        .spawn((
-            MaterialMesh2dBundle {
-                mesh: hand_mesh.into(),
-                material: right_hand_mat,
-                transform: Transform::from_xyz(25.0, -10.0, -0.1),
-                ..default()
-            },
-            Hand {
-                hand_type: HandType::Right,
-                offset: Vec3::new(25.0, -10.0, 0.0),
-                equipped_weapon: Some(WeaponType::Shuriken),
-            },
-            ShieldState::default(),
-            MagicLoadout::default(),
-        ))
-        .id();
-
-    commands
-        .entity(player_id)
-        .push_children(&[left_hand, right_hand]);
+            // Right Hand
+            parent.spawn((
+                Hand {
+                    hand_type: HandType::Right,
+                    offset: Vec3::new(20.0, 20.0, 1.0),
+                    equipped_weapon: Some(WeaponType::Sword), // Default Right
+                },
+                Weapon {
+                    weapon_type: WeaponType::Sword,
+                    ..default()
+                },
+                ShieldState::default(),
+                MagicLoadout::default(),
+                SwordState::default(),
+                SpatialBundle::default(),
+            ));
+        });
 }
 
 pub fn move_player(
