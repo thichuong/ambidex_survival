@@ -98,6 +98,12 @@ pub struct Projectile {
 }
 
 #[derive(Component)]
+pub struct ExplodingProjectile {
+    pub radius: f32,
+    pub damage: f32,
+}
+
+#[derive(Component)]
 pub struct Lifetime {
     pub timer: Timer,
 }

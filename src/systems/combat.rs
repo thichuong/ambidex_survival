@@ -1,8 +1,8 @@
 use crate::components::enemy::Enemy;
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{
-    Lifetime, MagicLoadout, Projectile, ShieldCollider, ShieldMode, ShieldState, SpellType,
-    SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
+    ExplodingProjectile, Lifetime, MagicLoadout, Projectile, ShieldCollider, ShieldMode,
+    ShieldState, SpellType, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
 };
 use bevy::color::palettes::css::{AQUA, AZURE, PURPLE, YELLOW};
 use bevy::prelude::*;
@@ -157,6 +157,36 @@ pub fn handle_combat_input(
                         }
                     }
                 }
+                WeaponType::Magic => {
+                    // Primary Spell (Click)
+                    if is_just_pressed {
+                        cast_spell(
+                            &mut commands,
+                            magic_loadout.primary,
+                            player_entity,
+                            &mut player_transform,
+                            cursor_pos,
+                            hand_pos,
+                            &mut meshes,
+                            &mut materials,
+                            &mut enemy_query,
+                        );
+                    }
+                    // Secondary Spell (Skill)
+                    if skill_pressed {
+                        cast_spell(
+                            &mut commands,
+                            magic_loadout.secondary,
+                            player_entity,
+                            &mut player_transform,
+                            cursor_pos,
+                            hand_pos,
+                            &mut meshes,
+                            &mut materials,
+                            &mut enemy_query,
+                        );
+                    }
+                }
                 _ => {
                     // Standard Weapons (Sword, Shuriken, Bow)
                     if is_just_pressed {
@@ -184,6 +214,7 @@ pub fn handle_combat_input(
                             &mut meshes,
                             &mut materials,
                             &projectile_query,
+                            &mut player_transform,
                         );
                     }
                 }
@@ -231,6 +262,10 @@ fn cast_spell(
                 },
                 Lifetime {
                     timer: Timer::from_seconds(3.0, TimerMode::Once),
+                },
+                ExplodingProjectile {
+                    radius: 40.0,
+                    damage: 20.0,
                 },
             ));
         }
@@ -306,15 +341,18 @@ fn perform_skill(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
     projectile_query: &Query<(Entity, &GlobalTransform, &Projectile), Without<Player>>,
+    player_transform: &mut Transform,
 ) {
     match weapon_type {
         WeaponType::Shuriken => {
             // Teleport to closest projectile
             let mut closest_proj: Option<(Entity, Vec3)> = None;
-            let mut min_dist_sq = f32::MAX;
+            let mut min_dist_sq = 500.0 * 500.0; // Max teleport range check? Or just find any.
+
             for (entity, proj_tf, proj) in projectile_query.iter() {
                 if proj.owner_entity == player_entity {
-                    // Hack: assume standard projectile is shuriken
+                    // Check if it is a Shuriken (hack: speed 600.0 or just purely by being projectile owner)
+                    // Ideally we'd have a WeaponType on Projectile, but owner is unique enough for now.
                     let translation = proj_tf.translation();
                     let dist_sq = translation.truncate().distance_squared(cursor_pos);
                     if dist_sq < min_dist_sq {
@@ -323,18 +361,42 @@ fn perform_skill(
                     }
                 }
             }
+
             if let Some((entity, location)) = closest_proj {
-                // Teleport Player? No, `player_entity` is passed but we don't have mutable Query for Player transform here.
-                // We can send a command or updated via component, but traditionally we need Player Transform.
-                // Ah, `handle_combat_input` has `player_query`.
-                // But we didn't pass `player_transform` to `perform_skill`!
-                // In previous code (lines 263), it accessed `player_transform`.
-                // I should likely add `player_query` or `player_transform` to `perform_skill` signature if I want teleport to work.
-                // But user asked for Sword. I will just Log "Blink attempt" if too complex to wire up now,
-                // OR fetch player transform from `commands`? No.
-                // I will skip Teleport implementation details to avoid signature explosion, just Log.
-                println!("Skill: Shuriken Teleport (Not implemented in this refactor)");
-                // If I want to fix it properly, I'd pass `mut player_query` or `player_transform`.
+                // Teleport FX (at old position)
+                commands.spawn((
+                    MaterialMesh2dBundle {
+                        mesh: meshes.add(Mesh::from(Circle::new(15.0))).into(),
+                        material: materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5)),
+                        transform: Transform::from_translation(player_transform.translation),
+                        ..default()
+                    },
+                    Lifetime {
+                        timer: Timer::from_seconds(0.2, TimerMode::Once),
+                    },
+                ));
+
+                // Move Player
+                player_transform.translation = location;
+                println!("Skill: Shuriken Teleport to {:?}", location);
+
+                // Teleport FX (at new position)
+                commands.spawn((
+                    MaterialMesh2dBundle {
+                        mesh: meshes.add(Mesh::from(Circle::new(15.0))).into(),
+                        material: materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5)),
+                        transform: Transform::from_translation(location),
+                        ..default()
+                    },
+                    Lifetime {
+                        timer: Timer::from_seconds(0.2, TimerMode::Once),
+                    },
+                ));
+
+                // Despawn the projectile used as anchor
+                commands.entity(entity).despawn_recursive();
+            } else {
+                println!("Skill: No Shuriken found to teleport to!");
             }
         }
         WeaponType::Sword => {
@@ -531,7 +593,7 @@ pub fn resolve_damage(
     mut commands: Commands,
     rapier_context: Res<RapierContext>,
     projectile_query: Query<(Entity, &Projectile, &Transform)>,
-    mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>,
+    mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // Keep mutable for direct damage
     // Shield Logic needs access to Shields
     shield_query: Query<(Entity, &ShieldCollider)>,
     mut hand_query: Query<&mut ShieldState>,
@@ -539,6 +601,7 @@ pub fn resolve_damage(
     mut shake: ResMut<crate::resources::polish::ScreenShake>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    exploding_query: Query<&ExplodingProjectile>,
 ) {
     // 1. Check Projectile vs Shield
     for (proj_entity, projectile, _proj_tf) in projectile_query.iter() {
@@ -573,7 +636,7 @@ pub fn resolve_damage(
     }
 
     // 2. Check Projectile vs Enemy
-    for (proj_entity, projectile, _proj_tf) in projectile_query.iter() {
+    for (proj_entity, projectile, projectile_transform) in projectile_query.iter() {
         // Skip if projectile dead (from absorb) - ECS despawn is deferred, so we might need manual check or `commands.entity(e).despawn()` works at end of stage.
         // Actually, despawned entities are still iteratable in the same system execution usually? No, but multiple loops might clash.
         // Let's rely on standard intersections.
@@ -585,6 +648,31 @@ pub fn resolve_damage(
                 // Don't hit self if reflected?
                 enemy.health -= projectile.damage;
                 shake.add_trauma(0.1); // Small shake on hit
+
+                // Explosion Logic
+                if let Ok(exploding) = exploding_query.get(proj_entity) {
+                    commands.spawn((
+                        MaterialMesh2dBundle {
+                            mesh: meshes.add(Mesh::from(Circle::new(exploding.radius))).into(),
+                            material: materials.add(Color::srgb(1.0, 0.5, 0.0).with_alpha(0.6)),
+                            transform: Transform::from_translation(
+                                projectile_transform.translation,
+                            ),
+                            ..default()
+                        },
+                        Collider::ball(exploding.radius),
+                        Sensor,
+                        Projectile {
+                            damage: exploding.damage,
+                            speed: 0.0,
+                            direction: Vec2::ZERO,
+                            owner_entity: projectile.owner_entity,
+                        },
+                        Lifetime {
+                            timer: Timer::from_seconds(0.1, TimerMode::Once),
+                        },
+                    ));
+                }
 
                 if projectile.speed > 0.0 {
                     commands.entity(proj_entity).despawn();
