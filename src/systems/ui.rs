@@ -32,7 +32,6 @@ pub struct MagicCycleButton {
 
 use crate::components::weapon::{MagicLoadout, SpellType};
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Root UI Node
     commands
@@ -290,12 +289,19 @@ fn spawn_magic_panel(parent: &mut ChildBuilder, side: HandType) {
         });
 }
 
-#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
+type WeaponButtonQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static Interaction,
+        &'static mut BackgroundColor,
+        &'static WeaponButton,
+    ),
+    (Changed<Interaction>, With<Button>),
+>;
+
 pub fn weapon_button_interaction(
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &WeaponButton),
-        (Changed<Interaction>, With<Button>),
-    >,
+    mut interaction_query: WeaponButtonQuery,
     mut hand_query: Query<(&mut Hand, &mut crate::components::weapon::Weapon)>,
 ) {
     for (interaction, mut color, button_data) in &mut interaction_query {
@@ -355,12 +361,19 @@ pub fn update_shop_visibility(
     }
 }
 
-#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
+type ShopButtonQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static Interaction,
+        &'static mut BackgroundColor,
+        &'static ShopButton,
+    ),
+    (Changed<Interaction>, With<Button>),
+>;
+
 pub fn shop_button_interaction(
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &ShopButton),
-        (Changed<Interaction>, With<Button>),
-    >,
+    mut interaction_query: ShopButtonQuery,
     mut round_manager: ResMut<crate::resources::round::RoundManager>,
     mut player_query: Query<&mut crate::components::player::Player>,
 ) {
@@ -458,12 +471,19 @@ pub fn update_magic_ui(
     }
 }
 
-#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
+type MagicButtonQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static Interaction,
+        &'static mut BackgroundColor,
+        &'static MagicCycleButton,
+    ),
+    (Changed<Interaction>, With<Button>),
+>;
+
 pub fn magic_button_interaction(
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &MagicCycleButton),
-        (Changed<Interaction>, With<Button>),
-    >,
+    mut interaction_query: MagicButtonQuery,
     mut loadout_query: Query<(&Hand, &mut MagicLoadout)>,
 ) {
     for (interaction, mut color, btn_data) in &mut interaction_query {

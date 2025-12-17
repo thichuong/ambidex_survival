@@ -7,23 +7,36 @@ use crate::components::weapon::{
 use crate::configs::spells::{energy_bolt, global, laser, nova};
 use crate::configs::weapons::{gun, shuriken, sword};
 use bevy::color::palettes::css::{AQUA, AZURE, PURPLE, YELLOW};
+use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
 use rand::Rng;
 
-#[allow(
-    clippy::too_many_arguments,
-    clippy::too_many_lines,
-    clippy::needless_pass_by_value
-)]
+#[derive(Event)]
+pub struct DamageEvent {
+    pub damage: f32,
+    pub position: Vec2,
+}
+
+use bevy::window::PrimaryWindow;
+
+#[derive(SystemParam)]
+pub struct CombatInputParams<'w, 's> {
+    pub commands: Commands<'w, 's>,
+    pub time: Res<'w, Time>,
+    pub mouse_input: Res<'w, ButtonInput<MouseButton>>,
+    pub key_input: Res<'w, ButtonInput<KeyCode>>,
+    pub window_query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
+    pub camera_query: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<GameCamera>>,
+    pub meshes: ResMut<'w, Assets<Mesh>>,
+    pub materials: ResMut<'w, Assets<ColorMaterial>>,
+    pub projectile_query:
+        Query<'w, 's, (Entity, &'static GlobalTransform, &'static Projectile), Without<Player>>,
+}
+
 pub fn handle_combat_input(
-    mut commands: Commands,
-    time: Res<Time>,
-    mouse_input: Res<ButtonInput<MouseButton>>,
-    key_input: Res<ButtonInput<KeyCode>>,
-    window_query: Query<&Window, With<bevy::window::PrimaryWindow>>,
-    camera_query: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
+    mut params: CombatInputParams,
     mut player_query: Query<(Entity, &mut Transform), With<Player>>,
     mut hand_query: Query<(
         Entity,
@@ -34,16 +47,13 @@ pub fn handle_combat_input(
         &mut GunState,
         &mut Weapon,
     )>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    projectile_query: Query<(Entity, &GlobalTransform, &Projectile), Without<Player>>,
     _enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // For Global spell
 ) {
     // ... (Keep early returns)
-    let Ok((camera, camera_transform)) = camera_query.get_single() else {
+    let Ok((camera, camera_transform)) = params.camera_query.get_single() else {
         return;
     };
-    let Ok(window) = window_query.get_single() else {
+    let Ok(window) = params.window_query.get_single() else {
         return;
     };
 
@@ -61,13 +71,13 @@ pub fn handle_combat_input(
     let _player_pos = player_transform.translation.truncate();
 
     // Input States
-    let left_pressed = mouse_input.pressed(MouseButton::Left);
-    let right_pressed = mouse_input.pressed(MouseButton::Right);
-    let left_just_pressed = mouse_input.just_pressed(MouseButton::Left);
-    let right_just_pressed = mouse_input.just_pressed(MouseButton::Right);
+    let left_pressed = params.mouse_input.pressed(MouseButton::Left);
+    let right_pressed = params.mouse_input.pressed(MouseButton::Right);
+    let left_just_pressed = params.mouse_input.just_pressed(MouseButton::Left);
+    let right_just_pressed = params.mouse_input.just_pressed(MouseButton::Right);
 
-    let q_just_pressed = key_input.just_pressed(KeyCode::KeyQ);
-    let e_just_pressed = key_input.just_pressed(KeyCode::KeyE);
+    let q_just_pressed = params.key_input.just_pressed(KeyCode::KeyQ);
+    let e_just_pressed = params.key_input.just_pressed(KeyCode::KeyE);
 
     for (
         _hand_entity,
@@ -108,7 +118,7 @@ pub fn handle_combat_input(
                     }
 
                     // Cast Active Spell (Click)
-                    let now = time.elapsed_seconds();
+                    let now = params.time.elapsed_seconds();
                     if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
                         let spell_to_cast = match magic_loadout.active_slot {
                             ActiveSpellSlot::Primary => magic_loadout.primary,
@@ -116,14 +126,12 @@ pub fn handle_combat_input(
                         };
 
                         cast_spell(
-                            &mut commands,
+                            &mut params,
                             spell_to_cast,
                             player_entity,
                             &mut player_transform,
                             cursor_pos,
                             hand_pos,
-                            &mut meshes,
-                            &mut materials,
                         );
                         weapon_data.last_shot = now;
                     }
@@ -136,33 +144,32 @@ pub fn handle_combat_input(
                     };
 
                     let should_fire = if gun_state.mode == GunMode::Rapid {
-                        is_pressed && time.elapsed_seconds() - weapon_data.last_shot >= cooldown
+                        is_pressed
+                            && params.time.elapsed_seconds() - weapon_data.last_shot >= cooldown
                     } else {
                         is_just_pressed
                     };
 
                     if should_fire {
                         fire_weapon(
-                            &mut commands,
+                            &mut params,
                             weapon_type,
                             hand_pos,
                             cursor_pos,
                             player_entity,
-                            &mut meshes,
-                            &mut materials,
                             sword_state.mode,
                             gun_state.mode,
                         );
-                        weapon_data.last_shot = time.elapsed_seconds();
+                        weapon_data.last_shot = params.time.elapsed_seconds();
                     }
 
-                    let now = time.elapsed_seconds();
+                    let now = params.time.elapsed_seconds();
                     if skill_pressed {
                         // Gun Mode Switch is instant/tactical, maybe small cooldown?
                         // Let's add small cooldown to prevent accidental double taps
                         if now - weapon_data.last_skill_use >= gun::MODE_SWITCH_COOLDOWN {
                             perform_skill(
-                                &mut commands,
+                                &mut params,
                                 weapon_type,
                                 hand_pos,
                                 cursor_pos,
@@ -170,9 +177,6 @@ pub fn handle_combat_input(
                                 &magic_loadout,
                                 &mut sword_state,
                                 &mut gun_state,
-                                &mut meshes,
-                                &mut materials,
-                                &projectile_query,
                                 &mut player_transform,
                             );
                             weapon_data.last_skill_use = now;
@@ -181,16 +185,14 @@ pub fn handle_combat_input(
                 }
                 _ => {
                     // Standard Weapons (Sword, Shuriken)
-                    let now = time.elapsed_seconds();
+                    let now = params.time.elapsed_seconds();
                     if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
                         fire_weapon(
-                            &mut commands,
+                            &mut params,
                             weapon_type,
                             hand_pos,
                             cursor_pos,
                             player_entity,
-                            &mut meshes,
-                            &mut materials,
                             sword_state.mode, // Pass Mode
                             gun_state.mode,   // Pass Gun Mode
                         );
@@ -200,7 +202,7 @@ pub fn handle_combat_input(
                         && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown
                     {
                         perform_skill(
-                            &mut commands,
+                            &mut params,
                             weapon_type,
                             hand_pos,
                             cursor_pos,
@@ -208,9 +210,6 @@ pub fn handle_combat_input(
                             &magic_loadout,
                             &mut sword_state, // Pass State
                             &mut gun_state,   // Pass Gun State
-                            &mut meshes,
-                            &mut materials,
-                            &projectile_query,
                             &mut player_transform,
                         );
                         weapon_data.last_skill_use = now;
@@ -221,26 +220,23 @@ pub fn handle_combat_input(
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn cast_spell(
-    commands: &mut Commands,
+    params: &mut CombatInputParams,
     spell: SpellType,
     player_entity: Entity,
     player_transform: &mut Transform,
     cursor_pos: Vec2,
     spawn_pos: Vec2,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
 ) {
     let direction = (cursor_pos - spawn_pos).normalize_or_zero();
     let angle = direction.y.atan2(direction.x);
 
     match spell {
         SpellType::EnergyBolt => {
-            commands.spawn((
+            params.commands.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Circle::new(8.0))).into(),
-                    material: materials.add(Color::from(PURPLE)),
+                    mesh: params.meshes.add(Mesh::from(Circle::new(8.0))).into(),
+                    material: params.materials.add(Color::from(PURPLE)),
                     transform: Transform::from_translation(spawn_pos.extend(0.0)),
                     ..default()
                 },
@@ -269,10 +265,13 @@ fn cast_spell(
         }
         SpellType::Laser => {
             // Raycast / Long box
-            commands.spawn((
+            params.commands.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Rectangle::new(1000.0, 4.0))).into(),
-                    material: materials.add(Color::from(AQUA)),
+                    mesh: params
+                        .meshes
+                        .add(Mesh::from(Rectangle::new(1000.0, 4.0)))
+                        .into(),
+                    material: params.materials.add(Color::from(AQUA)),
                     transform: Transform::from_translation(
                         (spawn_pos + direction * (laser::LENGTH / 2.0)).extend(0.0), // Center it
                     )
@@ -293,10 +292,15 @@ fn cast_spell(
             ));
         }
         SpellType::Nova => {
-            commands.spawn((
+            params.commands.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Circle::new(nova::RADIUS))).into(),
-                    material: materials.add(Color::srgb(1.0, 0.0, 1.0).with_alpha(0.4)),
+                    mesh: params
+                        .meshes
+                        .add(Mesh::from(Circle::new(nova::RADIUS)))
+                        .into(),
+                    material: params
+                        .materials
+                        .add(Color::srgb(1.0, 0.0, 1.0).with_alpha(0.4)),
                     transform: Transform::from_translation(player_transform.translation),
                     ..default()
                 },
@@ -320,10 +324,15 @@ fn cast_spell(
         SpellType::Global => {
             println!("Global Spell Used!");
             // Global is now a massive Nova
-            commands.spawn((
+            params.commands.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Circle::new(global::RADIUS))).into(),
-                    material: materials.add(Color::srgb(1.0, 1.0, 1.0).with_alpha(0.1)), // White flash
+                    mesh: params
+                        .meshes
+                        .add(Mesh::from(Circle::new(global::RADIUS)))
+                        .into(),
+                    material: params
+                        .materials
+                        .add(Color::srgb(1.0, 1.0, 1.0).with_alpha(0.1)), // White flash
                     transform: Transform::from_translation(player_transform.translation),
                     ..default()
                 },
@@ -344,9 +353,8 @@ fn cast_spell(
 }
 
 // ... (Keep existing perform_skill and fire_weapon functions, they are fine)
-#[allow(clippy::too_many_arguments)]
 fn perform_skill(
-    commands: &mut Commands,
+    params: &mut CombatInputParams,
     weapon_type: WeaponType,
     _spawn_pos: Vec2,
     cursor_pos: Vec2,
@@ -354,9 +362,6 @@ fn perform_skill(
     _magic_loadout: &MagicLoadout,
     sword_state: &mut SwordState,
     gun_state: &mut GunState,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
-    projectile_query: &Query<(Entity, &GlobalTransform, &Projectile), Without<Player>>,
     player_transform: &mut Transform,
 ) {
     match weapon_type {
@@ -365,7 +370,7 @@ fn perform_skill(
             let mut closest_proj: Option<(Entity, Vec3)> = None;
             let mut min_dist_sq = shuriken::TELEPORT_RANGE_SQ; // Max teleport range check? Or just find any.
 
-            for (entity, proj_tf, proj) in projectile_query.iter() {
+            for (entity, proj_tf, proj) in params.projectile_query.iter() {
                 if proj.owner_entity == player_entity {
                     // Check if it is a Shuriken (hack: speed 600.0 or just purely by being projectile owner)
                     // Ideally we'd have a WeaponType on Projectile, but owner is unique enough for now.
@@ -380,10 +385,10 @@ fn perform_skill(
 
             if let Some((entity, location)) = closest_proj {
                 // Teleport FX (at old position)
-                commands.spawn((
+                params.commands.spawn((
                     MaterialMesh2dBundle {
-                        mesh: meshes.add(Mesh::from(Circle::new(15.0))).into(),
-                        material: materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5)),
+                        mesh: params.meshes.add(Mesh::from(Circle::new(15.0))).into(),
+                        material: params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5)),
                         transform: Transform::from_translation(player_transform.translation),
                         ..default()
                     },
@@ -397,10 +402,10 @@ fn perform_skill(
                 println!("Skill: Shuriken Teleport to {location:?}");
 
                 // Teleport FX (at new position)
-                commands.spawn((
+                params.commands.spawn((
                     MaterialMesh2dBundle {
-                        mesh: meshes.add(Mesh::from(Circle::new(15.0))).into(),
-                        material: materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5)),
+                        mesh: params.meshes.add(Mesh::from(Circle::new(15.0))).into(),
+                        material: params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5)),
                         transform: Transform::from_translation(location),
                         ..default()
                     },
@@ -410,7 +415,7 @@ fn perform_skill(
                 ));
 
                 // Despawn the projectile used as anchor
-                commands.entity(entity).despawn_recursive();
+                params.commands.entity(entity).despawn_recursive();
             } else {
                 println!("Skill: No Shuriken found to teleport to!");
             }
@@ -449,25 +454,25 @@ fn perform_skill(
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn fire_weapon(
-    commands: &mut Commands,
+    params: &mut CombatInputParams,
     weapon_type: WeaponType,
     spawn_pos: Vec2,
     target_pos: Vec2,
     owner: Entity,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
     sword_mode: SwordMode, // Added mode
     gun_mode: GunMode,     // Added Gun Mode
 ) {
     let direction = (target_pos - spawn_pos).normalize_or_zero();
     match weapon_type {
         WeaponType::Shuriken => {
-            commands.spawn((
+            params.commands.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Rectangle::new(10.0, 10.0))).into(),
-                    material: materials.add(Color::from(AZURE)),
+                    mesh: params
+                        .meshes
+                        .add(Mesh::from(Rectangle::new(10.0, 10.0)))
+                        .into(),
+                    material: params.materials.add(Color::from(AZURE)),
                     transform: Transform::from_translation(spawn_pos.extend(0.0)),
                     ..default()
                 },
@@ -495,7 +500,8 @@ fn fire_weapon(
             match sword_mode {
                 SwordMode::Normal => {
                     // Normal 2-Phase Sweep
-                    commands
+                    params
+                        .commands
                         .spawn((
                             SpatialBundle {
                                 transform: Transform::from_translation(spawn_pos.extend(0.0)),
@@ -512,8 +518,11 @@ fn fire_weapon(
                         ))
                         .with_children(|parent| {
                             parent.spawn((MaterialMesh2dBundle {
-                                mesh: meshes.add(Mesh::from(Rectangle::new(140.0, 10.0))).into(),
-                                material: materials.add(Color::srgba(1.0, 1.0, 1.0, 0.8)),
+                                mesh: params
+                                    .meshes
+                                    .add(Mesh::from(Rectangle::new(140.0, 10.0)))
+                                    .into(),
+                                material: params.materials.add(Color::srgba(1.0, 1.0, 1.0, 0.8)),
                                 transform: Transform::from_xyz(70.0, 0.0, 0.0),
                                 ..default()
                             },));
@@ -521,7 +530,8 @@ fn fire_weapon(
                 }
                 SwordMode::Shattered => {
                     // Shattered 2-Phase Sweep (Skill Visuals/Stats)
-                    commands
+                    params
+                        .commands
                         .spawn((
                             SpatialBundle {
                                 transform: Transform::from_translation(spawn_pos.extend(0.0)),
@@ -543,10 +553,13 @@ fn fire_weapon(
                                 let dist = rng.gen_range(50.0..350.0);
                                 let jitter_y = rng.gen_range(-15.0..15.0);
                                 parent.spawn(MaterialMesh2dBundle {
-                                    mesh: meshes
+                                    mesh: params
+                                        .meshes
                                         .add(Mesh::from(Circle::new(rng.gen_range(2.0..4.0))))
                                         .into(),
-                                    material: materials.add(Color::srgba(1.0, 1.0, 1.0, 0.9)),
+                                    material: params
+                                        .materials
+                                        .add(Color::srgba(1.0, 1.0, 1.0, 0.9)),
                                     transform: Transform::from_xyz(dist, jitter_y, 0.0),
                                     ..default()
                                 });
@@ -578,10 +591,13 @@ fn fire_weapon(
                 let angle = base_angle + offset;
                 let dir = Vec2::new(angle.cos(), angle.sin());
 
-                commands.spawn((
+                params.commands.spawn((
                     MaterialMesh2dBundle {
-                        mesh: meshes.add(Mesh::from(Rectangle::new(20.0, 5.0))).into(),
-                        material: materials.add(Color::from(YELLOW)),
+                        mesh: params
+                            .meshes
+                            .add(Mesh::from(Rectangle::new(20.0, 5.0)))
+                            .into(),
+                        material: params.materials.add(Color::from(YELLOW)),
                         transform: Transform::from_translation(spawn_pos.extend(0.0))
                             .with_rotation(Quat::from_rotation_z(angle)),
                         ..default()
@@ -610,17 +626,21 @@ fn fire_weapon(
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_pass_by_value)]
+#[derive(SystemParam)]
+pub struct CombatResources<'w> {
+    pub shake: ResMut<'w, crate::resources::polish::ScreenShake>,
+    pub meshes: ResMut<'w, Assets<Mesh>>,
+    pub materials: ResMut<'w, Assets<ColorMaterial>>,
+}
+
 pub fn resolve_damage(
     mut commands: Commands,
     rapier_context: Res<RapierContext>,
     projectile_query: Query<(Entity, &Projectile, &Transform)>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // Keep mutable for direct damage
-    // Shield Logic needs access to Shields
-    mut shake: ResMut<crate::resources::polish::ScreenShake>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut res: CombatResources,
     exploding_query: Query<&ExplodingProjectile>,
+    mut damage_events: EventWriter<DamageEvent>,
 ) {
     // 2. Check Projectile vs Enemy
     for (proj_entity, projectile, projectile_transform) in projectile_query.iter() {
@@ -634,14 +654,23 @@ pub fn resolve_damage(
             {
                 // Don't hit self if reflected?
                 enemy.health -= projectile.damage;
-                shake.add_trauma(0.1); // Small shake on hit
+                damage_events.send(DamageEvent {
+                    damage: projectile.damage,
+                    position: enemy_transform.translation.truncate(),
+                });
+                res.shake.add_trauma(0.1); // Small shake on hit
 
                 // Explosion Logic
                 if let Ok(exploding) = exploding_query.get(proj_entity) {
                     commands.spawn((
                         MaterialMesh2dBundle {
-                            mesh: meshes.add(Mesh::from(Circle::new(exploding.radius))).into(),
-                            material: materials.add(Color::srgb(1.0, 0.5, 0.0).with_alpha(0.6)),
+                            mesh: res
+                                .meshes
+                                .add(Mesh::from(Circle::new(exploding.radius)))
+                                .into(),
+                            material: res
+                                .materials
+                                .add(Color::srgb(1.0, 0.5, 0.0).with_alpha(0.6)),
                             transform: Transform::from_translation(
                                 projectile_transform.translation,
                             ),
@@ -668,7 +697,7 @@ pub fn resolve_damage(
 
                 if enemy.health <= 0.0 {
                     commands.entity(enemy_entity).despawn_recursive();
-                    shake.add_trauma(0.3); // Big shake on kill
+                    res.shake.add_trauma(0.3); // Big shake on kill
                     println!("Enemy Killed!");
 
                     // Spawn Particles
@@ -678,8 +707,8 @@ pub fn resolve_damage(
                             .normalize_or_zero();
                         commands.spawn((
                             MaterialMesh2dBundle {
-                                mesh: meshes.add(Mesh::from(Circle::new(3.0))).into(),
-                                material: materials.add(Color::srgb(1.0, 0.0, 0.0)),
+                                mesh: res.meshes.add(Mesh::from(Circle::new(3.0))).into(),
+                                material: res.materials.add(Color::srgb(1.0, 0.0, 0.0)),
                                 transform: Transform::from_translation(enemy_transform.translation),
                                 ..default()
                             },
@@ -698,7 +727,6 @@ pub fn resolve_damage(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn update_sword_mechanics(
     mut commands: Commands,
     time: Res<Time>,
@@ -707,6 +735,7 @@ pub fn update_sword_mechanics(
     mut shake: ResMut<crate::resources::polish::ScreenShake>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut damage_events: EventWriter<DamageEvent>,
 ) {
     for (entity, mut swing, mut transform) in &mut sword_query {
         swing.timer.tick(time.delta());
@@ -733,17 +762,17 @@ pub fn update_sword_mechanics(
                         if dist_sq < sweep_radius * sweep_radius {
                             let angle_to_enemy = to_enemy.y.atan2(to_enemy.x);
                             let mut angle_diff = angle_to_enemy - swing.base_angle;
-                            #[allow(clippy::while_float)]
-                            while angle_diff > std::f32::consts::PI {
-                                angle_diff -= 2.0 * std::f32::consts::PI;
-                            }
-                            #[allow(clippy::while_float)]
-                            while angle_diff < -std::f32::consts::PI {
-                                angle_diff += 2.0 * std::f32::consts::PI;
-                            }
+                            // Normalize angle_diff to [-PI, PI]
+                            angle_diff = (angle_diff + std::f32::consts::PI)
+                                .rem_euclid(2.0 * std::f32::consts::PI)
+                                - std::f32::consts::PI;
 
                             if angle_diff.abs() <= sweep_arc / 2.0 {
                                 enemy.health -= swing.damage;
+                                damage_events.send(DamageEvent {
+                                    damage: swing.damage,
+                                    position: enemy_tf.translation.truncate(),
+                                });
                                 shake.add_trauma(0.05);
 
                                 let mut rng = rand::thread_rng();
@@ -803,7 +832,6 @@ pub fn update_sword_mechanics(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn manage_lifetime(
     mut commands: Commands,
     time: Res<Time>,

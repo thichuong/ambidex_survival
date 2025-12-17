@@ -26,6 +26,7 @@ fn main() {
             gravity: Vec2::ZERO,
             ..RapierConfiguration::new(100.0)
         })
+        .add_event::<systems::combat::DamageEvent>()
         //.add_plugins(RapierDebugRenderPlugin::default()) // Debug physics
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
@@ -49,6 +50,8 @@ fn main() {
                 systems::ui::shop_button_interaction,
                 systems::ui::update_magic_ui,
                 systems::ui::magic_button_interaction,
+                systems::damage_text::spawn_damage_text,
+                systems::damage_text::update_damage_text,
             )
                 .run_if(in_state(GameState::AssetLoading)),
         ) // TEMPORARY

@@ -6,7 +6,6 @@ use bevy_rapier2d::prelude::*;
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{GunState, MagicLoadout, SwordState, Weapon, WeaponType};
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -67,7 +66,6 @@ pub fn spawn_player(
         });
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn move_player(
     _time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
@@ -97,7 +95,6 @@ pub fn move_player(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn aim_player(
     window_query: Query<&Window, With<bevy::window::PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
