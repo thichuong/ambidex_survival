@@ -299,13 +299,13 @@ pub fn weapon_button_interaction(
     >,
     mut hand_query: Query<(&mut Hand, &mut crate::components::weapon::Weapon)>,
 ) {
-    for (interaction, mut color, button_data) in interaction_query.iter_mut() {
+    for (interaction, mut color, button_data) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0)); // Green clicked
 
                 // Update Player Hand
-                for (mut hand, mut weapon) in hand_query.iter_mut() {
+                for (mut hand, mut weapon) in &mut hand_query {
                     if hand.hand_type == button_data.hand_type {
                         hand.equipped_weapon = Some(button_data.weapon_type);
 
@@ -346,7 +346,7 @@ pub fn update_shop_visibility(
     mut shop_query: Query<&mut Style, With<ShopMenu>>,
     round_manager: Res<crate::resources::round::RoundManager>,
 ) {
-    for mut style in shop_query.iter_mut() {
+    for mut style in &mut shop_query {
         match round_manager.round_state {
             crate::resources::round::RoundState::Shop => {
                 style.display = Display::Flex;
@@ -366,7 +366,7 @@ pub fn shop_button_interaction(
     mut round_manager: ResMut<crate::resources::round::RoundManager>,
     mut player_query: Query<&mut crate::components::player::Player>,
 ) {
-    for (interaction, mut color, btn_type) in interaction_query.iter_mut() {
+    for (interaction, mut color, btn_type) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
@@ -407,13 +407,12 @@ pub fn update_magic_ui(
     loadout_query: Query<&MagicLoadout>,
 ) {
     // 1. Update Panel Visibility
-    for (mut style, panel) in panel_query.iter_mut() {
+    for (mut style, panel) in &mut panel_query {
         let mut is_magic = false;
         for hand in hand_query.iter() {
-            if hand.hand_type == panel.hand_type {
-                if let Some(WeaponType::Magic) = hand.equipped_weapon {
-                    is_magic = true;
-                }
+            if hand.hand_type == panel.hand_type && hand.equipped_weapon == Some(WeaponType::Magic)
+            {
+                is_magic = true;
             }
         }
         if is_magic {
@@ -452,9 +451,9 @@ pub fn update_magic_ui(
                 "Secondary"
             };
 
-            for &child in children.iter() {
+            for &child in children {
                 if let Ok(mut text) = text_query.get_mut(child) {
-                    text.sections[0].value = format!("{}: {}", prefix, spell_name);
+                    text.sections[0].value = format!("{prefix}: {spell_name}");
                 }
             }
         }
@@ -468,13 +467,13 @@ pub fn magic_button_interaction(
     >,
     mut loadout_query: Query<(&Hand, &mut MagicLoadout)>,
 ) {
-    for (interaction, mut color, btn_data) in interaction_query.iter_mut() {
+    for (interaction, mut color, btn_data) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 *color = BackgroundColor(Color::srgba(0.6, 0.0, 0.6, 1.0));
 
                 // Cycle Spell
-                for (hand, mut loadout) in loadout_query.iter_mut() {
+                for (hand, mut loadout) in &mut loadout_query {
                     if hand.hand_type == btn_data.hand_type {
                         let current = if btn_data.is_primary {
                             loadout.primary

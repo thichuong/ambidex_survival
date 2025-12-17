@@ -36,30 +36,22 @@ pub fn handle_combat_input(
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // For Global spell
 ) {
     // ... (Keep early returns)
-    let (camera, camera_transform) = if let Ok(res) = camera_query.get_single() {
-        res
-    } else {
+    let Ok((camera, camera_transform)) = camera_query.get_single() else {
         return;
     };
-    let window = if let Ok(w) = window_query.get_single() {
-        w
-    } else {
+    let Ok(window) = window_query.get_single() else {
         return;
     };
 
-    let cursor_pos = if let Some(world_position) = window
+    let Some(cursor_pos) = window
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
         .map(|ray| ray.origin.truncate())
-    {
-        world_position
-    } else {
+    else {
         return;
     };
 
-    let (player_entity, mut player_transform) = if let Ok(p) = player_query.get_single_mut() {
-        p
-    } else {
+    let Ok((player_entity, mut player_transform)) = player_query.get_single_mut() else {
         return;
     };
     let player_pos = player_transform.translation.truncate();
@@ -81,7 +73,7 @@ pub fn handle_combat_input(
         mut sword_state,
         mut gun_state,
         mut weapon_data,
-    ) in hand_query.iter_mut()
+    ) in &mut hand_query
     {
         let hand_pos = hand_transform.translation().truncate();
         let direction = (cursor_pos - hand_pos).normalize_or_zero();
@@ -172,7 +164,7 @@ pub fn handle_combat_input(
                                 hand_pos,
                                 cursor_pos,
                                 player_entity,
-                                &*magic_loadout,
+                                &magic_loadout,
                                 &mut sword_state,
                                 &mut gun_state,
                                 &mut meshes,
@@ -210,7 +202,7 @@ pub fn handle_combat_input(
                             hand_pos,
                             cursor_pos,
                             player_entity,
-                            &*magic_loadout,
+                            &magic_loadout,
                             &mut sword_state, // Pass State
                             &mut gun_state,   // Pass Gun State
                             &mut meshes,
@@ -235,7 +227,7 @@ fn cast_spell(
     spawn_pos: Vec2,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
-    enemy_query: &mut Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // Mutable for damage
+    enemy_query: &Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // Mutable for damage
 ) {
     let direction = (cursor_pos - spawn_pos).normalize_or_zero();
     let angle = direction.y.atan2(direction.x);
@@ -398,7 +390,7 @@ fn perform_skill(
 
                 // Move Player
                 player_transform.translation = location;
-                println!("Skill: Shuriken Teleport to {:?}", location);
+                println!("Skill: Shuriken Teleport to {location:?}");
 
                 // Teleport FX (at new position)
                 commands.spawn((
@@ -449,7 +441,7 @@ fn perform_skill(
                 }
             }
         }
-        _ => {}
+        WeaponType::Magic => {}
     }
 }
 
@@ -609,7 +601,7 @@ fn fire_weapon(
                 ));
             }
         }
-        _ => {}
+        WeaponType::Magic => {}
     }
 }
 
@@ -630,7 +622,7 @@ pub fn resolve_damage(
         // Actually, despawned entities are still iteratable in the same system execution usually? No, but multiple loops might clash.
         // Let's rely on standard intersections.
 
-        for (enemy_entity, enemy_transform, mut enemy) in enemy_query.iter_mut() {
+        for (enemy_entity, enemy_transform, mut enemy) in &mut enemy_query {
             if rapier_context.intersection_pair(proj_entity, enemy_entity) == Some(true)
                 && projectile.owner_entity != enemy_entity
             {
@@ -709,7 +701,7 @@ pub fn update_sword_mechanics(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for (entity, mut swing, mut transform) in sword_query.iter_mut() {
+    for (entity, mut swing, mut transform) in &mut sword_query {
         swing.timer.tick(time.delta());
 
         match swing.state {
@@ -726,7 +718,7 @@ pub fn update_sword_mechanics(
                     let sweep_radius = swing.range;
                     let sweep_arc = std::f32::consts::PI; // 180 degrees
 
-                    for (enemy_entity, enemy_tf, mut enemy) in enemy_query.iter_mut() {
+                    for (enemy_entity, enemy_tf, mut enemy) in &mut enemy_query {
                         let to_enemy =
                             enemy_tf.translation.truncate() - transform.translation.truncate();
 
@@ -785,7 +777,7 @@ pub fn update_sword_mechanics(
                 let start_angle = -std::f32::consts::FRAC_PI_2;
                 let end_angle = std::f32::consts::FRAC_PI_2;
                 let current_angle =
-                    swing.base_angle + start_angle + (end_angle - start_angle) * progress;
+                    (end_angle - start_angle).mul_add(progress, swing.base_angle + start_angle);
                 transform.rotation = Quat::from_rotation_z(current_angle);
 
                 if swing.timer.finished() {
@@ -807,7 +799,7 @@ pub fn manage_lifetime(
     time: Res<Time>,
     mut query: Query<(Entity, &mut Lifetime)>,
 ) {
-    for (entity, mut lifetime) in query.iter_mut() {
+    for (entity, mut lifetime) in &mut query {
         lifetime.timer.tick(time.delta());
         if lifetime.timer.finished() {
             commands.entity(entity).despawn_recursive();

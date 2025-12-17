@@ -9,7 +9,7 @@ mod utils;
 
 use components::player::GameCamera; // Import GameCamera from components
 use resources::game_state::GameState;
-use systems::player::*;
+use systems::player::{spawn_player, move_player, aim_player};
 
 fn main() {
     App::new()

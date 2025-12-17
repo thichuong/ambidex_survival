@@ -16,11 +16,10 @@ pub fn spawn_waves(
     enemy_query: Query<&Enemy>, // To count alive enemies
     player_query: Query<&Transform, With<Player>>,
 ) {
-    let player_pos = if let Ok(tf) = player_query.get_single() {
-        tf.translation.truncate()
-    } else {
+    let Ok(tf) = player_query.get_single() else {
         return;
     };
+    let player_pos = tf.translation.truncate();
 
     match round_manager.round_state {
         RoundState::Spawning => {
@@ -105,14 +104,12 @@ pub fn enemy_chase_player(
     mut enemy_query: Query<(&mut Velocity, &Transform, &Enemy)>,
     player_query: Query<&Transform, With<Player>>,
 ) {
-    let player_transform = if let Ok(p) = player_query.get_single() {
-        p
-    } else {
+    let Ok(player_transform) = player_query.get_single() else {
         return;
     };
     let player_pos = player_transform.translation.truncate();
 
-    for (mut velocity, transform, enemy) in enemy_query.iter_mut() {
+    for (mut velocity, transform, enemy) in &mut enemy_query {
         let pos = transform.translation.truncate();
         let dir = (player_pos - pos).normalize_or_zero();
         velocity.linvel = dir * enemy.speed;

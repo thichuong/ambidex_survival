@@ -1,4 +1,4 @@
-use bevy::color::palettes::css::{AQUA, ORANGE, YELLOW};
+use bevy::color::palettes::css::AQUA;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
@@ -71,7 +71,7 @@ pub fn move_player(
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Velocity, &Player)>,
 ) {
-    for (mut velocity, player) in query.iter_mut() {
+    for (mut velocity, player) in &mut query {
         let mut direction = Vec2::ZERO;
 
         if input.pressed(KeyCode::KeyW) {
@@ -100,15 +100,11 @@ pub fn aim_player(
     camera_query: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
     mut player_query: Query<&mut Transform, With<Player>>,
 ) {
-    let (camera, camera_transform) = if let Ok(res) = camera_query.get_single() {
-        res
-    } else {
+    let Ok((camera, camera_transform)) = camera_query.get_single() else {
         return;
     };
 
-    let window = if let Ok(w) = window_query.get_single() {
-        w
-    } else {
+    let Ok(window) = window_query.get_single() else {
         return;
     };
 
@@ -117,7 +113,7 @@ pub fn aim_player(
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
         .map(|ray| ray.origin.truncate())
     {
-        for mut player_transform in player_query.iter_mut() {
+        for mut player_transform in &mut player_query {
             let diff = world_position - player_transform.translation.truncate();
             let angle = diff.y.atan2(diff.x);
             player_transform.rotation = Quat::from_rotation_z(angle);

@@ -35,7 +35,7 @@ pub fn update_camera_shake(
 
     // Camera follows player + Shake
     if let Ok(player_tf) = player_query.get_single() {
-        for mut cam_tf in camera_query.iter_mut() {
+        for mut cam_tf in &mut camera_query {
             cam_tf.translation.x = player_tf.translation.x + offset_x;
             cam_tf.translation.y = player_tf.translation.y + offset_y;
             // Keep Z

@@ -33,7 +33,7 @@ impl Default for Weapon {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(dead_code)]
 pub enum SpellType {
     EnergyBolt,
@@ -43,7 +43,7 @@ pub enum SpellType {
     Global,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActiveSpellSlot {
     Primary,
     Secondary,
