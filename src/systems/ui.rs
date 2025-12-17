@@ -1,4 +1,5 @@
 use crate::components::player::{Hand, HandType};
+
 use crate::components::weapon::WeaponType;
 use bevy::prelude::*;
 
@@ -17,6 +18,19 @@ pub enum ShopButton {
     DamageUp,
     NextRound,
 }
+
+#[derive(Component)]
+pub struct MagicPanel {
+    pub hand_type: HandType,
+}
+
+#[derive(Component)]
+pub struct MagicCycleButton {
+    pub hand_type: HandType,
+    pub is_primary: bool, // true = primary, false = secondary
+}
+
+use crate::components::weapon::{MagicLoadout, SpellType};
 
 pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Root UI Node
@@ -89,8 +103,13 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Sword, "Sword");
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Bow, "Bow");
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Shield, "Shield");
+                    spawn_weapon_button(panel, HandType::Right, WeaponType::Shield, "Shield");
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Magic, "Magic");
                 });
+
+            // Magic Loadout Panels (Dynamic)
+            spawn_magic_panel(parent, HandType::Left);
+            spawn_magic_panel(parent, HandType::Right);
 
             // Shop Menu (Initially Hidden)
             parent
@@ -186,6 +205,96 @@ fn spawn_weapon_button(parent: &mut ChildBuilder, hand: HandType, weapon: Weapon
         });
 }
 
+fn spawn_magic_panel(parent: &mut ChildBuilder, hand_type: HandType) {
+    parent
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Px(600.0),
+                height: Val::Px(60.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                margin: UiRect::bottom(Val::Px(10.0)),
+                display: Display::None, // Hidden by default
+                ..default()
+            },
+            background_color: BackgroundColor(Color::srgba(0.2, 0.0, 0.2, 0.8)),
+            ..default()
+        })
+        .insert(MagicPanel { hand_type })
+        .with_children(|panel| {
+            let label = match hand_type {
+                HandType::Left => "Left Magic (Q): ",
+                HandType::Right => "Right Magic (E): ",
+            };
+            panel.spawn(TextBundle::from_section(
+                label,
+                TextStyle {
+                    font_size: 16.0,
+                    color: Color::WHITE,
+                    ..default()
+                },
+            ));
+
+            // Primary Cycle Button
+            panel
+                .spawn(ButtonBundle {
+                    style: Style {
+                        width: Val::Px(180.0),
+                        height: Val::Px(40.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::all(Val::Px(10.0)),
+                        ..default()
+                    },
+                    background_color: BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
+                    ..default()
+                })
+                .insert(MagicCycleButton {
+                    hand_type,
+                    is_primary: true,
+                })
+                .with_children(|btn| {
+                    btn.spawn(TextBundle::from_section(
+                        "Primary: Bolt",
+                        TextStyle {
+                            font_size: 14.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    ));
+                });
+
+            // Secondary Cycle Button
+            panel
+                .spawn(ButtonBundle {
+                    style: Style {
+                        width: Val::Px(180.0),
+                        height: Val::Px(40.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::all(Val::Px(10.0)),
+                        ..default()
+                    },
+                    background_color: BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
+                    ..default()
+                })
+                .insert(MagicCycleButton {
+                    hand_type,
+                    is_primary: false,
+                })
+                .with_children(|btn| {
+                    btn.spawn(TextBundle::from_section(
+                        "Secondary: Blink",
+                        TextStyle {
+                            font_size: 14.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    ));
+                });
+        });
+}
+
 pub fn weapon_button_interaction(
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &WeaponButton),
@@ -271,6 +380,111 @@ pub fn shop_button_interaction(
             }
             Interaction::Hovered => *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 1.0)),
             Interaction::None => *color = BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
+        }
+    }
+}
+
+pub fn update_magic_ui(
+    mut panel_query: Query<(&mut Style, &MagicPanel)>,
+    hand_query: Query<&Hand>,
+    // button_query: Query<(&mut Text, &MagicCycleButton), Without<MagicPanel>>,
+    button_node_query: Query<(&Children, &MagicCycleButton)>,
+    mut text_query: Query<&mut Text>,
+    loadout_query: Query<&MagicLoadout>,
+) {
+    // 1. Update Panel Visibility
+    for (mut style, panel) in panel_query.iter_mut() {
+        let mut is_magic = false;
+        for hand in hand_query.iter() {
+            if hand.hand_type == panel.hand_type {
+                if let Some(WeaponType::Magic) = hand.equipped_weapon {
+                    is_magic = true;
+                }
+            }
+        }
+        if is_magic {
+            style.display = Display::Flex;
+        } else {
+            style.display = Display::None;
+        }
+    }
+
+    // 2. Update Button Text from Loadout
+    for (children, btn_data) in button_node_query.iter() {
+        // Find Loadout for this hand
+        let mut current_loadout = None;
+        for (hand, loadout) in hand_query.iter().zip(loadout_query.iter()) {
+            if hand.hand_type == btn_data.hand_type {
+                current_loadout = Some(loadout);
+            }
+        }
+
+        if let Some(loadout) = current_loadout {
+            let spell = if btn_data.is_primary {
+                loadout.primary
+            } else {
+                loadout.secondary
+            };
+            let spell_name = match spell {
+                SpellType::EnergyBolt => "Bolt",
+                SpellType::Laser => "Laser",
+                SpellType::Nova => "Nova",
+                SpellType::Blink => "Blink",
+                SpellType::Global => "Global",
+            };
+            let prefix = if btn_data.is_primary {
+                "Primary"
+            } else {
+                "Secondary"
+            };
+
+            for &child in children.iter() {
+                if let Ok(mut text) = text_query.get_mut(child) {
+                    text.sections[0].value = format!("{}: {}", prefix, spell_name);
+                }
+            }
+        }
+    }
+}
+
+pub fn magic_button_interaction(
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &MagicCycleButton),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut loadout_query: Query<(&Hand, &mut MagicLoadout)>,
+) {
+    for (interaction, mut color, btn_data) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Pressed => {
+                *color = BackgroundColor(Color::srgba(0.6, 0.0, 0.6, 1.0));
+
+                // Cycle Spell
+                for (hand, mut loadout) in loadout_query.iter_mut() {
+                    if hand.hand_type == btn_data.hand_type {
+                        let current = if btn_data.is_primary {
+                            loadout.primary
+                        } else {
+                            loadout.secondary
+                        };
+                        let next = match current {
+                            SpellType::EnergyBolt => SpellType::Laser,
+                            SpellType::Laser => SpellType::Nova,
+                            SpellType::Nova => SpellType::Blink,
+                            SpellType::Blink => SpellType::Global,
+                            SpellType::Global => SpellType::EnergyBolt,
+                        };
+
+                        if btn_data.is_primary {
+                            loadout.primary = next;
+                        } else {
+                            loadout.secondary = next;
+                        }
+                    }
+                }
+            }
+            Interaction::Hovered => *color = BackgroundColor(Color::srgba(0.5, 0.0, 0.5, 1.0)),
+            Interaction::None => *color = BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
         }
     }
 }

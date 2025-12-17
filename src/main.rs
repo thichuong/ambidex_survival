@@ -46,6 +46,8 @@ fn main() {
                 systems::ui::weapon_button_interaction,
                 systems::ui::update_shop_visibility,
                 systems::ui::shop_button_interaction,
+                systems::ui::update_magic_ui,
+                systems::ui::magic_button_interaction,
             )
                 .run_if(in_state(GameState::AssetLoading)),
         ) // TEMPORARY
