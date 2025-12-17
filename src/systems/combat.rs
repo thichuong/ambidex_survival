@@ -35,6 +35,8 @@ pub struct CombatInputParams<'w, 's> {
         Query<'w, 's, (Entity, &'static GlobalTransform, &'static Projectile), Without<Player>>,
 }
 
+#[allow(clippy::too_many_lines)]
+#[allow(clippy::needless_pass_by_value)]
 pub fn handle_combat_input(
     mut params: CombatInputParams,
     mut player_query: Query<(Entity, &mut Transform), With<Player>>,
@@ -220,6 +222,7 @@ pub fn handle_combat_input(
     }
 }
 
+#[allow(clippy::too_many_lines)]
 fn cast_spell(
     params: &mut CombatInputParams,
     spell: SpellType,
@@ -353,6 +356,7 @@ fn cast_spell(
 }
 
 // ... (Keep existing perform_skill and fire_weapon functions, they are fine)
+#[allow(clippy::too_many_arguments)]
 fn perform_skill(
     params: &mut CombatInputParams,
     weapon_type: WeaponType,
@@ -454,6 +458,7 @@ fn perform_skill(
     }
 }
 
+#[allow(clippy::too_many_lines)]
 fn fire_weapon(
     params: &mut CombatInputParams,
     weapon_type: WeaponType,
@@ -633,6 +638,8 @@ pub struct CombatResources<'w> {
     pub materials: ResMut<'w, Assets<ColorMaterial>>,
 }
 
+#[allow(clippy::too_many_lines)]
+#[allow(clippy::needless_pass_by_value)]
 pub fn resolve_damage(
     mut commands: Commands,
     rapier_context: Res<RapierContext>,
@@ -727,14 +734,13 @@ pub fn resolve_damage(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_sword_mechanics(
     mut commands: Commands,
     time: Res<Time>,
     mut sword_query: Query<(Entity, &mut SwordSwing, &mut Transform)>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<SwordSwing>>,
-    mut shake: ResMut<crate::resources::polish::ScreenShake>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut res: CombatResources,
     mut damage_events: EventWriter<DamageEvent>,
 ) {
     for (entity, mut swing, mut transform) in &mut sword_query {
@@ -773,7 +779,7 @@ pub fn update_sword_mechanics(
                                     damage: swing.damage,
                                     position: enemy_tf.translation.truncate(),
                                 });
-                                shake.add_trauma(0.05);
+                                res.shake.add_trauma(0.05);
 
                                 let mut rng = rand::thread_rng();
                                 for _ in 0..3 {
@@ -784,8 +790,11 @@ pub fn update_sword_mechanics(
                                     .normalize_or_zero();
                                     commands.spawn((
                                         MaterialMesh2dBundle {
-                                            mesh: meshes.add(Mesh::from(Circle::new(2.0))).into(),
-                                            material: materials.add(Color::srgb(1.0, 0.5, 0.0)),
+                                            mesh: res
+                                                .meshes
+                                                .add(Mesh::from(Circle::new(2.0)))
+                                                .into(),
+                                            material: res.materials.add(Color::srgb(1.0, 0.5, 0.0)),
                                             transform: Transform::from_translation(
                                                 enemy_tf.translation,
                                             ),
@@ -803,7 +812,7 @@ pub fn update_sword_mechanics(
 
                                 if enemy.health <= 0.0 {
                                     commands.entity(enemy_entity).despawn_recursive();
-                                    shake.add_trauma(0.2);
+                                    res.shake.add_trauma(0.2);
                                 }
                             }
                         }
@@ -832,6 +841,7 @@ pub fn update_sword_mechanics(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn manage_lifetime(
     mut commands: Commands,
     time: Res<Time>,

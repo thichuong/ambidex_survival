@@ -66,6 +66,7 @@ pub fn spawn_player(
         });
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn move_player(
     _time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
@@ -95,6 +96,7 @@ pub fn move_player(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn aim_player(
     window_query: Query<&Window, With<bevy::window::PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<GameCamera>>,

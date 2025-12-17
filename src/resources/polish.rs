@@ -12,6 +12,7 @@ impl ScreenShake {
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_camera_shake(
     mut camera_query: Query<&mut Transform, With<crate::components::player::GameCamera>>,
     mut shake: ResMut<ScreenShake>,
@@ -49,6 +50,7 @@ pub struct Trail {
     pub timer: Timer,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn spawn_trails(
     mut commands: Commands,
     _time: Res<Time>,
