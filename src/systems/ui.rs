@@ -297,7 +297,7 @@ pub fn weapon_button_interaction(
         (&Interaction, &mut BackgroundColor, &WeaponButton),
         (Changed<Interaction>, With<Button>),
     >,
-    mut hand_query: Query<&mut Hand>,
+    mut hand_query: Query<(&mut Hand, &mut crate::components::weapon::Weapon)>,
 ) {
     for (interaction, mut color, button_data) in interaction_query.iter_mut() {
         match *interaction {
@@ -305,9 +305,26 @@ pub fn weapon_button_interaction(
                 *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0)); // Green clicked
 
                 // Update Player Hand
-                for mut hand in hand_query.iter_mut() {
+                for (mut hand, mut weapon) in hand_query.iter_mut() {
                     if hand.hand_type == button_data.hand_type {
                         hand.equipped_weapon = Some(button_data.weapon_type);
+
+                        // Update Weapon Stats based on Type
+                        weapon.weapon_type = button_data.weapon_type;
+                        match button_data.weapon_type {
+                            WeaponType::Magic => {
+                                weapon.cooldown = 0.8; // Slower magic (User Request)
+                                weapon.damage = 0.0; // Handled by spell projectile
+                            }
+                            WeaponType::Bow => {
+                                weapon.cooldown = 0.5;
+                                weapon.damage = 0.0; // Handled by projectile
+                            }
+                            _ => {
+                                weapon.cooldown = 0.5; // Default
+                            }
+                        }
+
                         println!(
                             "Equipped {:?} to {:?}",
                             button_data.weapon_type, button_data.hand_type

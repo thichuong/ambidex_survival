@@ -16,6 +16,8 @@ pub struct Weapon {
     pub damage: f32,
     pub cooldown: f32,
     pub last_shot: f32, // Time of last shot
+    pub skill_cooldown: f32,
+    pub last_skill_use: f32,
 }
 
 impl Default for Weapon {
@@ -25,6 +27,8 @@ impl Default for Weapon {
             damage: 10.0,
             cooldown: 0.5,
             last_shot: 0.0,
+            skill_cooldown: 3.0,    // Default skill cooldown
+            last_skill_use: -100.0, // Start ready
         }
     }
 }

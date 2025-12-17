@@ -95,6 +95,7 @@ pub fn handle_combat_input(
             match weapon_type {
                 WeaponType::Magic => {
                     // Toggle Active Slot (Skill Key)
+                    // Magic Swap is instant (no cooldown) or very short? Let's keep it instant for fluidity.
                     if skill_pressed {
                         match magic_loadout.active_slot {
                             ActiveSpellSlot::Primary => {
@@ -109,7 +110,8 @@ pub fn handle_combat_input(
                     }
 
                     // Cast Active Spell (Click)
-                    if is_just_pressed {
+                    let now = time.elapsed_seconds();
+                    if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
                         let spell_to_cast = match magic_loadout.active_slot {
                             ActiveSpellSlot::Primary => magic_loadout.primary,
                             ActiveSpellSlot::Secondary => magic_loadout.secondary,
@@ -126,6 +128,7 @@ pub fn handle_combat_input(
                             &mut materials,
                             &mut enemy_query,
                         );
+                        weapon_data.last_shot = now;
                     }
                 }
                 WeaponType::Bow => {
@@ -156,26 +159,33 @@ pub fn handle_combat_input(
                         weapon_data.last_shot = time.elapsed_seconds();
                     }
 
+                    let now = time.elapsed_seconds();
                     if skill_pressed {
-                        perform_skill(
-                            &mut commands,
-                            weapon_type,
-                            hand_pos,
-                            cursor_pos,
-                            player_entity,
-                            &*magic_loadout,
-                            &mut sword_state,
-                            &mut bow_state,
-                            &mut meshes,
-                            &mut materials,
-                            &projectile_query,
-                            &mut player_transform,
-                        );
+                        // Bow Mode Switch is instant/tactical, maybe small cooldown?
+                        // Let's add small cooldown to prevent accidental double taps
+                        if now - weapon_data.last_skill_use >= 0.2 {
+                            perform_skill(
+                                &mut commands,
+                                weapon_type,
+                                hand_pos,
+                                cursor_pos,
+                                player_entity,
+                                &*magic_loadout,
+                                &mut sword_state,
+                                &mut bow_state,
+                                &mut meshes,
+                                &mut materials,
+                                &projectile_query,
+                                &mut player_transform,
+                            );
+                            weapon_data.last_skill_use = now;
+                        }
                     }
                 }
                 _ => {
                     // Standard Weapons (Sword, Shuriken)
-                    if is_just_pressed {
+                    let now = time.elapsed_seconds();
+                    if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
                         fire_weapon(
                             &mut commands,
                             weapon_type,
@@ -187,8 +197,11 @@ pub fn handle_combat_input(
                             sword_state.mode, // Pass Mode
                             bow_state.mode,   // Pass Bow Mode
                         );
+                        weapon_data.last_shot = now;
                     }
-                    if skill_pressed {
+                    if skill_pressed
+                        && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown
+                    {
                         perform_skill(
                             &mut commands,
                             weapon_type,
@@ -203,6 +216,7 @@ pub fn handle_combat_input(
                             &projectile_query,
                             &mut player_transform,
                         );
+                        weapon_data.last_skill_use = now;
                     }
                 }
             }
