@@ -28,18 +28,22 @@ fn main() {
         //.add_plugins(RapierDebugRenderPlugin::default()) // Debug physics
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
+        .init_resource::<resources::polish::ScreenShake>()
         .add_systems(Startup, (setup_camera, spawn_player))
         .add_systems(
             Update,
             (
                 move_player,
                 aim_player,
+                resources::polish::update_camera_shake,
                 systems::combat::handle_combat_input,
                 systems::combat::manage_lifetime,
                 systems::combat::resolve_damage,
                 systems::enemy::enemy_chase_player,
                 systems::enemy::spawn_waves,
                 systems::ui::weapon_button_interaction,
+                systems::ui::update_shop_visibility,
+                systems::ui::shop_button_interaction,
             )
                 .run_if(in_state(GameState::AssetLoading)),
         ) // TEMPORARY

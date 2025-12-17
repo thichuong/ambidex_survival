@@ -8,6 +8,16 @@ pub struct WeaponButton {
     pub weapon_type: WeaponType,
 }
 
+#[derive(Component)]
+pub struct ShopMenu;
+
+#[derive(Component)]
+pub enum ShopButton {
+    Heal,
+    DamageUp,
+    NextRound,
+}
+
 pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Root UI Node
     commands
@@ -81,6 +91,68 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Shield, "Shield");
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Magic, "Magic");
                 });
+
+            // Shop Menu (Initially Hidden)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(400.0),
+                        height: Val::Px(300.0),
+                        position_type: PositionType::Absolute,
+                        left: Val::Percent(50.0),              // Center X
+                        top: Val::Percent(30.0),               // Center Y
+                        margin: UiRect::left(Val::Px(-200.0)), // Offset by half width
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        display: Display::None, // Hidden by default
+                        ..default()
+                    },
+                    background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
+                    ..default()
+                })
+                .insert(ShopMenu)
+                .with_children(|shop| {
+                    shop.spawn(TextBundle::from_section(
+                        "--- SHOP ---",
+                        TextStyle {
+                            font_size: 30.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    ));
+
+                    spawn_shop_button(shop, ShopButton::Heal, "Heal (+30 HP)");
+                    spawn_shop_button(shop, ShopButton::DamageUp, "Damage Up (+10%)");
+                    spawn_shop_button(shop, ShopButton::NextRound, "Start Next Round");
+                });
+        });
+}
+
+fn spawn_shop_button(parent: &mut ChildBuilder, btn_type: ShopButton, label: &str) {
+    parent
+        .spawn(ButtonBundle {
+            style: Style {
+                width: Val::Px(250.0),
+                height: Val::Px(50.0),
+                margin: UiRect::all(Val::Px(10.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            background_color: BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
+            ..default()
+        })
+        .insert(btn_type)
+        .with_children(|btn| {
+            btn.spawn(TextBundle::from_section(
+                label,
+                TextStyle {
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                    ..default()
+                },
+            ));
         });
 }
 
@@ -143,6 +215,62 @@ pub fn weapon_button_interaction(
             Interaction::None => {
                 *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0));
             }
+        }
+    }
+}
+
+pub fn update_shop_visibility(
+    mut shop_query: Query<&mut Style, With<ShopMenu>>,
+    round_manager: Res<crate::resources::round::RoundManager>,
+) {
+    for mut style in shop_query.iter_mut() {
+        match round_manager.round_state {
+            crate::resources::round::RoundState::Shop => {
+                style.display = Display::Flex;
+            }
+            _ => {
+                style.display = Display::None;
+            }
+        }
+    }
+}
+
+pub fn shop_button_interaction(
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &ShopButton),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut round_manager: ResMut<crate::resources::round::RoundManager>,
+    mut player_query: Query<&mut crate::components::player::Player>,
+) {
+    for (interaction, mut color, btn_type) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Pressed => {
+                *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
+                match btn_type {
+                    ShopButton::Heal => {
+                        if let Ok(mut player) = player_query.get_single_mut() {
+                            player.health = (player.health + 30.0).min(100.0);
+                            println!("Healed! Health: {}", player.health);
+                        }
+                    }
+                    ShopButton::DamageUp => {
+                        // Needs global damage modifier or per-weapon?
+                        // For now, print placeholder
+                        println!("Damage Upgraded! (Placeholder)");
+                    }
+                    ShopButton::NextRound => {
+                        // Force next round
+                        round_manager
+                            .round_timer
+                            .set_duration(std::time::Duration::from_secs(0));
+                        round_manager.round_timer.reset();
+                        // The spawn_waves system checks finished() on this timer to switch state
+                    }
+                }
+            }
+            Interaction::Hovered => *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 1.0)),
+            Interaction::None => *color = BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
         }
     }
 }

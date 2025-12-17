@@ -1,4 +1,3 @@
-use bevy::color::palettes::css::RED;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;

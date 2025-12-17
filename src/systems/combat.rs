@@ -8,6 +8,7 @@ use bevy::color::palettes::css::{AQUA, AZURE, PURPLE, YELLOW};
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
+use rand::Rng;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_combat_input(
@@ -529,11 +530,14 @@ pub fn resolve_damage(
     mut commands: Commands,
     rapier_context: Res<RapierContext>,
     projectile_query: Query<(Entity, &Projectile, &Transform)>,
-    mut enemy_query: Query<(Entity, &mut Enemy)>,
+    mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>,
     // Shield Logic needs access to Shields
     shield_query: Query<(Entity, &ShieldCollider)>,
     mut hand_query: Query<&mut ShieldState>,
     mut velocity_query: Query<&mut Velocity>,
+    mut shake: ResMut<crate::resources::polish::ScreenShake>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     // 1. Check Projectile vs Shield
     for (proj_entity, projectile, _proj_tf) in projectile_query.iter() {
@@ -573,16 +577,44 @@ pub fn resolve_damage(
         // Actually, despawned entities are still iteratable in the same system execution usually? No, but multiple loops might clash.
         // Let's rely on standard intersections.
 
-        for (enemy_entity, mut enemy) in enemy_query.iter_mut() {
+        for (enemy_entity, enemy_transform, mut enemy) in enemy_query.iter_mut() {
             if rapier_context.intersection_pair(proj_entity, enemy_entity) == Some(true) {
                 if projectile.owner_entity != enemy_entity {
                     // Don't hit self if reflected?
                     enemy.health -= projectile.damage;
+                    shake.add_trauma(0.1); // Small shake on hit
+
                     if projectile.speed > 0.0 {
                         commands.entity(proj_entity).despawn();
                     }
                     if enemy.health <= 0.0 {
                         commands.entity(enemy_entity).despawn_recursive();
+                        shake.add_trauma(0.3); // Big shake on kill
+                        println!("Enemy Killed!");
+
+                        // Spawn Particles
+                        let mut rng = rand::thread_rng();
+                        for _ in 0..5 {
+                            let dir = Vec2::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0))
+                                .normalize_or_zero();
+                            commands.spawn((
+                                MaterialMesh2dBundle {
+                                    mesh: meshes.add(Mesh::from(Circle::new(3.0))).into(),
+                                    material: materials.add(Color::srgb(1.0, 0.0, 0.0)),
+                                    transform: Transform::from_translation(
+                                        enemy_transform.translation,
+                                    ),
+                                    ..default()
+                                },
+                                Velocity {
+                                    linvel: dir * 100.0,
+                                    angvel: 0.0,
+                                },
+                                Lifetime {
+                                    timer: Timer::from_seconds(0.5, TimerMode::Once),
+                                },
+                            ));
+                        }
                     }
                 }
             }

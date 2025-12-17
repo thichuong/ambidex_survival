@@ -3,11 +3,15 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct Player {
     pub speed: f32,
+    pub health: f32,
 }
 
 impl Default for Player {
     fn default() -> Self {
-        Self { speed: 300.0 }
+        Self {
+            speed: 300.0,
+            health: 100.0,
+        }
     }
 }
 
