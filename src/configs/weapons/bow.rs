@@ -1,0 +1,21 @@
+// Cooldowns
+pub const RAPID_COOLDOWN: f32 = 0.1;
+pub const STANDARD_COOLDOWN: f32 = 0.5;
+
+// Mode Swapping
+pub const MODE_SWITCH_COOLDOWN: f32 = 0.2;
+
+// Single Mode
+pub const SINGLE_DAMAGE: f32 = 40.0;
+pub const SINGLE_SPEED: f32 = 1000.0;
+pub const SINGLE_SPREAD: &[f32] = &[0.0];
+
+// Multishot Mode
+pub const MULTISHOT_DAMAGE: f32 = 15.0;
+pub const MULTISHOT_SPEED: f32 = 800.0;
+pub const MULTISHOT_SPREAD: &[f32] = &[-0.2, 0.0, 0.2];
+
+// Rapid Mode
+pub const RAPID_DAMAGE: f32 = 8.0;
+pub const RAPID_SPEED: f32 = 900.0;
+pub const RAPID_SPREAD_JITTER: f32 = 0.1; // +/- 0.1

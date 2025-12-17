@@ -4,6 +4,8 @@ use crate::components::weapon::{
     ActiveSpellSlot, BowMode, BowState, ExplodingProjectile, Lifetime, MagicLoadout, Projectile,
     SpellType, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
 };
+use crate::configs::spells::{energy_bolt, global, laser, nova};
+use crate::configs::weapons::{bow, shuriken, sword};
 use bevy::color::palettes::css::{AQUA, AZURE, PURPLE, YELLOW};
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
@@ -134,8 +136,8 @@ pub fn handle_combat_input(
                 WeaponType::Bow => {
                     // Bow Logic (Supports Rapid Fire)
                     let cooldown = match bow_state.mode {
-                        BowMode::Rapid => 0.1,
-                        _ => 0.5,
+                        BowMode::Rapid => bow::RAPID_COOLDOWN,
+                        _ => bow::STANDARD_COOLDOWN,
                     };
 
                     let should_fire = if bow_state.mode == BowMode::Rapid {
@@ -163,7 +165,7 @@ pub fn handle_combat_input(
                     if skill_pressed {
                         // Bow Mode Switch is instant/tactical, maybe small cooldown?
                         // Let's add small cooldown to prevent accidental double taps
-                        if now - weapon_data.last_skill_use >= 0.2 {
+                        if now - weapon_data.last_skill_use >= bow::MODE_SWITCH_COOLDOWN {
                             perform_skill(
                                 &mut commands,
                                 weapon_type,
@@ -252,21 +254,21 @@ fn cast_spell(
                 Sensor,
                 GravityScale(0.0),
                 Velocity {
-                    linvel: direction * 500.0,
+                    linvel: direction * energy_bolt::SPEED,
                     angvel: 0.0,
                 },
                 Projectile {
-                    damage: 25.0,
-                    speed: 500.0,
+                    damage: energy_bolt::DAMAGE,
+                    speed: energy_bolt::SPEED,
                     direction,
                     owner_entity: player_entity,
                 },
                 Lifetime {
-                    timer: Timer::from_seconds(3.0, TimerMode::Once),
+                    timer: Timer::from_seconds(energy_bolt::LIFETIME, TimerMode::Once),
                 },
                 ExplodingProjectile {
-                    radius: 40.0,
-                    damage: 25.0,
+                    radius: energy_bolt::EXPLOSION_RADIUS,
+                    damage: energy_bolt::DAMAGE, // Using same damage for explosion for now
                 },
             ));
         }
@@ -277,42 +279,42 @@ fn cast_spell(
                     mesh: meshes.add(Mesh::from(Rectangle::new(1000.0, 4.0))).into(),
                     material: materials.add(Color::from(AQUA)),
                     transform: Transform::from_translation(
-                        (spawn_pos + direction * 500.0).extend(0.0),
+                        (spawn_pos + direction * (laser::LENGTH / 2.0)).extend(0.0), // Center it
                     )
                     .with_rotation(Quat::from_rotation_z(angle)),
                     ..default()
                 },
                 Sensor,
-                Collider::cuboid(500.0, 2.0),
+                Collider::cuboid(laser::LENGTH / 2.0, laser::WIDTH / 2.0), // Half-extents
                 Projectile {
-                    damage: 30.0,
+                    damage: laser::DAMAGE,
                     speed: 0.0,
                     direction,
                     owner_entity: player_entity,
                 },
                 Lifetime {
-                    timer: Timer::from_seconds(0.1, TimerMode::Once),
+                    timer: Timer::from_seconds(laser::LIFETIME, TimerMode::Once),
                 },
             ));
         }
         SpellType::Nova => {
             commands.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Circle::new(80.0))).into(),
+                    mesh: meshes.add(Mesh::from(Circle::new(nova::RADIUS))).into(),
                     material: materials.add(Color::srgb(1.0, 0.0, 1.0).with_alpha(0.4)),
                     transform: Transform::from_translation(player_transform.translation),
                     ..default()
                 },
                 Sensor,
-                Collider::ball(80.0),
+                Collider::ball(nova::RADIUS),
                 Projectile {
-                    damage: 40.0,
+                    damage: nova::DAMAGE,
                     speed: 0.0,
                     direction: Vec2::ZERO,
                     owner_entity: player_entity,
                 },
                 Lifetime {
-                    timer: Timer::from_seconds(0.2, TimerMode::Once),
+                    timer: Timer::from_seconds(nova::LIFETIME, TimerMode::Once),
                 },
             ));
         }
@@ -325,21 +327,21 @@ fn cast_spell(
             // Global is now a massive Nova
             commands.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Circle::new(800.0))).into(),
+                    mesh: meshes.add(Mesh::from(Circle::new(global::RADIUS))).into(),
                     material: materials.add(Color::srgb(1.0, 1.0, 1.0).with_alpha(0.1)), // White flash
                     transform: Transform::from_translation(player_transform.translation),
                     ..default()
                 },
                 Sensor,
-                Collider::ball(800.0),
+                Collider::ball(global::RADIUS),
                 Projectile {
-                    damage: 15.0, // Back to reasonable damage (single hit)
+                    damage: global::DAMAGE, // Back to reasonable damage (single hit)
                     speed: 0.0,
                     direction: Vec2::ZERO,
                     owner_entity: player_entity,
                 },
                 Lifetime {
-                    timer: Timer::from_seconds(0.2, TimerMode::Once),
+                    timer: Timer::from_seconds(global::LIFETIME, TimerMode::Once),
                 },
             ));
         }
@@ -365,7 +367,7 @@ fn perform_skill(
         WeaponType::Shuriken => {
             // Teleport to closest projectile
             let mut closest_proj: Option<(Entity, Vec3)> = None;
-            let mut min_dist_sq = 500.0 * 500.0; // Max teleport range check? Or just find any.
+            let mut min_dist_sq = shuriken::TELEPORT_RANGE_SQ; // Max teleport range check? Or just find any.
 
             for (entity, proj_tf, proj) in projectile_query.iter() {
                 if proj.owner_entity == player_entity {
@@ -476,18 +478,19 @@ fn fire_weapon(
                 Collider::ball(5.0),
                 Sensor,
                 GravityScale(0.0),
+                GravityScale(0.0),
                 Velocity {
-                    linvel: direction * 600.0,
+                    linvel: direction * shuriken::SPEED,
                     angvel: 10.0,
                 },
                 Projectile {
-                    damage: 20.0,
-                    speed: 600.0,
+                    damage: shuriken::DAMAGE,
+                    speed: shuriken::SPEED,
                     direction,
                     owner_entity: owner,
                 },
                 Lifetime {
-                    timer: Timer::from_seconds(2.0, TimerMode::Once),
+                    timer: Timer::from_seconds(shuriken::LIFETIME, TimerMode::Once),
                 },
             ));
         }
@@ -504,11 +507,11 @@ fn fire_weapon(
                             },
                             SwordSwing {
                                 state: SwingState::Windup,
-                                timer: Timer::from_seconds(0.15, TimerMode::Once),
+                                timer: Timer::from_seconds(sword::NORMAL_TIMER, TimerMode::Once),
                                 base_angle: start_angle,
                                 owner_entity: owner,
-                                damage: 30.0,
-                                range: 200.0, // Standard Range
+                                damage: sword::NORMAL_DAMAGE,
+                                range: sword::NORMAL_RANGE,
                             },
                         ))
                         .with_children(|parent| {
@@ -530,11 +533,11 @@ fn fire_weapon(
                             },
                             SwordSwing {
                                 state: SwingState::Windup,
-                                timer: Timer::from_seconds(0.2, TimerMode::Once),
+                                timer: Timer::from_seconds(sword::SHATTERED_TIMER, TimerMode::Once),
                                 base_angle: start_angle,
                                 owner_entity: owner,
-                                damage: 15.0, // Reduced damage (vs 30.0 normal)
-                                range: 400.0, // Significantly increased range (vs 200.0 normal)
+                                damage: sword::SHATTERED_DAMAGE,
+                                range: sword::SHATTERED_RANGE,
                             },
                         ))
                         .with_children(|parent| {
@@ -558,18 +561,24 @@ fn fire_weapon(
         }
         WeaponType::Bow => {
             let base_angle = direction.y.atan2(direction.x);
-            let (spread, damage, speed) = match bow_mode {
-                BowMode::Single => (vec![0.0], 40.0, 1000.0), // High Damage, Fast
-                BowMode::Multishot => (vec![-0.2, 0.0, 0.2], 15.0, 800.0), // Spread, Mid Damage
-                BowMode::Rapid => {
-                    // Random slight deviation for Rapid
-                    let mut rng = rand::thread_rng();
-                    let jitter = rng.gen_range(-0.1..0.1);
-                    (vec![jitter], 8.0, 900.0) // Low Damage, Fast Fire (handled in input)
-                }
-            };
 
-            for offset in spread {
+            // Refactoring to handle dynamic spread or just handle it inside the loop
+            let mut projectiles = Vec::new();
+            match bow_mode {
+                BowMode::Single => projectiles.push((0.0, bow::SINGLE_DAMAGE, bow::SINGLE_SPEED)),
+                BowMode::Multishot => {
+                    for &s in bow::MULTISHOT_SPREAD {
+                        projectiles.push((s, bow::MULTISHOT_DAMAGE, bow::MULTISHOT_SPEED));
+                    }
+                }
+                BowMode::Rapid => {
+                    let mut rng = rand::thread_rng();
+                    let jitter = rng.gen_range(-bow::RAPID_SPREAD_JITTER..bow::RAPID_SPREAD_JITTER);
+                    projectiles.push((jitter, bow::RAPID_DAMAGE, bow::RAPID_SPEED));
+                }
+            }
+
+            for (offset, damage, speed) in projectiles {
                 let angle = base_angle + offset;
                 let dir = Vec2::new(angle.cos(), angle.sin());
 

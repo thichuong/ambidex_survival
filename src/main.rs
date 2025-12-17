@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 mod components;
+mod configs;
 mod resources;
 mod systems;
 mod utils;
