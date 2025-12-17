@@ -36,6 +36,7 @@ fn main() {
                 move_player,
                 aim_player,
                 resources::polish::update_camera_shake,
+                resources::polish::spawn_trails,
                 systems::combat::handle_combat_input,
                 systems::combat::manage_lifetime,
                 systems::combat::resolve_damage,

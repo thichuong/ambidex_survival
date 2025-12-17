@@ -578,43 +578,41 @@ pub fn resolve_damage(
         // Let's rely on standard intersections.
 
         for (enemy_entity, enemy_transform, mut enemy) in enemy_query.iter_mut() {
-            if rapier_context.intersection_pair(proj_entity, enemy_entity) == Some(true) {
-                if projectile.owner_entity != enemy_entity {
-                    // Don't hit self if reflected?
-                    enemy.health -= projectile.damage;
-                    shake.add_trauma(0.1); // Small shake on hit
+            if rapier_context.intersection_pair(proj_entity, enemy_entity) == Some(true)
+                && projectile.owner_entity != enemy_entity
+            {
+                // Don't hit self if reflected?
+                enemy.health -= projectile.damage;
+                shake.add_trauma(0.1); // Small shake on hit
 
-                    if projectile.speed > 0.0 {
-                        commands.entity(proj_entity).despawn();
-                    }
-                    if enemy.health <= 0.0 {
-                        commands.entity(enemy_entity).despawn_recursive();
-                        shake.add_trauma(0.3); // Big shake on kill
-                        println!("Enemy Killed!");
+                if projectile.speed > 0.0 {
+                    commands.entity(proj_entity).despawn();
+                }
+                if enemy.health <= 0.0 {
+                    commands.entity(enemy_entity).despawn_recursive();
+                    shake.add_trauma(0.3); // Big shake on kill
+                    println!("Enemy Killed!");
 
-                        // Spawn Particles
-                        let mut rng = rand::thread_rng();
-                        for _ in 0..5 {
-                            let dir = Vec2::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0))
-                                .normalize_or_zero();
-                            commands.spawn((
-                                MaterialMesh2dBundle {
-                                    mesh: meshes.add(Mesh::from(Circle::new(3.0))).into(),
-                                    material: materials.add(Color::srgb(1.0, 0.0, 0.0)),
-                                    transform: Transform::from_translation(
-                                        enemy_transform.translation,
-                                    ),
-                                    ..default()
-                                },
-                                Velocity {
-                                    linvel: dir * 100.0,
-                                    angvel: 0.0,
-                                },
-                                Lifetime {
-                                    timer: Timer::from_seconds(0.5, TimerMode::Once),
-                                },
-                            ));
-                        }
+                    // Spawn Particles
+                    let mut rng = rand::thread_rng();
+                    for _ in 0..5 {
+                        let dir = Vec2::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0))
+                            .normalize_or_zero();
+                        commands.spawn((
+                            MaterialMesh2dBundle {
+                                mesh: meshes.add(Mesh::from(Circle::new(3.0))).into(),
+                                material: materials.add(Color::srgb(1.0, 0.0, 0.0)),
+                                transform: Transform::from_translation(enemy_transform.translation),
+                                ..default()
+                            },
+                            Velocity {
+                                linvel: dir * 100.0,
+                                angvel: 0.0,
+                            },
+                            Lifetime {
+                                timer: Timer::from_seconds(0.5, TimerMode::Once),
+                            },
+                        ));
                     }
                 }
             }

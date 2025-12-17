@@ -42,3 +42,40 @@ pub fn update_camera_shake(
         }
     }
 }
+
+#[derive(Component)]
+pub struct Trail {
+    pub timer: Timer,
+}
+
+pub fn spawn_trails(
+    mut commands: Commands,
+    _time: Res<Time>,
+    projectile_query: Query<(&Transform, &crate::components::weapon::Projectile)>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    // Basic interval check? Or every frame?
+    // Every frame might be too much. Let's rely on frame rate.
+    // Actually, distinct Trail component on projectile to configure it?
+    // For now, let's just make ALL projectiles leave a trail for polish.
+
+    for (transform, proj) in projectile_query.iter() {
+        if proj.speed > 100.0 {
+            // Only moving projectiles
+            commands.spawn((
+                bevy::sprite::MaterialMesh2dBundle {
+                    mesh: meshes.add(Mesh::from(Circle::new(3.0))).into(), // Small dot
+                    material: materials.add(Color::srgba(1.0, 1.0, 1.0, 0.3)), // Faint white
+                    transform: Transform::from_translation(
+                        transform.translation - transform.local_x() * 10.0,
+                    ), // Behind slightly?
+                    ..default()
+                },
+                crate::components::weapon::Lifetime {
+                    timer: Timer::from_seconds(0.3, TimerMode::Once),
+                },
+            ));
+        }
+    }
+}
