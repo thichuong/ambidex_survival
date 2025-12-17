@@ -1,8 +1,8 @@
 use crate::components::enemy::Enemy;
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{
-    ExplodingProjectile, Lifetime, MagicLoadout, Projectile, ShieldCollider, ShieldMode,
-    ShieldState, SpellType, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
+    ActiveSpellSlot, BowMode, BowState, ExplodingProjectile, Lifetime, MagicLoadout, Projectile,
+    SpellType, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
 };
 use bevy::color::palettes::css::{AQUA, AZURE, PURPLE, YELLOW};
 use bevy::prelude::*;
@@ -13,7 +13,7 @@ use rand::Rng;
 #[allow(clippy::too_many_arguments)]
 pub fn handle_combat_input(
     mut commands: Commands,
-    _time: Res<Time>,
+    time: Res<Time>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     key_input: Res<ButtonInput<KeyCode>>,
     window_query: Query<&Window, With<bevy::window::PrimaryWindow>>,
@@ -23,9 +23,10 @@ pub fn handle_combat_input(
         Entity,
         &GlobalTransform,
         &Hand,
-        &mut ShieldState,
-        &MagicLoadout,
+        &mut MagicLoadout,
         &mut SwordState,
+        &mut BowState,
+        &mut Weapon,
     )>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -70,8 +71,15 @@ pub fn handle_combat_input(
     let q_just_pressed = key_input.just_pressed(KeyCode::KeyQ);
     let e_just_pressed = key_input.just_pressed(KeyCode::KeyE);
 
-    for (hand_entity, hand_transform, hand, mut shield_state, magic_loadout, mut sword_state) in
-        hand_query.iter_mut()
+    for (
+        hand_entity,
+        hand_transform,
+        hand,
+        mut magic_loadout,
+        mut sword_state,
+        mut bow_state,
+        mut weapon_data,
+    ) in hand_query.iter_mut()
     {
         let hand_pos = hand_transform.translation().truncate();
         let direction = (cursor_pos - hand_pos).normalize_or_zero();
@@ -85,84 +93,31 @@ pub fn handle_combat_input(
 
         if let Some(weapon_type) = hand.equipped_weapon {
             match weapon_type {
-                WeaponType::Shield => {
-                    // ... (Shield Logic - Same as before)
-                    if is_pressed {
-                        if shield_state.shield_entity.is_none() {
-                            // Spawn Shield (Simplified copy of existing logic to ensure match)
-                            let color = match shield_state.mode {
-                                ShieldMode::Absorb => Color::srgb(0.0, 0.0, 1.0).with_alpha(0.5),
-                                ShieldMode::Reflect => Color::srgb(1.0, 0.5, 0.0).with_alpha(0.5),
-                            };
-                            let id = commands
-                                .spawn((
-                                    MaterialMesh2dBundle {
-                                        mesh: meshes
-                                            .add(Mesh::from(Rectangle::new(10.0, 60.0)))
-                                            .into(),
-                                        material: materials.add(color),
-                                        transform: Transform::from_xyz(30.0, 0.0, 1.0),
-                                        ..default()
-                                    },
-                                    Collider::cuboid(5.0, 30.0),
-                                    Sensor,
-                                    ShieldCollider {
-                                        owner_hand: hand_entity,
-                                    },
-                                ))
-                                .id();
-                            commands.entity(hand_entity).push_children(&[id]);
-                            shield_state.shield_entity = Some(id);
-                        }
-                    } else if let Some(id) = shield_state.shield_entity {
-                        commands.entity(id).despawn_recursive();
-                        shield_state.shield_entity = None;
-                    }
-                    if skill_pressed {
-                        match shield_state.mode {
-                            ShieldMode::Absorb => {
-                                shield_state.mode = ShieldMode::Reflect;
-                                println!("Shield Mode: Reflect");
-                                if shield_state.accumulated_damage > 0.0 {
-                                    // Shockwave
-                                    commands.spawn((
-                                        MaterialMesh2dBundle {
-                                            mesh: meshes.add(Mesh::from(Circle::new(50.0))).into(),
-                                            material: materials
-                                                .add(Color::srgb(0.0, 1.0, 1.0).with_alpha(0.3)),
-                                            transform: Transform::from_translation(
-                                                player_pos.extend(1.0),
-                                            ),
-                                            ..default()
-                                        },
-                                        Collider::ball(50.0),
-                                        Sensor,
-                                        Projectile {
-                                            damage: shield_state.accumulated_damage,
-                                            speed: 0.0,
-                                            direction: Vec2::ZERO,
-                                            owner_entity: player_entity,
-                                        },
-                                        Lifetime {
-                                            timer: Timer::from_seconds(0.1, TimerMode::Once),
-                                        },
-                                    ));
-                                    shield_state.accumulated_damage = 0.0;
-                                }
-                            }
-                            ShieldMode::Reflect => {
-                                shield_state.mode = ShieldMode::Absorb;
-                                println!("Shield Mode: Absorb");
-                            }
-                        }
-                    }
-                }
                 WeaponType::Magic => {
-                    // Primary Spell (Click)
+                    // Toggle Active Slot (Skill Key)
+                    if skill_pressed {
+                        match magic_loadout.active_slot {
+                            ActiveSpellSlot::Primary => {
+                                magic_loadout.active_slot = ActiveSpellSlot::Secondary;
+                                println!("Magic: Switched to Secondary Spell");
+                            }
+                            ActiveSpellSlot::Secondary => {
+                                magic_loadout.active_slot = ActiveSpellSlot::Primary;
+                                println!("Magic: Switched to Primary Spell");
+                            }
+                        }
+                    }
+
+                    // Cast Active Spell (Click)
                     if is_just_pressed {
+                        let spell_to_cast = match magic_loadout.active_slot {
+                            ActiveSpellSlot::Primary => magic_loadout.primary,
+                            ActiveSpellSlot::Secondary => magic_loadout.secondary,
+                        };
+
                         cast_spell(
                             &mut commands,
-                            magic_loadout.primary,
+                            spell_to_cast,
                             player_entity,
                             &mut player_transform,
                             cursor_pos,
@@ -172,23 +127,54 @@ pub fn handle_combat_input(
                             &mut enemy_query,
                         );
                     }
-                    // Secondary Spell (Skill)
-                    if skill_pressed {
-                        cast_spell(
+                }
+                WeaponType::Bow => {
+                    // Bow Logic (Supports Rapid Fire)
+                    let cooldown = match bow_state.mode {
+                        BowMode::Rapid => 0.1,
+                        _ => 0.5,
+                    };
+
+                    let should_fire = if bow_state.mode == BowMode::Rapid {
+                        is_pressed && time.elapsed_seconds() - weapon_data.last_shot >= cooldown
+                    } else {
+                        is_just_pressed
+                    };
+
+                    if should_fire {
+                        fire_weapon(
                             &mut commands,
-                            magic_loadout.secondary,
-                            player_entity,
-                            &mut player_transform,
-                            cursor_pos,
+                            weapon_type,
                             hand_pos,
+                            cursor_pos,
+                            player_entity,
                             &mut meshes,
                             &mut materials,
-                            &mut enemy_query,
+                            sword_state.mode,
+                            bow_state.mode,
+                        );
+                        weapon_data.last_shot = time.elapsed_seconds();
+                    }
+
+                    if skill_pressed {
+                        perform_skill(
+                            &mut commands,
+                            weapon_type,
+                            hand_pos,
+                            cursor_pos,
+                            player_entity,
+                            &*magic_loadout,
+                            &mut sword_state,
+                            &mut bow_state,
+                            &mut meshes,
+                            &mut materials,
+                            &projectile_query,
+                            &mut player_transform,
                         );
                     }
                 }
                 _ => {
-                    // Standard Weapons (Sword, Shuriken, Bow)
+                    // Standard Weapons (Sword, Shuriken)
                     if is_just_pressed {
                         fire_weapon(
                             &mut commands,
@@ -199,6 +185,7 @@ pub fn handle_combat_input(
                             &mut meshes,
                             &mut materials,
                             sword_state.mode, // Pass Mode
+                            bow_state.mode,   // Pass Bow Mode
                         );
                     }
                     if skill_pressed {
@@ -208,9 +195,9 @@ pub fn handle_combat_input(
                             hand_pos,
                             cursor_pos,
                             player_entity,
-                            &mut shield_state,
-                            magic_loadout,
+                            &*magic_loadout,
                             &mut sword_state, // Pass State
+                            &mut bow_state,   // Pass Bow State
                             &mut meshes,
                             &mut materials,
                             &projectile_query,
@@ -335,9 +322,9 @@ fn perform_skill(
     spawn_pos: Vec2,
     cursor_pos: Vec2,
     player_entity: Entity,
-    _shield_state: &mut ShieldState,
     _magic_loadout: &MagicLoadout,
     sword_state: &mut SwordState,
+    bow_state: &mut BowState,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
     projectile_query: &Query<(Entity, &GlobalTransform, &Projectile), Without<Player>>,
@@ -413,39 +400,20 @@ fn perform_skill(
             }
         }
         WeaponType::Bow => {
-            // Multishot
-            let base_dir = (cursor_pos - spawn_pos).normalize_or_zero();
-            let base_angle = base_dir.y.atan2(base_dir.x);
-            let spread = [-0.3, 0.0, 0.3];
-            for offset in spread.iter() {
-                let angle = base_angle + offset;
-                let dir = Vec2::new(angle.cos(), angle.sin());
-                commands.spawn((
-                    MaterialMesh2dBundle {
-                        mesh: meshes.add(Mesh::from(Rectangle::new(20.0, 5.0))).into(),
-                        material: materials.add(Color::from(YELLOW)),
-                        transform: Transform::from_translation(spawn_pos.extend(0.0))
-                            .with_rotation(Quat::from_rotation_z(angle)),
-                        ..default()
-                    },
-                    RigidBody::Dynamic,
-                    Collider::cuboid(10.0, 2.5),
-                    Sensor,
-                    GravityScale(0.0),
-                    Velocity {
-                        linvel: dir * 800.0,
-                        angvel: 0.0,
-                    },
-                    Projectile {
-                        damage: 15.0,
-                        speed: 800.0,
-                        direction: dir,
-                        owner_entity: player_entity,
-                    },
-                    Lifetime {
-                        timer: Timer::from_seconds(3.0, TimerMode::Once),
-                    },
-                ));
+            // Toggle Bow Mode
+            match bow_state.mode {
+                BowMode::Single => {
+                    bow_state.mode = BowMode::Multishot;
+                    println!("Bow Mode: Multishot (Triple Shot)!");
+                }
+                BowMode::Multishot => {
+                    bow_state.mode = BowMode::Rapid;
+                    println!("Bow Mode: Rapid Fire (Machine Gun)!");
+                }
+                BowMode::Rapid => {
+                    bow_state.mode = BowMode::Single;
+                    println!("Bow Mode: Single (Precision)!");
+                }
             }
         }
         _ => {}
@@ -461,6 +429,7 @@ fn fire_weapon(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
     sword_mode: SwordMode, // Added mode
+    bow_mode: BowMode,     // Added Bow Mode
 ) {
     let direction = (target_pos - spawn_pos).normalize_or_zero();
     match weapon_type {
@@ -557,33 +526,49 @@ fn fire_weapon(
             }
         }
         WeaponType::Bow => {
-            let angle = direction.y.atan2(direction.x);
-            commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Rectangle::new(20.0, 5.0))).into(),
-                    material: materials.add(Color::from(YELLOW)),
-                    transform: Transform::from_translation(spawn_pos.extend(0.0))
-                        .with_rotation(Quat::from_rotation_z(angle)),
-                    ..default()
-                },
-                RigidBody::Dynamic,
-                Collider::cuboid(10.0, 2.5),
-                Sensor,
-                GravityScale(0.0),
-                Velocity {
-                    linvel: direction * 800.0,
-                    angvel: 0.0,
-                },
-                Projectile {
-                    damage: 15.0,
-                    speed: 800.0,
-                    direction,
-                    owner_entity: owner,
-                },
-                Lifetime {
-                    timer: Timer::from_seconds(3.0, TimerMode::Once),
-                },
-            ));
+            let base_angle = direction.y.atan2(direction.x);
+            let (spread, damage, speed) = match bow_mode {
+                BowMode::Single => (vec![0.0], 40.0, 1000.0), // High Damage, Fast
+                BowMode::Multishot => (vec![-0.2, 0.0, 0.2], 15.0, 800.0), // Spread, Mid Damage
+                BowMode::Rapid => {
+                    // Random slight deviation for Rapid
+                    let mut rng = rand::thread_rng();
+                    let jitter = rng.gen_range(-0.1..0.1);
+                    (vec![jitter], 8.0, 900.0) // Low Damage, Fast Fire (handled in input)
+                }
+            };
+
+            for offset in spread {
+                let angle = base_angle + offset;
+                let dir = Vec2::new(angle.cos(), angle.sin());
+
+                commands.spawn((
+                    MaterialMesh2dBundle {
+                        mesh: meshes.add(Mesh::from(Rectangle::new(20.0, 5.0))).into(),
+                        material: materials.add(Color::from(YELLOW)),
+                        transform: Transform::from_translation(spawn_pos.extend(0.0))
+                            .with_rotation(Quat::from_rotation_z(angle)),
+                        ..default()
+                    },
+                    RigidBody::Dynamic,
+                    Collider::cuboid(10.0, 2.5),
+                    Sensor,
+                    GravityScale(0.0),
+                    Velocity {
+                        linvel: dir * speed,
+                        angvel: 0.0,
+                    },
+                    Projectile {
+                        damage,
+                        speed,
+                        direction: dir,
+                        owner_entity: owner,
+                    },
+                    Lifetime {
+                        timer: Timer::from_seconds(3.0, TimerMode::Once),
+                    },
+                ));
+            }
         }
         _ => {}
     }
@@ -595,46 +580,11 @@ pub fn resolve_damage(
     projectile_query: Query<(Entity, &Projectile, &Transform)>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // Keep mutable for direct damage
     // Shield Logic needs access to Shields
-    shield_query: Query<(Entity, &ShieldCollider)>,
-    mut hand_query: Query<&mut ShieldState>,
-    mut velocity_query: Query<&mut Velocity>,
     mut shake: ResMut<crate::resources::polish::ScreenShake>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     exploding_query: Query<&ExplodingProjectile>,
 ) {
-    // 1. Check Projectile vs Shield
-    for (proj_entity, projectile, _proj_tf) in projectile_query.iter() {
-        for (shield_entity, shield_collider) in shield_query.iter() {
-            if rapier_context.intersection_pair(proj_entity, shield_entity) == Some(true) {
-                // Hit Shield!
-                if let Ok(mut shield_state) = hand_query.get_mut(shield_collider.owner_hand) {
-                    match shield_state.mode {
-                        ShieldMode::Absorb => {
-                            shield_state.accumulated_damage += projectile.damage;
-                            println!(
-                                "Shield Absorbed! Total: {}",
-                                shield_state.accumulated_damage
-                            );
-                            commands.entity(proj_entity).despawn();
-                        }
-                        ShieldMode::Reflect => {
-                            // Reflect logic: Reverse velocity?
-                            if let Ok(mut vel) = velocity_query.get_mut(proj_entity) {
-                                vel.linvel = -vel.linvel;
-                            }
-                            println!("Shield Reflected!");
-                            // ownership change? Not easy without mutable query on projectile component logic,
-                            // but effectively it flies back.
-                        }
-                    }
-                }
-                // Prevent it from hitting enemies/player in same frame?
-                // Projectile continues if reflected, destroyed if absorbed.
-            }
-        }
-    }
-
     // 2. Check Projectile vs Enemy
     for (proj_entity, projectile, projectile_transform) in projectile_query.iter() {
         // Skip if projectile dead (from absorb) - ECS despawn is deferred, so we might need manual check or `commands.entity(e).despawn()` works at end of stage.
