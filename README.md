@@ -8,7 +8,7 @@
 Unlike traditional shooters, **Ambidex Survival** gives you independent control over your character's two hands.
 *   **Left Hand (Left Click + Q)**: Equip a weapon for your left hand.
 *   **Right Hand (Right Click + E)**: Equip a different weapon for your right hand.
-*   **Synergy**: Combine weapons for unique playstyles (e.g., Bow for long-range + Sword for close encounters, or Double Magic for maximum chaos).
+*   **Synergy**: Combine weapons for unique playstyles (e.g., Gun for long-range + Sword for close encounters, or Double Magic for maximum chaos).
 
 ### 🔫 Weapon Mastery & Skills
 Each weapon has a primary attack and a generic "Skill" key (`Q` or `E`) that changes its functionality:
@@ -17,10 +17,10 @@ Each weapon has a primary attack and a generic "Skill" key (`Q` or `E`) that cha
     *   **Normal Mode**: A balanced 2-phase slash with standard range.
     *   **Shattered Mode (Skill)**: Toggles the sword into an unstable form. Deal **Reduced Damage** but covers a massive area with **Extended Range** and random strikes. Perfect for crowd control.
 
-*   **🏹 Bow**: A versatile ranged weapon with three tactical modes:
-    *   **Single Shot**: High damage, high velocity precision arrows.
-    *   **Multishot (Skill Cycle)**: Fires a spread of 3 arrows for crowd control.
-    *   **Rapid Fire (Skill Cycle)**: Hold Left-Click to unleash a machine-gun stream of low-damage arrows.
+*   **🔫 Gun**: A versatile firearm with three tactical modes:
+    *   **Single Shot**: High damage, high velocity precision rounds.
+    *   **Shotgun (Skill Cycle)**: Fires a spread of projectiles for massive area coverage.
+    *   **Rapid Fire (Skill Cycle)**: Hold Left-Click to unleash a machine-gun stream of low-damage bullets.
 
 *   **💠 Magic**: The ultimate customizable weapon.
     *   **Loadout System**: Choose two spells from your grimoire to equip to a single hand (Primary & Secondary slots).
@@ -72,7 +72,7 @@ Then open `http://localhost:8080` in your browser.
 | **Left SKill** | `Q` | Activate special skill or toggle mode for **Left Hand**. |
 | **Right Skill** | `E` | Activate special skill or toggle mode for **Right Hand**. |
 
-> **Note**: Skills vary by weapon (e.g., Teleport for Shuriken, Mode Toggle for Sword/Bow/Magic).
+> **Note**: Skills vary by weapon (e.g., Teleport for Shuriken, Mode Toggle for Sword/Gun/Magic).
 
 ## 🛠️ Built With
 
