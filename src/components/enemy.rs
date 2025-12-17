@@ -4,6 +4,7 @@ use bevy::prelude::*;
 pub struct Enemy {
     pub health: f32,
     pub speed: f32,
+    #[allow(dead_code)]
     pub damage: f32,
 }
 

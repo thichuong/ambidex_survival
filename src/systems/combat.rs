@@ -12,7 +12,11 @@ use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
 use rand::Rng;
 
-#[allow(clippy::too_many_arguments)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::too_many_lines,
+    clippy::needless_pass_by_value
+)]
 pub fn handle_combat_input(
     mut commands: Commands,
     time: Res<Time>,
@@ -33,7 +37,7 @@ pub fn handle_combat_input(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     projectile_query: Query<(Entity, &GlobalTransform, &Projectile), Without<Player>>,
-    mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // For Global spell
+    _enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // For Global spell
 ) {
     // ... (Keep early returns)
     let Ok((camera, camera_transform)) = camera_query.get_single() else {
@@ -54,7 +58,7 @@ pub fn handle_combat_input(
     let Ok((player_entity, mut player_transform)) = player_query.get_single_mut() else {
         return;
     };
-    let player_pos = player_transform.translation.truncate();
+    let _player_pos = player_transform.translation.truncate();
 
     // Input States
     let left_pressed = mouse_input.pressed(MouseButton::Left);
@@ -66,7 +70,7 @@ pub fn handle_combat_input(
     let e_just_pressed = key_input.just_pressed(KeyCode::KeyE);
 
     for (
-        hand_entity,
+        _hand_entity,
         hand_transform,
         hand,
         mut magic_loadout,
@@ -80,7 +84,7 @@ pub fn handle_combat_input(
         let _angle = direction.y.atan2(direction.x);
 
         // Input mapping
-        let (is_pressed, is_just_pressed, skill_pressed) = match hand.hand_type {
+        let (is_pressed, is_just_pressed, skill_pressed) = match hand.side {
             HandType::Left => (left_pressed, left_just_pressed, q_just_pressed),
             HandType::Right => (right_pressed, right_just_pressed, e_just_pressed),
         };
@@ -120,7 +124,6 @@ pub fn handle_combat_input(
                             hand_pos,
                             &mut meshes,
                             &mut materials,
-                            &mut enemy_query,
                         );
                         weapon_data.last_shot = now;
                     }
@@ -218,6 +221,7 @@ pub fn handle_combat_input(
     }
 }
 
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn cast_spell(
     commands: &mut Commands,
     spell: SpellType,
@@ -227,7 +231,6 @@ fn cast_spell(
     spawn_pos: Vec2,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
-    enemy_query: &Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // Mutable for damage
 ) {
     let direction = (cursor_pos - spawn_pos).normalize_or_zero();
     let angle = direction.y.atan2(direction.x);
@@ -341,10 +344,11 @@ fn cast_spell(
 }
 
 // ... (Keep existing perform_skill and fire_weapon functions, they are fine)
+#[allow(clippy::too_many_arguments)]
 fn perform_skill(
     commands: &mut Commands,
     weapon_type: WeaponType,
-    spawn_pos: Vec2,
+    _spawn_pos: Vec2,
     cursor_pos: Vec2,
     player_entity: Entity,
     _magic_loadout: &MagicLoadout,
@@ -445,6 +449,7 @@ fn perform_skill(
     }
 }
 
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn fire_weapon(
     commands: &mut Commands,
     weapon_type: WeaponType,
@@ -605,6 +610,7 @@ fn fire_weapon(
     }
 }
 
+#[allow(clippy::too_many_arguments, clippy::needless_pass_by_value)]
 pub fn resolve_damage(
     mut commands: Commands,
     rapier_context: Res<RapierContext>,
@@ -692,6 +698,7 @@ pub fn resolve_damage(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_sword_mechanics(
     mut commands: Commands,
     time: Res<Time>,
@@ -726,9 +733,11 @@ pub fn update_sword_mechanics(
                         if dist_sq < sweep_radius * sweep_radius {
                             let angle_to_enemy = to_enemy.y.atan2(to_enemy.x);
                             let mut angle_diff = angle_to_enemy - swing.base_angle;
+                            #[allow(clippy::while_float)]
                             while angle_diff > std::f32::consts::PI {
                                 angle_diff -= 2.0 * std::f32::consts::PI;
                             }
+                            #[allow(clippy::while_float)]
                             while angle_diff < -std::f32::consts::PI {
                                 angle_diff += 2.0 * std::f32::consts::PI;
                             }
@@ -794,6 +803,7 @@ pub fn update_sword_mechanics(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn manage_lifetime(
     mut commands: Commands,
     time: Res<Time>,

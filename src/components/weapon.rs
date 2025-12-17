@@ -12,7 +12,7 @@ pub enum WeaponType {
 #[derive(Component)]
 #[allow(dead_code)]
 pub struct Weapon {
-    pub weapon_type: WeaponType,
+    pub kind: WeaponType,
     pub damage: f32,
     pub cooldown: f32,
     pub last_shot: f32, // Time of last shot
@@ -23,7 +23,7 @@ pub struct Weapon {
 impl Default for Weapon {
     fn default() -> Self {
         Self {
-            weapon_type: WeaponType::Shuriken,
+            kind: WeaponType::Shuriken,
             damage: 10.0,
             cooldown: 0.5,
             last_shot: 0.0,
@@ -99,6 +99,7 @@ pub struct SwordSwing {
     pub state: SwingState,
     pub timer: Timer,
     pub base_angle: f32,
+    #[allow(dead_code)]
     pub owner_entity: Entity,
     pub damage: f32,
     pub range: f32,

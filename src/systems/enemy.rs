@@ -7,6 +7,7 @@ use crate::components::enemy::Enemy;
 use crate::components::player::Player;
 use crate::resources::round::{RoundManager, RoundState};
 
+#[allow(clippy::needless_pass_by_value, clippy::cast_possible_wrap)]
 pub fn spawn_waves(
     mut commands: Commands,
     time: Res<Time>,
@@ -95,11 +96,13 @@ fn spawn_random_enemy(
         Enemy {
             health: 30.0,
             speed: 150.0,
+            #[allow(dead_code)]
             damage: 10.0,
         },
     ));
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn enemy_chase_player(
     mut enemy_query: Query<(&mut Velocity, &Transform, &Enemy)>,
     player_query: Query<&Transform, With<Player>>,

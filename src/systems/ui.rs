@@ -5,8 +5,8 @@ use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct WeaponButton {
-    pub hand_type: HandType,
-    pub weapon_type: WeaponType,
+    pub side: HandType,
+    pub kind: WeaponType,
 }
 
 #[derive(Component)]
@@ -21,17 +21,18 @@ pub enum ShopButton {
 
 #[derive(Component)]
 pub struct MagicPanel {
-    pub hand_type: HandType,
+    pub side: HandType,
 }
 
 #[derive(Component)]
 pub struct MagicCycleButton {
-    pub hand_type: HandType,
+    pub side: HandType,
     pub is_primary: bool, // true = primary, false = secondary
 }
 
 use crate::components::weapon::{MagicLoadout, SpellType};
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Root UI Node
     commands
@@ -172,7 +173,7 @@ fn spawn_shop_button(parent: &mut ChildBuilder, btn_type: ShopButton, label: &st
         });
 }
 
-fn spawn_weapon_button(parent: &mut ChildBuilder, hand: HandType, weapon: WeaponType, label: &str) {
+fn spawn_weapon_button(parent: &mut ChildBuilder, side: HandType, kind: WeaponType, label: &str) {
     parent
         .spawn(ButtonBundle {
             style: Style {
@@ -186,10 +187,7 @@ fn spawn_weapon_button(parent: &mut ChildBuilder, hand: HandType, weapon: Weapon
             background_color: BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
             ..default()
         })
-        .insert(WeaponButton {
-            hand_type: hand,
-            weapon_type: weapon,
-        })
+        .insert(WeaponButton { side, kind })
         .with_children(|btn| {
             btn.spawn(TextBundle::from_section(
                 label,
@@ -202,7 +200,7 @@ fn spawn_weapon_button(parent: &mut ChildBuilder, hand: HandType, weapon: Weapon
         });
 }
 
-fn spawn_magic_panel(parent: &mut ChildBuilder, hand_type: HandType) {
+fn spawn_magic_panel(parent: &mut ChildBuilder, side: HandType) {
     parent
         .spawn(NodeBundle {
             style: Style {
@@ -217,9 +215,9 @@ fn spawn_magic_panel(parent: &mut ChildBuilder, hand_type: HandType) {
             background_color: BackgroundColor(Color::srgba(0.2, 0.0, 0.2, 0.8)),
             ..default()
         })
-        .insert(MagicPanel { hand_type })
+        .insert(MagicPanel { side })
         .with_children(|panel| {
-            let label = match hand_type {
+            let label = match side {
                 HandType::Left => "Left Magic (Q): ",
                 HandType::Right => "Right Magic (E): ",
             };
@@ -247,7 +245,7 @@ fn spawn_magic_panel(parent: &mut ChildBuilder, hand_type: HandType) {
                     ..default()
                 })
                 .insert(MagicCycleButton {
-                    hand_type,
+                    side,
                     is_primary: true,
                 })
                 .with_children(|btn| {
@@ -276,7 +274,7 @@ fn spawn_magic_panel(parent: &mut ChildBuilder, hand_type: HandType) {
                     ..default()
                 })
                 .insert(MagicCycleButton {
-                    hand_type,
+                    side,
                     is_primary: false,
                 })
                 .with_children(|btn| {
@@ -292,6 +290,7 @@ fn spawn_magic_panel(parent: &mut ChildBuilder, hand_type: HandType) {
         });
 }
 
+#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
 pub fn weapon_button_interaction(
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &WeaponButton),
@@ -306,12 +305,12 @@ pub fn weapon_button_interaction(
 
                 // Update Player Hand
                 for (mut hand, mut weapon) in &mut hand_query {
-                    if hand.hand_type == button_data.hand_type {
-                        hand.equipped_weapon = Some(button_data.weapon_type);
+                    if hand.side == button_data.side {
+                        hand.equipped_weapon = Some(button_data.kind);
 
                         // Update Weapon Stats based on Type
-                        weapon.weapon_type = button_data.weapon_type;
-                        match button_data.weapon_type {
+                        weapon.kind = button_data.kind;
+                        match button_data.kind {
                             WeaponType::Magic => {
                                 weapon.cooldown = 0.8; // Slower magic (User Request)
                                 weapon.damage = 0.0; // Handled by spell projectile
@@ -325,10 +324,7 @@ pub fn weapon_button_interaction(
                             }
                         }
 
-                        println!(
-                            "Equipped {:?} to {:?}",
-                            button_data.weapon_type, button_data.hand_type
-                        );
+                        println!("Equipped {:?} to {:?}", button_data.kind, button_data.side);
                     }
                 }
             }
@@ -342,6 +338,7 @@ pub fn weapon_button_interaction(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_shop_visibility(
     mut shop_query: Query<&mut Style, With<ShopMenu>>,
     round_manager: Res<crate::resources::round::RoundManager>,
@@ -358,6 +355,7 @@ pub fn update_shop_visibility(
     }
 }
 
+#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
 pub fn shop_button_interaction(
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &ShopButton),
@@ -398,6 +396,7 @@ pub fn shop_button_interaction(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_magic_ui(
     mut panel_query: Query<(&mut Style, &MagicPanel)>,
     hand_query: Query<&Hand>,
@@ -410,8 +409,7 @@ pub fn update_magic_ui(
     for (mut style, panel) in &mut panel_query {
         let mut is_magic = false;
         for hand in hand_query.iter() {
-            if hand.hand_type == panel.hand_type && hand.equipped_weapon == Some(WeaponType::Magic)
-            {
+            if hand.side == panel.side && hand.equipped_weapon == Some(WeaponType::Magic) {
                 is_magic = true;
             }
         }
@@ -427,7 +425,7 @@ pub fn update_magic_ui(
         // Find Loadout for this hand
         let mut current_loadout = None;
         for (hand, loadout) in hand_query.iter().zip(loadout_query.iter()) {
-            if hand.hand_type == btn_data.hand_type {
+            if hand.side == btn_data.side {
                 current_loadout = Some(loadout);
             }
         }
@@ -460,6 +458,7 @@ pub fn update_magic_ui(
     }
 }
 
+#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
 pub fn magic_button_interaction(
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &MagicCycleButton),
@@ -474,7 +473,7 @@ pub fn magic_button_interaction(
 
                 // Cycle Spell
                 for (hand, mut loadout) in &mut loadout_query {
-                    if hand.hand_type == btn_data.hand_type {
+                    if hand.side == btn_data.side {
                         let current = if btn_data.is_primary {
                             loadout.primary
                         } else {

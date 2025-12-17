@@ -8,6 +8,7 @@ pub const MODE_SWITCH_COOLDOWN: f32 = 0.2;
 // Single Mode
 pub const SINGLE_DAMAGE: f32 = 60.0;
 pub const SINGLE_SPEED: f32 = 1000.0;
+#[allow(dead_code)]
 pub const SINGLE_SPREAD: &[f32] = &[0.0];
 
 // Shotgun Mode

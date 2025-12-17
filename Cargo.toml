@@ -29,10 +29,4 @@ codegen-units = 1
 [lints.clippy]
 pedantic = { level = "deny", priority = -1 }
 nursery = { level = "deny", priority = -1 }
-needless_pass_by_value = "allow"
-type_complexity = "allow"
-too_many_arguments = "allow"
-too_many_lines = "allow"
-struct_field_names = "allow"
-cast_possible_wrap = "allow"
-while_float = "allow"
+

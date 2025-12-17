@@ -6,6 +6,7 @@ use bevy_rapier2d::prelude::*;
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{GunState, MagicLoadout, SwordState, Weapon, WeaponType};
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -33,12 +34,12 @@ pub fn spawn_player(
             // Left Hand
             parent.spawn((
                 Hand {
-                    hand_type: HandType::Left,
+                    side: HandType::Left,
                     offset: Vec3::new(-20.0, 20.0, 1.0),
                     equipped_weapon: Some(WeaponType::Shuriken), // Default Left
                 },
                 Weapon {
-                    weapon_type: WeaponType::Shuriken,
+                    kind: WeaponType::Shuriken,
                     ..default()
                 },
                 MagicLoadout::default(),
@@ -50,12 +51,12 @@ pub fn spawn_player(
             // Right Hand
             parent.spawn((
                 Hand {
-                    hand_type: HandType::Right,
+                    side: HandType::Right,
                     offset: Vec3::new(20.0, 20.0, 1.0),
                     equipped_weapon: Some(WeaponType::Sword), // Default Right
                 },
                 Weapon {
-                    weapon_type: WeaponType::Sword,
+                    kind: WeaponType::Sword,
                     ..default()
                 },
                 MagicLoadout::default(),
@@ -66,6 +67,7 @@ pub fn spawn_player(
         });
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn move_player(
     _time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
@@ -95,6 +97,7 @@ pub fn move_player(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn aim_player(
     window_query: Query<&Window, With<bevy::window::PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<GameCamera>>,

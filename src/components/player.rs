@@ -25,7 +25,7 @@ pub enum HandType {
 
 #[derive(Component)]
 pub struct Hand {
-    pub hand_type: HandType,
+    pub side: HandType,
     #[allow(dead_code)]
     pub offset: Vec3,
     pub equipped_weapon: Option<WeaponType>,

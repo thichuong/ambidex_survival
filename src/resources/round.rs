@@ -6,6 +6,7 @@ pub struct RoundManager {
     pub round_timer: Timer, // Time between rounds or wave spawning? Let's use it for spawn_timer.
     pub spawn_timer: Timer,
     pub enemies_to_spawn: u32,
+    #[allow(dead_code)]
     pub enemies_killed_this_round: u32,
     pub round_state: RoundState,
 }
