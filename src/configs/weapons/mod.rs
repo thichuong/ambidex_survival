@@ -1,3 +1,3 @@
-pub mod bow;
+pub mod gun;
 pub mod shuriken;
 pub mod sword;

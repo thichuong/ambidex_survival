@@ -5,7 +5,7 @@ use bevy::prelude::*;
 pub enum WeaponType {
     Shuriken,
     Sword,
-    Bow,
+    Gun,
     Magic,
 }
 
@@ -123,21 +123,21 @@ impl Default for SwordState {
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BowMode {
+pub enum GunMode {
     Single,
-    Multishot,
+    Shotgun,
     Rapid,
 }
 
 #[derive(Component)]
-pub struct BowState {
-    pub mode: BowMode,
+pub struct GunState {
+    pub mode: GunMode,
 }
 
-impl Default for BowState {
+impl Default for GunState {
     fn default() -> Self {
         Self {
-            mode: BowMode::Single,
+            mode: GunMode::Single,
         }
     }
 }

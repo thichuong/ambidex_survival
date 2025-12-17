@@ -1,11 +1,11 @@
 use crate::components::enemy::Enemy;
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{
-    ActiveSpellSlot, BowMode, BowState, ExplodingProjectile, Lifetime, MagicLoadout, Projectile,
+    ActiveSpellSlot, ExplodingProjectile, GunMode, GunState, Lifetime, MagicLoadout, Projectile,
     SpellType, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
 };
 use crate::configs::spells::{energy_bolt, global, laser, nova};
-use crate::configs::weapons::{bow, shuriken, sword};
+use crate::configs::weapons::{gun, shuriken, sword};
 use bevy::color::palettes::css::{AQUA, AZURE, PURPLE, YELLOW};
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
@@ -27,7 +27,7 @@ pub fn handle_combat_input(
         &Hand,
         &mut MagicLoadout,
         &mut SwordState,
-        &mut BowState,
+        &mut GunState,
         &mut Weapon,
     )>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -79,7 +79,7 @@ pub fn handle_combat_input(
         hand,
         mut magic_loadout,
         mut sword_state,
-        mut bow_state,
+        mut gun_state,
         mut weapon_data,
     ) in hand_query.iter_mut()
     {
@@ -133,14 +133,14 @@ pub fn handle_combat_input(
                         weapon_data.last_shot = now;
                     }
                 }
-                WeaponType::Bow => {
-                    // Bow Logic (Supports Rapid Fire)
-                    let cooldown = match bow_state.mode {
-                        BowMode::Rapid => bow::RAPID_COOLDOWN,
-                        _ => bow::STANDARD_COOLDOWN,
+                WeaponType::Gun => {
+                    // Gun Logic (Supports Rapid Fire)
+                    let cooldown = match gun_state.mode {
+                        GunMode::Rapid => gun::RAPID_COOLDOWN,
+                        _ => gun::STANDARD_COOLDOWN,
                     };
 
-                    let should_fire = if bow_state.mode == BowMode::Rapid {
+                    let should_fire = if gun_state.mode == GunMode::Rapid {
                         is_pressed && time.elapsed_seconds() - weapon_data.last_shot >= cooldown
                     } else {
                         is_just_pressed
@@ -156,16 +156,16 @@ pub fn handle_combat_input(
                             &mut meshes,
                             &mut materials,
                             sword_state.mode,
-                            bow_state.mode,
+                            gun_state.mode,
                         );
                         weapon_data.last_shot = time.elapsed_seconds();
                     }
 
                     let now = time.elapsed_seconds();
                     if skill_pressed {
-                        // Bow Mode Switch is instant/tactical, maybe small cooldown?
+                        // Gun Mode Switch is instant/tactical, maybe small cooldown?
                         // Let's add small cooldown to prevent accidental double taps
-                        if now - weapon_data.last_skill_use >= bow::MODE_SWITCH_COOLDOWN {
+                        if now - weapon_data.last_skill_use >= gun::MODE_SWITCH_COOLDOWN {
                             perform_skill(
                                 &mut commands,
                                 weapon_type,
@@ -174,7 +174,7 @@ pub fn handle_combat_input(
                                 player_entity,
                                 &*magic_loadout,
                                 &mut sword_state,
-                                &mut bow_state,
+                                &mut gun_state,
                                 &mut meshes,
                                 &mut materials,
                                 &projectile_query,
@@ -197,7 +197,7 @@ pub fn handle_combat_input(
                             &mut meshes,
                             &mut materials,
                             sword_state.mode, // Pass Mode
-                            bow_state.mode,   // Pass Bow Mode
+                            gun_state.mode,   // Pass Gun Mode
                         );
                         weapon_data.last_shot = now;
                     }
@@ -212,7 +212,7 @@ pub fn handle_combat_input(
                             player_entity,
                             &*magic_loadout,
                             &mut sword_state, // Pass State
-                            &mut bow_state,   // Pass Bow State
+                            &mut gun_state,   // Pass Gun State
                             &mut meshes,
                             &mut materials,
                             &projectile_query,
@@ -357,7 +357,7 @@ fn perform_skill(
     player_entity: Entity,
     _magic_loadout: &MagicLoadout,
     sword_state: &mut SwordState,
-    bow_state: &mut BowState,
+    gun_state: &mut GunState,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
     projectile_query: &Query<(Entity, &GlobalTransform, &Projectile), Without<Player>>,
@@ -432,20 +432,20 @@ fn perform_skill(
                 }
             }
         }
-        WeaponType::Bow => {
-            // Toggle Bow Mode
-            match bow_state.mode {
-                BowMode::Single => {
-                    bow_state.mode = BowMode::Multishot;
-                    println!("Bow Mode: Multishot (Triple Shot)!");
+        WeaponType::Gun => {
+            // Toggle Gun Mode
+            match gun_state.mode {
+                GunMode::Single => {
+                    gun_state.mode = GunMode::Shotgun;
+                    println!("Gun Mode: Shotgun (Triple Shot)!");
                 }
-                BowMode::Multishot => {
-                    bow_state.mode = BowMode::Rapid;
-                    println!("Bow Mode: Rapid Fire (Machine Gun)!");
+                GunMode::Shotgun => {
+                    gun_state.mode = GunMode::Rapid;
+                    println!("Gun Mode: Rapid Fire (Machine Gun)!");
                 }
-                BowMode::Rapid => {
-                    bow_state.mode = BowMode::Single;
-                    println!("Bow Mode: Single (Precision)!");
+                GunMode::Rapid => {
+                    gun_state.mode = GunMode::Single;
+                    println!("Gun Mode: Single (Precision)!");
                 }
             }
         }
@@ -462,7 +462,7 @@ fn fire_weapon(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
     sword_mode: SwordMode, // Added mode
-    bow_mode: BowMode,     // Added Bow Mode
+    gun_mode: GunMode,     // Added Gun Mode
 ) {
     let direction = (target_pos - spawn_pos).normalize_or_zero();
     match weapon_type {
@@ -477,7 +477,6 @@ fn fire_weapon(
                 RigidBody::Dynamic,
                 Collider::ball(5.0),
                 Sensor,
-                GravityScale(0.0),
                 GravityScale(0.0),
                 Velocity {
                     linvel: direction * shuriken::SPEED,
@@ -559,22 +558,22 @@ fn fire_weapon(
                 }
             }
         }
-        WeaponType::Bow => {
+        WeaponType::Gun => {
             let base_angle = direction.y.atan2(direction.x);
 
             // Refactoring to handle dynamic spread or just handle it inside the loop
             let mut projectiles = Vec::new();
-            match bow_mode {
-                BowMode::Single => projectiles.push((0.0, bow::SINGLE_DAMAGE, bow::SINGLE_SPEED)),
-                BowMode::Multishot => {
-                    for &s in bow::MULTISHOT_SPREAD {
-                        projectiles.push((s, bow::MULTISHOT_DAMAGE, bow::MULTISHOT_SPEED));
+            match gun_mode {
+                GunMode::Single => projectiles.push((0.0, gun::SINGLE_DAMAGE, gun::SINGLE_SPEED)),
+                GunMode::Shotgun => {
+                    for &s in gun::SHOTGUN_SPREAD {
+                        projectiles.push((s, gun::SHOTGUN_DAMAGE, gun::SHOTGUN_SPEED));
                     }
                 }
-                BowMode::Rapid => {
+                GunMode::Rapid => {
                     let mut rng = rand::thread_rng();
-                    let jitter = rng.gen_range(-bow::RAPID_SPREAD_JITTER..bow::RAPID_SPREAD_JITTER);
-                    projectiles.push((jitter, bow::RAPID_DAMAGE, bow::RAPID_SPEED));
+                    let jitter = rng.gen_range(-gun::RAPID_SPREAD_JITTER..gun::RAPID_SPREAD_JITTER);
+                    projectiles.push((jitter, gun::RAPID_DAMAGE, gun::RAPID_SPEED));
                 }
             }
 

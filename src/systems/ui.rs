@@ -75,7 +75,7 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                     // Buttons for Left Hand
                     spawn_weapon_button(panel, HandType::Left, WeaponType::Shuriken, "Shuriken");
                     spawn_weapon_button(panel, HandType::Left, WeaponType::Sword, "Sword");
-                    spawn_weapon_button(panel, HandType::Left, WeaponType::Bow, "Bow");
+                    spawn_weapon_button(panel, HandType::Left, WeaponType::Gun, "Gun");
                     spawn_weapon_button(panel, HandType::Left, WeaponType::Magic, "Magic");
 
                     // Spacer
@@ -100,7 +100,7 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                     // Buttons for Right Hand
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Shuriken, "Shuriken");
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Sword, "Sword");
-                    spawn_weapon_button(panel, HandType::Right, WeaponType::Bow, "Bow");
+                    spawn_weapon_button(panel, HandType::Right, WeaponType::Gun, "Gun");
                     spawn_weapon_button(panel, HandType::Right, WeaponType::Magic, "Magic");
                 });
 
@@ -316,7 +316,7 @@ pub fn weapon_button_interaction(
                                 weapon.cooldown = 0.8; // Slower magic (User Request)
                                 weapon.damage = 0.0; // Handled by spell projectile
                             }
-                            WeaponType::Bow => {
+                            WeaponType::Gun => {
                                 weapon.cooldown = 0.5;
                                 weapon.damage = 0.0; // Handled by projectile
                             }

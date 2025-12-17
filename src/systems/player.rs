@@ -4,7 +4,7 @@ use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
 
 use crate::components::player::{GameCamera, Hand, HandType, Player};
-use crate::components::weapon::{BowState, MagicLoadout, SwordState, Weapon, WeaponType};
+use crate::components::weapon::{GunState, MagicLoadout, SwordState, Weapon, WeaponType};
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -43,7 +43,7 @@ pub fn spawn_player(
                 },
                 MagicLoadout::default(),
                 SwordState::default(),
-                BowState::default(),
+                GunState::default(),
                 SpatialBundle::default(),
             ));
 
@@ -60,7 +60,7 @@ pub fn spawn_player(
                 },
                 MagicLoadout::default(),
                 SwordState::default(),
-                BowState::default(),
+                GunState::default(),
                 SpatialBundle::default(),
             ));
         });
