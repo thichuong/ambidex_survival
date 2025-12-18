@@ -83,7 +83,7 @@ pub struct ExplodingProjectile {
     pub damage: f32,
 }
 
-/// Marker component for AoE projectiles that damage all enemies in area
+/// Marker component for `AoE` projectiles that damage all enemies in area
 /// without despawning on first hit (like laser, nova, global)
 #[derive(Component, Default)]
 pub struct AoEProjectile {

@@ -683,11 +683,10 @@ pub fn resolve_damage(
                 && projectile.owner_entity != enemy_entity
             {
                 // For AoE projectiles, check if already damaged
-                if let Some(ref aoe) = aoe_opt {
-                    if aoe.damaged_entities.contains(&enemy_entity) {
+                if let Some(ref aoe) = aoe_opt
+                    && aoe.damaged_entities.contains(&enemy_entity) {
                         continue; // Skip already damaged entities
                     }
-                }
                 hits.push((enemy_entity, enemy.health, enemy_transform.translation));
             }
         }

@@ -89,7 +89,7 @@ pub fn circle_rect_collision(
 }
 
 /// Check collision between a circle and a line segment
-/// Line starts at line_start and extends in direction for given length
+/// Line starts at `line_start` and extends in direction for given length
 #[must_use]
 pub fn circle_line_collision(
     circle_pos: Vec2,
@@ -171,19 +171,19 @@ pub fn check_collision(
         ) => circle_line_collision(pos_b, *radius, pos_a, *direction, *length, *width),
         (
             Collider::Rectangle {
-                half_width: hw_a,
-                half_height: hh_a,
+                half_width: half_width_a,
+                half_height: half_height_a,
             },
             Collider::Rectangle {
-                half_width: hw_b,
-                half_height: hh_b,
+                half_width: half_width_b,
+                half_height: half_height_b,
             },
         ) => {
             // AABB vs AABB
-            (pos_a.x - hw_a <= pos_b.x + hw_b)
-                && (pos_a.x + hw_a >= pos_b.x - hw_b)
-                && (pos_a.y - hh_a <= pos_b.y + hh_b)
-                && (pos_a.y + hh_a >= pos_b.y - hh_b)
+            (pos_a.x - half_width_a <= pos_b.x + half_width_b)
+                && (pos_a.x + half_width_a >= pos_b.x - half_width_b)
+                && (pos_a.y - half_height_a <= pos_b.y + half_height_b)
+                && (pos_a.y + half_height_a >= pos_b.y - half_height_b)
         }
         // Line vs Rectangle/Line - fallback to false (not commonly needed)
         _ => false,
