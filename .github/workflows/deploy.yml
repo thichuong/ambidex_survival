@@ -6,10 +6,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write # Required to push to the gh-pages branch
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -26,15 +24,19 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
 
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
       - name: Download Trunk
         uses: jetli/trunk-action@v0.5.0
         with:
           version: 'latest'
 
       - name: Build
+        # Generates the 'dist' directory
         run: trunk build --release --public-url /${{ github.event.repository.name }}/
 
-      - name: Deploy
+      - name: Deploy to gh-pages branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
