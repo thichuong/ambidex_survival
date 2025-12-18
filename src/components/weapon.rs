@@ -83,6 +83,14 @@ pub struct ExplodingProjectile {
     pub damage: f32,
 }
 
+/// Marker component for AoE projectiles that damage all enemies in area
+/// without despawning on first hit (like laser, nova, global)
+#[derive(Component, Default)]
+pub struct AoEProjectile {
+    /// Track entities that have already been damaged by this projectile
+    pub damaged_entities: Vec<Entity>,
+}
+
 #[derive(Component)]
 pub struct Lifetime {
     pub timer: Timer,

@@ -2,8 +2,8 @@ use crate::components::enemy::Enemy;
 use crate::components::physics::{Collider, Velocity, check_collision};
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{
-    ActiveSpellSlot, ExplodingProjectile, GunMode, GunState, Lifetime, MagicLoadout, Projectile,
-    SpellType, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
+    ActiveSpellSlot, AoEProjectile, ExplodingProjectile, GunMode, GunState, Lifetime, MagicLoadout,
+    Projectile, SpellType, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
 };
 use crate::configs::spells::{energy_bolt, global, laser, nova};
 use crate::configs::weapons::{gun, shuriken, sword};
@@ -274,27 +274,41 @@ fn cast_spell(
             ));
         }
         SpellType::Laser => {
-            // Raycast / Long box
-            params.commands.spawn((
-                Mesh2d(params.meshes.add(Rectangle::new(1000.0, 4.0))),
-                MeshMaterial2d(params.materials.add(Color::from(AQUA))),
-                Transform::from_translation(
-                    (spawn_pos + direction * (laser::LENGTH / 2.0)).extend(0.0),
-                )
-                .with_rotation(Quat::from_rotation_z(angle)),
-                Collider::cuboid(laser::LENGTH / 2.0, laser::WIDTH / 2.0),
-                Velocity::default(),
-                Projectile {
-                    kind: WeaponType::Magic,
-                    damage: laser::DAMAGE,
-                    speed: 0.0,
-                    direction,
-                    owner_entity: player_entity,
-                },
-                Lifetime {
-                    timer: Timer::from_seconds(laser::LIFETIME, TimerMode::Once),
-                },
-            ));
+            // Raycast / Long line - starts at spawn_pos, extends in direction
+            params
+                .commands
+                .spawn((
+                    Transform::from_translation(spawn_pos.extend(0.0))
+                        .with_rotation(Quat::from_rotation_z(angle)),
+                    Visibility::Visible,
+                    InheritedVisibility::default(),
+                    // Use Line collider - starts at spawn_pos and extends in direction
+                    Collider::line(direction, laser::LENGTH, laser::WIDTH / 2.0),
+                    Velocity::default(),
+                    Projectile {
+                        kind: WeaponType::Magic,
+                        damage: laser::DAMAGE,
+                        speed: 0.0,
+                        direction,
+                        owner_entity: player_entity,
+                    },
+                    Lifetime {
+                        timer: Timer::from_seconds(laser::LIFETIME, TimerMode::Once),
+                    },
+                    AoEProjectile::default(), // Damages all enemies without despawning
+                ))
+                .with_children(|parent| {
+                    // Visual mesh offset to align with line collider
+                    parent.spawn((
+                        Mesh2d(
+                            params
+                                .meshes
+                                .add(Rectangle::new(laser::LENGTH, laser::WIDTH)),
+                        ),
+                        MeshMaterial2d(params.materials.add(Color::from(AQUA))),
+                        Transform::from_xyz(laser::LENGTH / 2.0, 0.0, 0.0), // Offset half-length to align
+                    ));
+                });
         }
         SpellType::Nova => {
             params.commands.spawn((
@@ -317,6 +331,7 @@ fn cast_spell(
                 Lifetime {
                     timer: Timer::from_seconds(nova::LIFETIME, TimerMode::Once),
                 },
+                AoEProjectile::default(), // Damages all enemies without despawning
             ));
         }
         SpellType::Blink => {
@@ -346,6 +361,7 @@ fn cast_spell(
                 Lifetime {
                     timer: Timer::from_seconds(global::LIFETIME, TimerMode::Once),
                 },
+                AoEProjectile::default(), // Damages all enemies without despawning
             ));
         }
     }
@@ -638,58 +654,91 @@ pub struct CombatResources<'w, 's> {
 #[allow(clippy::needless_pass_by_value)]
 pub fn resolve_damage(
     mut commands: Commands,
-    projectile_query: Query<(Entity, &Projectile, &Transform, &Collider)>,
+    mut projectile_query: Query<(
+        Entity,
+        &Projectile,
+        &Transform,
+        &Collider,
+        Option<&mut AoEProjectile>,
+    )>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy, &Collider), Without<Player>>,
     mut res: CombatResources,
     mut damage_events: MessageWriter<DamageEvent>,
 ) {
     // Check Projectile vs Enemy using custom collision
-    for (proj_entity, projectile, projectile_transform, proj_collider) in projectile_query.iter() {
+    for (proj_entity, projectile, projectile_transform, proj_collider, mut aoe_opt) in
+        &mut projectile_query
+    {
         let proj_pos = projectile_transform.translation.truncate();
+        let is_aoe = aoe_opt.is_some();
 
-        for (enemy_entity, enemy_transform, mut enemy, enemy_collider) in &mut enemy_query {
+        // Collect entities to damage (avoiding borrow issues)
+        let mut hits: Vec<(Entity, f32, Vec3)> = Vec::new();
+
+        for (enemy_entity, enemy_transform, enemy, enemy_collider) in &enemy_query {
             let enemy_pos = enemy_transform.translation.truncate();
 
             // Custom collision detection
             if check_collision(proj_pos, proj_collider, enemy_pos, enemy_collider)
                 && projectile.owner_entity != enemy_entity
             {
+                // For AoE projectiles, check if already damaged
+                if let Some(ref aoe) = aoe_opt {
+                    if aoe.damaged_entities.contains(&enemy_entity) {
+                        continue; // Skip already damaged entities
+                    }
+                }
+                hits.push((enemy_entity, enemy.health, enemy_transform.translation));
+            }
+        }
+
+        // Apply damage
+        let mut should_despawn = false;
+        for (enemy_entity, _old_health, enemy_pos) in &hits {
+            // Mark as damaged for AoE
+            if let Some(ref mut aoe) = aoe_opt {
+                aoe.damaged_entities.push(*enemy_entity);
+            }
+
+            // Get enemy again to apply damage
+            if let Ok((_, _, mut enemy, _)) = enemy_query.get_mut(*enemy_entity) {
                 enemy.health -= projectile.damage;
                 damage_events.write(DamageEvent {
                     damage: projectile.damage,
-                    position: enemy_transform.translation.truncate(),
+                    position: enemy_pos.truncate(),
                 });
                 res.shake.add_trauma(0.1);
 
-                // Explosion Logic
-                if let Ok(exploding) = res.exploding_query.get(proj_entity) {
-                    commands.spawn((
-                        Mesh2d(res.meshes.add(Circle::new(exploding.radius))),
-                        MeshMaterial2d(
-                            res.materials
-                                .add(Color::srgb(1.0, 0.5, 0.0).with_alpha(0.6)),
-                        ),
-                        Transform::from_translation(projectile_transform.translation),
-                        Collider::ball(exploding.radius),
-                        Velocity::default(),
-                        Projectile {
-                            kind: projectile.kind,
-                            damage: exploding.damage,
-                            speed: 0.0,
-                            direction: Vec2::ZERO,
-                            owner_entity: projectile.owner_entity,
-                        },
-                        Lifetime {
-                            timer: Timer::from_seconds(0.1, TimerMode::Once),
-                        },
-                    ));
+                // Explosion Logic (only for non-AoE projectiles)
+                if !is_aoe {
+                    if let Ok(exploding) = res.exploding_query.get(proj_entity) {
+                        commands.spawn((
+                            Mesh2d(res.meshes.add(Circle::new(exploding.radius))),
+                            MeshMaterial2d(
+                                res.materials
+                                    .add(Color::srgb(1.0, 0.5, 0.0).with_alpha(0.6)),
+                            ),
+                            Transform::from_translation(projectile_transform.translation),
+                            Collider::ball(exploding.radius),
+                            Velocity::default(),
+                            Projectile {
+                                kind: projectile.kind,
+                                damage: exploding.damage,
+                                speed: 0.0,
+                                direction: Vec2::ZERO,
+                                owner_entity: projectile.owner_entity,
+                            },
+                            Lifetime {
+                                timer: Timer::from_seconds(0.1, TimerMode::Once),
+                            },
+                            AoEProjectile::default(),
+                        ));
+                    }
+                    should_despawn = true;
                 }
 
-                // Despawn projectile after hit
-                commands.entity(proj_entity).despawn();
-
                 if enemy.health <= 0.0 {
-                    commands.entity(enemy_entity).despawn();
+                    commands.entity(*enemy_entity).despawn();
                     res.shake.add_trauma(0.3);
                     println!("Enemy Killed!");
 
@@ -701,7 +750,7 @@ pub fn resolve_damage(
                         commands.spawn((
                             Mesh2d(res.meshes.add(Circle::new(3.0))),
                             MeshMaterial2d(res.materials.add(Color::srgb(1.0, 0.0, 0.0))),
-                            Transform::from_translation(enemy_transform.translation),
+                            Transform::from_translation(*enemy_pos),
                             Velocity {
                                 linvel: dir * 100.0,
                                 angvel: 0.0,
@@ -713,6 +762,11 @@ pub fn resolve_damage(
                     }
                 }
             }
+        }
+
+        // Only despawn non-AoE projectiles after hit
+        if should_despawn && !is_aoe {
+            commands.entity(proj_entity).despawn();
         }
     }
 }
