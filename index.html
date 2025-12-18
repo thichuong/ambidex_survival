@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambidex Survival</title>
+    
+    
+    <link rel="manifest" href="manifest.json" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+    </style>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.error('Service Worker registration failed', err));
+            });
+        }
+    </script>
+    
+<link rel="modulepreload" href="/ambidex_survival/ambidex_survival-ffbba32cfd5881dc.js" crossorigin="anonymous"><link rel="preload" href="/ambidex_survival/ambidex_survival-ffbba32cfd5881dc_bg.wasm" crossorigin="anonymous" as="fetch" type="application/wasm"></head>
+
+<body>
+
+<script type="module">
+import init, * as bindings from '/ambidex_survival/ambidex_survival-ffbba32cfd5881dc.js';
+const wasm = await init({ module_or_path: '/ambidex_survival/ambidex_survival-ffbba32cfd5881dc_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script></body>
+
+</html>
