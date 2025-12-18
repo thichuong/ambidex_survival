@@ -25,6 +25,7 @@
             display: block;
         }
     </style>
+    <!-- Service Worker commented out for debugging
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -34,14 +35,15 @@
             });
         }
     </script>
+    -->
     
-<link rel="modulepreload" href="/ambidex_survival-2610557850ad9000.js" crossorigin="anonymous"><link rel="preload" href="/ambidex_survival-2610557850ad9000_bg.wasm" crossorigin="anonymous" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/ambidex_survival-203d2f2b22cedadd.js" crossorigin="anonymous"><link rel="preload" href="/ambidex_survival-203d2f2b22cedadd_bg.wasm" crossorigin="anonymous" as="fetch" type="application/wasm"></head>
 
 <body>
 
 <script type="module">
-import init, * as bindings from '/ambidex_survival-2610557850ad9000.js';
-const wasm = await init({ module_or_path: '/ambidex_survival-2610557850ad9000_bg.wasm' });
+import init, * as bindings from '/ambidex_survival-203d2f2b22cedadd.js';
+const wasm = await init({ module_or_path: '/ambidex_survival-203d2f2b22cedadd_bg.wasm' });
 
 
 window.wasmBindings = bindings;

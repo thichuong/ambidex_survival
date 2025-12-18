@@ -59,6 +59,11 @@ cargo run --release
 ```bash
 trunk serve
 ```
+
+```bash
+trunk serve --release
+```
+
 Then open `http://localhost:8080` in your browser.
 
 ## 🕹️ Controls
