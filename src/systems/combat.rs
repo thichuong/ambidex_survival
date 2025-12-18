@@ -31,8 +31,17 @@ pub struct CombatInputParams<'w, 's> {
     pub camera_query: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<GameCamera>>,
     pub meshes: ResMut<'w, Assets<Mesh>>,
     pub materials: ResMut<'w, Assets<ColorMaterial>>,
-    pub projectile_query:
-        Query<'w, 's, (Entity, &'static GlobalTransform, &'static Projectile), Without<Player>>,
+    pub projectile_query: Query<
+        'w,
+        's,
+        (
+            Entity,
+            &'static GlobalTransform,
+            &'static Projectile,
+            &'static Lifetime,
+        ),
+        Without<Player>,
+    >,
 }
 
 #[allow(clippy::too_many_lines)]
@@ -171,7 +180,7 @@ pub fn handle_combat_input(
                         // Gun Mode Switch is instant/tactical, maybe small cooldown?
                         // Let's add small cooldown to prevent accidental double taps
                         if now - weapon_data.last_skill_use >= gun::MODE_SWITCH_COOLDOWN {
-                            perform_skill(
+                            if perform_skill(
                                 &mut params,
                                 weapon_type,
                                 hand_pos,
@@ -181,8 +190,9 @@ pub fn handle_combat_input(
                                 &mut sword_state,
                                 &mut gun_state,
                                 &mut player_transform,
-                            );
-                            weapon_data.last_skill_use = now;
+                            ) {
+                                weapon_data.last_skill_use = now;
+                            }
                         }
                     }
                 }
@@ -205,7 +215,7 @@ pub fn handle_combat_input(
                     if skill_pressed
                         && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown
                     {
-                        perform_skill(
+                        if perform_skill(
                             &mut params,
                             weapon_type,
                             hand_pos,
@@ -215,8 +225,9 @@ pub fn handle_combat_input(
                             &mut sword_state, // Pass State
                             &mut gun_state,   // Pass Gun State
                             &mut player_transform,
-                        );
-                        weapon_data.last_skill_use = now;
+                        ) {
+                            weapon_data.last_skill_use = now;
+                        }
                     }
                 }
             }
@@ -254,6 +265,7 @@ fn cast_spell(
                     angvel: 0.0,
                 },
                 Projectile {
+                    kind: WeaponType::Magic,
                     damage: energy_bolt::DAMAGE,
                     speed: energy_bolt::SPEED,
                     direction,
@@ -286,6 +298,7 @@ fn cast_spell(
                 Sensor,
                 Collider::cuboid(laser::LENGTH / 2.0, laser::WIDTH / 2.0), // Half-extents
                 Projectile {
+                    kind: WeaponType::Magic,
                     damage: laser::DAMAGE,
                     speed: 0.0,
                     direction,
@@ -312,6 +325,7 @@ fn cast_spell(
                 Sensor,
                 Collider::ball(nova::RADIUS),
                 Projectile {
+                    kind: WeaponType::Magic,
                     damage: nova::DAMAGE,
                     speed: 0.0,
                     direction: Vec2::ZERO,
@@ -344,6 +358,7 @@ fn cast_spell(
                 Sensor,
                 Collider::ball(global::RADIUS),
                 Projectile {
+                    kind: WeaponType::Magic,
                     damage: global::DAMAGE, // Back to reasonable damage (single hit)
                     speed: 0.0,
                     direction: Vec2::ZERO,
@@ -369,17 +384,17 @@ fn perform_skill(
     sword_state: &mut SwordState,
     gun_state: &mut GunState,
     player_transform: &mut Transform,
-) {
+) -> bool {
     match weapon_type {
         WeaponType::Shuriken => {
             // Teleport to closest projectile
             let mut closest_proj: Option<(Entity, Vec3)> = None;
-            let mut min_dist_sq = shuriken::TELEPORT_RANGE_SQ; // Max teleport range check? Or just find any.
+            let mut min_dist_sq = f32::MAX; // Use MAX to ensure we find any shuriken
 
-            for (entity, proj_tf, proj) in params.projectile_query.iter() {
-                if proj.owner_entity == player_entity {
-                    // Check if it is a Shuriken (hack: speed 600.0 or just purely by being projectile owner)
-                    // Ideally we'd have a WeaponType on Projectile, but owner is unique enough for now.
+            let mut count = 0;
+            for (entity, proj_tf, proj, _) in params.projectile_query.iter() {
+                if proj.kind == WeaponType::Shuriken && proj.owner_entity == player_entity {
+                    count += 1;
                     let translation = proj_tf.translation();
                     let dist_sq = translation.truncate().distance_squared(cursor_pos);
                     if dist_sq < min_dist_sq {
@@ -422,8 +437,10 @@ fn perform_skill(
 
                 // Despawn the projectile used as anchor
                 params.commands.entity(entity).despawn_recursive();
+                true
             } else {
-                println!("Skill: No Shuriken found to teleport to!");
+                println!("Skill: No Shuriken found to teleport to! (Checked {count} shurikens)");
+                false
             }
         }
         WeaponType::Sword => {
@@ -438,6 +455,7 @@ fn perform_skill(
                     println!("Sword Mode: Normal!");
                 }
             }
+            true
         }
         WeaponType::Gun => {
             // Toggle Gun Mode
@@ -455,8 +473,9 @@ fn perform_skill(
                     println!("Gun Mode: Single (Precision)!");
                 }
             }
+            true
         }
-        WeaponType::Magic => {}
+        WeaponType::Magic => false,
     }
 }
 
@@ -475,6 +494,23 @@ fn fire_weapon(
     let direction = (target_pos - spawn_pos).normalize_or_zero();
     match weapon_type {
         WeaponType::Shuriken => {
+            // Limit number of shurikens
+            let mut shurikens: Vec<(Entity, f32)> = params
+                .projectile_query
+                .iter()
+                .filter(|(_, _, p, _)| p.kind == WeaponType::Shuriken && p.owner_entity == owner)
+                .map(|(e, _, _, l)| (e, l.timer.remaining_secs()))
+                .collect();
+
+            if shurikens.len() >= shuriken::MAX_COUNT {
+                // Find oldest (one with least time remaining)
+                shurikens
+                    .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+                if let Some((oldest_entity, _)) = shurikens.first() {
+                    params.commands.entity(*oldest_entity).despawn_recursive();
+                }
+            }
+
             params.commands.spawn((
                 MaterialMesh2dBundle {
                     mesh: params
@@ -494,6 +530,7 @@ fn fire_weapon(
                     angvel: 10.0,
                 },
                 Projectile {
+                    kind: WeaponType::Shuriken,
                     damage: shuriken::DAMAGE,
                     speed: shuriken::SPEED,
                     direction,
@@ -624,6 +661,7 @@ fn fire_weapon(
                         angvel: 0.0,
                     },
                     Projectile {
+                        kind: WeaponType::Gun,
                         damage,
                         speed,
                         direction: dir,
@@ -694,6 +732,7 @@ pub fn resolve_damage(
                         Collider::ball(exploding.radius),
                         Sensor,
                         Projectile {
+                            kind: projectile.kind, // Inherit kind for explosions (mostly magic)
                             damage: exploding.damage,
                             speed: 0.0,
                             direction: Vec2::ZERO,

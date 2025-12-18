@@ -27,7 +27,7 @@ impl Default for Weapon {
             damage: 10.0,
             cooldown: 0.5,
             last_shot: 0.0,
-            skill_cooldown: 3.0,    // Default skill cooldown
+            skill_cooldown: 0.0,    // Default to no cooldown
             last_skill_use: -100.0, // Start ready
         }
     }
@@ -70,6 +70,7 @@ impl Default for MagicLoadout {
 #[derive(Component)]
 #[allow(dead_code)]
 pub struct Projectile {
+    pub kind: WeaponType,
     pub damage: f32,
     pub speed: f32,
     pub direction: Vec2,

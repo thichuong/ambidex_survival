@@ -39,6 +39,8 @@ pub fn spawn_player(
                 },
                 Weapon {
                     kind: WeaponType::Shuriken,
+                    cooldown: crate::configs::weapons::shuriken::COOLDOWN,
+                    skill_cooldown: crate::configs::weapons::shuriken::SKILL_COOLDOWN,
                     ..default()
                 },
                 MagicLoadout::default(),

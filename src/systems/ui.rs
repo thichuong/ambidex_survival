@@ -325,6 +325,11 @@ pub fn weapon_button_interaction(
                                 weapon.cooldown = 0.5;
                                 weapon.damage = 0.0; // Handled by projectile
                             }
+                            WeaponType::Shuriken => {
+                                weapon.cooldown = crate::configs::weapons::shuriken::COOLDOWN;
+                                weapon.skill_cooldown =
+                                    crate::configs::weapons::shuriken::SKILL_COOLDOWN;
+                            }
                             _ => {
                                 weapon.cooldown = 0.5; // Default
                             }
