@@ -482,11 +482,10 @@ fn fire_weapon(
                 // Find oldest (one with least time remaining)
                 shurikens
                     .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
-                if let Some((oldest_entity, _)) = shurikens.first() {
-                    if let Ok(mut e) = params.commands.get_entity(*oldest_entity) {
+                if let Some((oldest_entity, _)) = shurikens.first()
+                    && let Ok(mut e) = params.commands.get_entity(*oldest_entity) {
                         e.despawn();
                     }
-                }
             }
 
             params.commands.spawn((

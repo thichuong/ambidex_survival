@@ -1,0 +1,5 @@
+# Reverting linker config as it depends on clang/mold which are not installed.
+# Using default linker for better compatibility.
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]

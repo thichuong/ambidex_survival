@@ -1,7 +1,7 @@
 [package]
 name = "ambidex_survival"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 bevy = "0.17.3"
@@ -25,6 +25,7 @@ opt-level = 3
 [profile.release]
 lto = true
 codegen-units = 1
+panic = "abort"
 
 [lints.clippy]
 pedantic = "warn"
