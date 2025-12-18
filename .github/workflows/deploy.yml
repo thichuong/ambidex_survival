@@ -1,0 +1,35 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write # Required for pushing to gh-pages
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Download and install Trunk
+        uses: jetli/trunk-action@v0.5.0
+
+      - name: Build
+        # We need to set the public URL to the repository name for GitHub Pages to work correctly.
+        # This assumes the repo is deployed at <username>.github.io/<repo-name>
+        run: trunk build --release --public-url /${{ github.event.repository.name }}/
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
