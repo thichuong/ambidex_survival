@@ -7,6 +7,7 @@ mod resources;
 mod systems;
 mod utils;
 
+use bevy::window::PrimaryWindow;
 use components::player::GameCamera; // Import GameCamera from components
 use resources::game_state::GameState;
 use systems::player::{aim_player, move_player, spawn_player};
@@ -17,6 +18,7 @@ fn main() {
             primary_window: Some(Window {
                 title: "Ambidex Survival".into(),
                 resolution: (1280.0, 720.0).into(),
+                fit_canvas_to_parent: true,
                 ..default()
             }),
             ..default()
@@ -31,7 +33,7 @@ fn main() {
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
         .init_resource::<resources::polish::ScreenShake>()
-        .add_systems(Startup, (setup_camera, spawn_player))
+        .add_systems(Startup, (setup_camera, spawn_player, maximize_window))
         .add_systems(
             Update,
             (
@@ -60,4 +62,15 @@ fn main() {
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn((Camera2dBundle::default(), GameCamera));
+}
+
+fn maximize_window(
+    winit_windows: NonSend<bevy::winit::WinitWindows>,
+    windows: Query<Entity, With<PrimaryWindow>>,
+) {
+    for entity in &windows {
+        if let Some(winit_window) = winit_windows.get_window(entity) {
+            winit_window.set_maximized(true);
+        }
+    }
 }
