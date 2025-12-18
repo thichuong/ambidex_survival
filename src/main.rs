@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
-use bevy_rapier2d::prelude::*;
 
 mod components;
 mod configs;
@@ -24,10 +23,6 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        // RapierConfiguration is now a component on the DefaultRapierContext entity.
-        // If we want to change it globally, we need to query for it or use a plugin configuration if available.
-        // For now, let's remove the resource insertion.
         .add_message::<systems::combat::DamageEvent>()
         //.add_plugins(RapierDebugRenderPlugin::default()) // Debug physics
         .init_state::<GameState>()
@@ -38,6 +33,7 @@ fn main() {
         .add_systems(
             Update,
             (
+                systems::physics::apply_velocity,
                 move_player,
                 aim_player,
                 resources::polish::update_camera_shake,

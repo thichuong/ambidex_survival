@@ -1,4 +1,5 @@
 use crate::components::enemy::Enemy;
+use crate::components::physics::{Collider, Velocity, check_collision};
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{
     ActiveSpellSlot, ExplodingProjectile, GunMode, GunState, Lifetime, MagicLoadout, Projectile,
@@ -9,7 +10,6 @@ use crate::configs::weapons::{gun, shuriken, sword};
 use bevy::color::palettes::css::{AQUA, AZURE, PURPLE, YELLOW};
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
 use rand::Rng;
 
 #[derive(Event, Message)]
@@ -252,10 +252,7 @@ fn cast_spell(
                     MeshMaterial2d(params.materials.add(Color::from(PURPLE))),
                     Transform::from_translation(spawn_pos.extend(0.0)),
                 ),
-                RigidBody::Dynamic,
                 Collider::ball(4.0),
-                Sensor,
-                GravityScale(0.0),
                 Velocity {
                     linvel: direction * energy_bolt::SPEED,
                     angvel: 0.0,
@@ -272,7 +269,7 @@ fn cast_spell(
                 },
                 ExplodingProjectile {
                     radius: energy_bolt::EXPLOSION_RADIUS,
-                    damage: energy_bolt::DAMAGE, // Using same damage for explosion for now
+                    damage: energy_bolt::DAMAGE,
                 },
             ));
         }
@@ -282,11 +279,11 @@ fn cast_spell(
                 Mesh2d(params.meshes.add(Rectangle::new(1000.0, 4.0))),
                 MeshMaterial2d(params.materials.add(Color::from(AQUA))),
                 Transform::from_translation(
-                    (spawn_pos + direction * (laser::LENGTH / 2.0)).extend(0.0), // Center it
+                    (spawn_pos + direction * (laser::LENGTH / 2.0)).extend(0.0),
                 )
                 .with_rotation(Quat::from_rotation_z(angle)),
-                Sensor,
-                Collider::cuboid(laser::LENGTH / 2.0, laser::WIDTH / 2.0), // Half-extents
+                Collider::cuboid(laser::LENGTH / 2.0, laser::WIDTH / 2.0),
+                Velocity::default(),
                 Projectile {
                     kind: WeaponType::Magic,
                     damage: laser::DAMAGE,
@@ -308,8 +305,8 @@ fn cast_spell(
                         .add(Color::srgb(1.0, 0.0, 1.0).with_alpha(0.4)),
                 ),
                 Transform::from_translation(player_transform.translation),
-                Sensor,
                 Collider::ball(nova::RADIUS),
+                Velocity::default(),
                 Projectile {
                     kind: WeaponType::Magic,
                     damage: nova::DAMAGE,
@@ -335,13 +332,13 @@ fn cast_spell(
                     params
                         .materials
                         .add(Color::srgb(1.0, 1.0, 1.0).with_alpha(0.1)),
-                ), // White flash
+                ),
                 Transform::from_translation(player_transform.translation),
-                Sensor,
                 Collider::ball(global::RADIUS),
+                Velocity::default(),
                 Projectile {
                     kind: WeaponType::Magic,
-                    damage: global::DAMAGE, // Back to reasonable damage (single hit)
+                    damage: global::DAMAGE,
                     speed: 0.0,
                     direction: Vec2::ZERO,
                     owner_entity: player_entity,
@@ -483,19 +480,17 @@ fn fire_weapon(
                 shurikens
                     .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
                 if let Some((oldest_entity, _)) = shurikens.first()
-                    && let Ok(mut e) = params.commands.get_entity(*oldest_entity) {
-                        e.despawn();
-                    }
+                    && let Ok(mut e) = params.commands.get_entity(*oldest_entity)
+                {
+                    e.despawn();
+                }
             }
 
             params.commands.spawn((
                 Mesh2d(params.meshes.add(Rectangle::new(10.0, 10.0))),
                 MeshMaterial2d(params.materials.add(Color::from(AZURE))),
                 Transform::from_translation(spawn_pos.extend(0.0)),
-                RigidBody::Dynamic,
                 Collider::ball(5.0),
-                Sensor,
-                GravityScale(0.0),
                 Velocity {
                     linvel: direction * shuriken::SPEED,
                     angvel: 10.0,
@@ -609,10 +604,7 @@ fn fire_weapon(
                     MeshMaterial2d(params.materials.add(Color::from(YELLOW))),
                     Transform::from_translation(spawn_pos.extend(0.0))
                         .with_rotation(Quat::from_rotation_z(angle)),
-                    RigidBody::Dynamic,
                     Collider::cuboid(10.0, 2.5),
-                    Sensor,
-                    GravityScale(0.0),
                     Velocity {
                         linvel: dir * speed,
                         angvel: 0.0,
@@ -646,31 +638,28 @@ pub struct CombatResources<'w, 's> {
 #[allow(clippy::needless_pass_by_value)]
 pub fn resolve_damage(
     mut commands: Commands,
-    rapier_context: ReadRapierContext,
-    projectile_query: Query<(Entity, &Projectile, &Transform)>,
-    mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // Keep mutable for direct damage
+    projectile_query: Query<(Entity, &Projectile, &Transform, &Collider)>,
+    mut enemy_query: Query<(Entity, &Transform, &mut Enemy, &Collider), Without<Player>>,
     mut res: CombatResources,
     mut damage_events: MessageWriter<DamageEvent>,
 ) {
-    // 2. Check Projectile vs Enemy
-    for (proj_entity, projectile, projectile_transform) in projectile_query.iter() {
-        // Skip if projectile dead (from absorb) - ECS despawn is deferred, so we might need manual check or `commands.entity(e).despawn()` works at end of stage.
-        // Actually, despawned entities are still iteratable in the same system execution usually? No, but multiple loops might clash.
-        // Let's rely on standard intersections.
+    // Check Projectile vs Enemy using custom collision
+    for (proj_entity, projectile, projectile_transform, proj_collider) in projectile_query.iter() {
+        let proj_pos = projectile_transform.translation.truncate();
 
-        for (enemy_entity, enemy_transform, mut enemy) in &mut enemy_query {
-            // ReadRapierContext wraps a query for a tuple of physics components.
-            let (simulation, colliders, ..) = rapier_context.rapier_context.single().unwrap();
-            if simulation.intersection_pair(colliders, proj_entity, enemy_entity) == Some(true)
+        for (enemy_entity, enemy_transform, mut enemy, enemy_collider) in &mut enemy_query {
+            let enemy_pos = enemy_transform.translation.truncate();
+
+            // Custom collision detection
+            if check_collision(proj_pos, proj_collider, enemy_pos, enemy_collider)
                 && projectile.owner_entity != enemy_entity
             {
-                // Don't hit self if reflected?
                 enemy.health -= projectile.damage;
                 damage_events.write(DamageEvent {
                     damage: projectile.damage,
                     position: enemy_transform.translation.truncate(),
                 });
-                res.shake.add_trauma(0.1); // Small shake on hit
+                res.shake.add_trauma(0.1);
 
                 // Explosion Logic
                 if let Ok(exploding) = res.exploding_query.get(proj_entity) {
@@ -682,9 +671,9 @@ pub fn resolve_damage(
                         ),
                         Transform::from_translation(projectile_transform.translation),
                         Collider::ball(exploding.radius),
-                        Sensor,
+                        Velocity::default(),
                         Projectile {
-                            kind: projectile.kind, // Inherit kind for explosions (mostly magic)
+                            kind: projectile.kind,
                             damage: exploding.damage,
                             speed: 0.0,
                             direction: Vec2::ZERO,
@@ -696,14 +685,12 @@ pub fn resolve_damage(
                     ));
                 }
 
-                // Despawn projectile after hit (even stationary ones like Nova/Global)
-                // This prevents them from dealing damage every frame of their lifetime.
-                // Commands are deferred, so it will still finish colliding with other enemies in this frame.
+                // Despawn projectile after hit
                 commands.entity(proj_entity).despawn();
 
                 if enemy.health <= 0.0 {
                     commands.entity(enemy_entity).despawn();
-                    res.shake.add_trauma(0.3); // Big shake on kill
+                    res.shake.add_trauma(0.3);
                     println!("Enemy Killed!");
 
                     // Spawn Particles

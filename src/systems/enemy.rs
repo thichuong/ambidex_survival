@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
 use rand::Rng;
 
 use crate::components::enemy::Enemy;
+use crate::components::physics::{Collider, Velocity};
 use crate::components::player::Player;
 use crate::resources::round::{RoundManager, RoundState};
 
@@ -84,14 +84,8 @@ fn spawn_random_enemy(
             MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::RED))),
             Transform::from_translation(spawn_pos.extend(0.1)),
         ),
-        RigidBody::Dynamic,
         Collider::ball(15.0),
         Velocity::default(),
-        LockedAxes::ROTATION_LOCKED, // Keep upright
-        Damping {
-            linear_damping: 1.0,
-            angular_damping: 1.0,
-        },
         Enemy {
             health: 30.0,
             speed: 150.0,

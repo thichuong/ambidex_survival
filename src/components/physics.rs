@@ -1,0 +1,114 @@
+use bevy::prelude::*;
+
+/// Custom velocity component for physics simulation
+#[derive(Component, Default, Clone, Copy)]
+pub struct Velocity {
+    pub linvel: Vec2,
+    pub angvel: f32,
+}
+
+impl Velocity {
+    #[must_use]
+    pub const fn zero() -> Self {
+        Self {
+            linvel: Vec2::ZERO,
+            angvel: 0.0,
+        }
+    }
+}
+
+/// Custom collider for simple collision detection
+#[derive(Component, Clone, Copy)]
+pub enum Collider {
+    Circle { radius: f32 },
+    Rectangle { half_width: f32, half_height: f32 },
+}
+
+impl Collider {
+    #[must_use]
+    pub const fn ball(radius: f32) -> Self {
+        Self::Circle { radius }
+    }
+
+    #[must_use]
+    pub const fn cuboid(half_width: f32, half_height: f32) -> Self {
+        Self::Rectangle {
+            half_width,
+            half_height,
+        }
+    }
+}
+
+/// Check collision between two circle colliders
+#[must_use]
+pub fn circle_circle_collision(pos_a: Vec2, radius_a: f32, pos_b: Vec2, radius_b: f32) -> bool {
+    let dist_sq = pos_a.distance_squared(pos_b);
+    let radius_sum = radius_a + radius_b;
+    dist_sq <= radius_sum * radius_sum
+}
+
+/// Check collision between a circle and a rectangle (AABB approximation for rotated rects)
+#[must_use]
+pub fn circle_rect_collision(
+    circle_pos: Vec2,
+    circle_radius: f32,
+    rect_pos: Vec2,
+    half_width: f32,
+    half_height: f32,
+) -> bool {
+    // Simple AABB check (ignores rotation for simplicity)
+    let closest_x = circle_pos
+        .x
+        .clamp(rect_pos.x - half_width, rect_pos.x + half_width);
+    let closest_y = circle_pos
+        .y
+        .clamp(rect_pos.y - half_height, rect_pos.y + half_height);
+
+    let dist_sq = (circle_pos.x - closest_x).powi(2) + (circle_pos.y - closest_y).powi(2);
+    dist_sq <= circle_radius * circle_radius
+}
+
+/// Check collision between two colliders at given positions
+#[must_use]
+pub fn check_collision(
+    pos_a: Vec2,
+    collider_a: &Collider,
+    pos_b: Vec2,
+    collider_b: &Collider,
+) -> bool {
+    match (collider_a, collider_b) {
+        (Collider::Circle { radius: r_a }, Collider::Circle { radius: r_b }) => {
+            circle_circle_collision(pos_a, *r_a, pos_b, *r_b)
+        }
+        (
+            Collider::Circle { radius },
+            Collider::Rectangle {
+                half_width,
+                half_height,
+            },
+        ) => circle_rect_collision(pos_a, *radius, pos_b, *half_width, *half_height),
+        (
+            Collider::Rectangle {
+                half_width,
+                half_height,
+            },
+            Collider::Circle { radius },
+        ) => circle_rect_collision(pos_b, *radius, pos_a, *half_width, *half_height),
+        (
+            Collider::Rectangle {
+                half_width: hw_a,
+                half_height: hh_a,
+            },
+            Collider::Rectangle {
+                half_width: hw_b,
+                half_height: hh_b,
+            },
+        ) => {
+            // AABB vs AABB
+            (pos_a.x - hw_a <= pos_b.x + hw_b)
+                && (pos_a.x + hw_a >= pos_b.x - hw_b)
+                && (pos_a.y - hh_a <= pos_b.y + hh_b)
+                && (pos_a.y + hh_a >= pos_b.y - hh_b)
+        }
+    }
+}

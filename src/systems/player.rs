@@ -1,7 +1,7 @@
 use bevy::color::palettes::css::AQUA;
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
 
+use crate::components::physics::{Collider, Velocity};
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{GunState, MagicLoadout, SwordState, Weapon, WeaponType};
 
@@ -17,14 +17,8 @@ pub fn spawn_player(
                 MeshMaterial2d(materials.add(Color::from(AQUA))),
                 Transform::from_xyz(0.0, 0.0, 0.0),
             ),
-            RigidBody::Dynamic,
             Collider::ball(20.0),
             Velocity::zero(),
-            LockedAxes::ROTATION_LOCKED,
-            Damping {
-                linear_damping: 1.0,
-                angular_damping: 1.0,
-            },
             Player::default(),
         ))
         .with_children(|parent| {
