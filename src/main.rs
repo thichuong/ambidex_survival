@@ -64,6 +64,7 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn((Camera2dBundle::default(), GameCamera));
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn maximize_window(
     winit_windows: NonSend<bevy::winit::WinitWindows>,
     windows: Query<Entity, With<PrimaryWindow>>,
