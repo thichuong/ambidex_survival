@@ -330,7 +330,7 @@ pub fn weapon_button_interaction(
                                 weapon.skill_cooldown =
                                     crate::configs::weapons::shuriken::SKILL_COOLDOWN;
                             }
-                            _ => {
+                            WeaponType::Sword => {
                                 weapon.cooldown = 0.5; // Default
                             }
                         }

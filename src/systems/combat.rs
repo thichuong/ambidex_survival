@@ -179,8 +179,8 @@ pub fn handle_combat_input(
                     if skill_pressed {
                         // Gun Mode Switch is instant/tactical, maybe small cooldown?
                         // Let's add small cooldown to prevent accidental double taps
-                        if now - weapon_data.last_skill_use >= gun::MODE_SWITCH_COOLDOWN {
-                            if perform_skill(
+                        if now - weapon_data.last_skill_use >= gun::MODE_SWITCH_COOLDOWN
+                            && perform_skill(
                                 &mut params,
                                 weapon_type,
                                 hand_pos,
@@ -193,7 +193,6 @@ pub fn handle_combat_input(
                             ) {
                                 weapon_data.last_skill_use = now;
                             }
-                        }
                     }
                 }
                 _ => {
@@ -214,8 +213,7 @@ pub fn handle_combat_input(
                     }
                     if skill_pressed
                         && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown
-                    {
-                        if perform_skill(
+                        && perform_skill(
                             &mut params,
                             weapon_type,
                             hand_pos,
@@ -228,7 +226,6 @@ pub fn handle_combat_input(
                         ) {
                             weapon_data.last_skill_use = now;
                         }
-                    }
                 }
             }
         }
