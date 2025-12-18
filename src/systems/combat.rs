@@ -9,11 +9,10 @@ use crate::configs::weapons::{gun, shuriken, sword};
 use bevy::color::palettes::css::{AQUA, AZURE, PURPLE, YELLOW};
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
-use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
 use rand::Rng;
 
-#[derive(Event)]
+#[derive(Event, Message)]
 pub struct DamageEvent {
     pub damage: f32,
     pub position: Vec2,
@@ -61,22 +60,22 @@ pub fn handle_combat_input(
     _enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // For Global spell
 ) {
     // ... (Keep early returns)
-    let Ok((camera, camera_transform)) = params.camera_query.get_single() else {
+    let Ok((camera, camera_transform)) = params.camera_query.single() else {
         return;
     };
-    let Ok(window) = params.window_query.get_single() else {
+    let Ok(window) = params.window_query.single() else {
         return;
     };
 
     let Some(cursor_pos) = window
         .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
+        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
         .map(|ray| ray.origin.truncate())
     else {
         return;
     };
 
-    let Ok((player_entity, mut player_transform)) = player_query.get_single_mut() else {
+    let Ok((player_entity, mut player_transform)) = player_query.single_mut() else {
         return;
     };
     let _player_pos = player_transform.translation.truncate();
@@ -129,7 +128,7 @@ pub fn handle_combat_input(
                     }
 
                     // Cast Active Spell (Click)
-                    let now = params.time.elapsed_seconds();
+                    let now = params.time.elapsed_secs();
                     if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
                         let spell_to_cast = match magic_loadout.active_slot {
                             ActiveSpellSlot::Primary => magic_loadout.primary,
@@ -155,8 +154,7 @@ pub fn handle_combat_input(
                     };
 
                     let should_fire = if gun_state.mode == GunMode::Rapid {
-                        is_pressed
-                            && params.time.elapsed_seconds() - weapon_data.last_shot >= cooldown
+                        is_pressed && params.time.elapsed_secs() - weapon_data.last_shot >= cooldown
                     } else {
                         is_just_pressed
                     };
@@ -172,10 +170,10 @@ pub fn handle_combat_input(
                             gun_state.mode,
                             hand_entity, // Pass Hand Entity
                         );
-                        weapon_data.last_shot = params.time.elapsed_seconds();
+                        weapon_data.last_shot = params.time.elapsed_secs();
                     }
 
-                    let now = params.time.elapsed_seconds();
+                    let now = params.time.elapsed_secs();
                     if skill_pressed {
                         // Gun Mode Switch is instant/tactical, maybe small cooldown?
                         // Let's add small cooldown to prevent accidental double taps
@@ -190,14 +188,15 @@ pub fn handle_combat_input(
                                 &mut sword_state,
                                 &mut gun_state,
                                 &mut player_transform,
-                            ) {
-                                weapon_data.last_skill_use = now;
-                            }
+                            )
+                        {
+                            weapon_data.last_skill_use = now;
+                        }
                     }
                 }
                 _ => {
                     // Standard Weapons (Sword, Shuriken)
-                    let now = params.time.elapsed_seconds();
+                    let now = params.time.elapsed_secs();
                     if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
                         fire_weapon(
                             &mut params,
@@ -223,9 +222,10 @@ pub fn handle_combat_input(
                             &mut sword_state, // Pass State
                             &mut gun_state,   // Pass Gun State
                             &mut player_transform,
-                        ) {
-                            weapon_data.last_skill_use = now;
-                        }
+                        )
+                    {
+                        weapon_data.last_skill_use = now;
+                    }
                 }
             }
         }
@@ -247,12 +247,11 @@ fn cast_spell(
     match spell {
         SpellType::EnergyBolt => {
             params.commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: params.meshes.add(Mesh::from(Circle::new(8.0))).into(),
-                    material: params.materials.add(Color::from(PURPLE)),
-                    transform: Transform::from_translation(spawn_pos.extend(0.0)),
-                    ..default()
-                },
+                (
+                    Mesh2d(params.meshes.add(Circle::new(8.0))),
+                    MeshMaterial2d(params.materials.add(Color::from(PURPLE))),
+                    Transform::from_translation(spawn_pos.extend(0.0)),
+                ),
                 RigidBody::Dynamic,
                 Collider::ball(4.0),
                 Sensor,
@@ -280,18 +279,12 @@ fn cast_spell(
         SpellType::Laser => {
             // Raycast / Long box
             params.commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: params
-                        .meshes
-                        .add(Mesh::from(Rectangle::new(1000.0, 4.0)))
-                        .into(),
-                    material: params.materials.add(Color::from(AQUA)),
-                    transform: Transform::from_translation(
-                        (spawn_pos + direction * (laser::LENGTH / 2.0)).extend(0.0), // Center it
-                    )
-                    .with_rotation(Quat::from_rotation_z(angle)),
-                    ..default()
-                },
+                Mesh2d(params.meshes.add(Rectangle::new(1000.0, 4.0))),
+                MeshMaterial2d(params.materials.add(Color::from(AQUA))),
+                Transform::from_translation(
+                    (spawn_pos + direction * (laser::LENGTH / 2.0)).extend(0.0), // Center it
+                )
+                .with_rotation(Quat::from_rotation_z(angle)),
                 Sensor,
                 Collider::cuboid(laser::LENGTH / 2.0, laser::WIDTH / 2.0), // Half-extents
                 Projectile {
@@ -308,17 +301,13 @@ fn cast_spell(
         }
         SpellType::Nova => {
             params.commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: params
-                        .meshes
-                        .add(Mesh::from(Circle::new(nova::RADIUS)))
-                        .into(),
-                    material: params
+                Mesh2d(params.meshes.add(Circle::new(nova::RADIUS))),
+                MeshMaterial2d(
+                    params
                         .materials
                         .add(Color::srgb(1.0, 0.0, 1.0).with_alpha(0.4)),
-                    transform: Transform::from_translation(player_transform.translation),
-                    ..default()
-                },
+                ),
+                Transform::from_translation(player_transform.translation),
                 Sensor,
                 Collider::ball(nova::RADIUS),
                 Projectile {
@@ -341,17 +330,13 @@ fn cast_spell(
             println!("Global Spell Used!");
             // Global is now a massive Nova
             params.commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: params
-                        .meshes
-                        .add(Mesh::from(Circle::new(global::RADIUS)))
-                        .into(),
-                    material: params
+                Mesh2d(params.meshes.add(Circle::new(global::RADIUS))),
+                MeshMaterial2d(
+                    params
                         .materials
-                        .add(Color::srgb(1.0, 1.0, 1.0).with_alpha(0.1)), // White flash
-                    transform: Transform::from_translation(player_transform.translation),
-                    ..default()
-                },
+                        .add(Color::srgb(1.0, 1.0, 1.0).with_alpha(0.1)),
+                ), // White flash
+                Transform::from_translation(player_transform.translation),
                 Sensor,
                 Collider::ball(global::RADIUS),
                 Projectile {
@@ -404,12 +389,9 @@ fn perform_skill(
             if let Some((entity, location)) = closest_proj {
                 // Teleport FX (at old position)
                 params.commands.spawn((
-                    MaterialMesh2dBundle {
-                        mesh: params.meshes.add(Mesh::from(Circle::new(15.0))).into(),
-                        material: params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5)),
-                        transform: Transform::from_translation(player_transform.translation),
-                        ..default()
-                    },
+                    Mesh2d(params.meshes.add(Circle::new(15.0))),
+                    MeshMaterial2d(params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5))),
+                    Transform::from_translation(player_transform.translation),
                     Lifetime {
                         timer: Timer::from_seconds(0.2, TimerMode::Once),
                     },
@@ -421,19 +403,16 @@ fn perform_skill(
 
                 // Teleport FX (at new position)
                 params.commands.spawn((
-                    MaterialMesh2dBundle {
-                        mesh: params.meshes.add(Mesh::from(Circle::new(15.0))).into(),
-                        material: params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5)),
-                        transform: Transform::from_translation(location),
-                        ..default()
-                    },
+                    Mesh2d(params.meshes.add(Circle::new(15.0))),
+                    MeshMaterial2d(params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5))),
+                    Transform::from_translation(location),
                     Lifetime {
                         timer: Timer::from_seconds(0.2, TimerMode::Once),
                     },
                 ));
 
                 // Despawn the projectile used as anchor
-                params.commands.entity(entity).despawn_recursive();
+                params.commands.entity(entity).despawn();
                 true
             } else {
                 println!("Skill: No Shuriken found to teleport to! (Checked {count} shurikens)");
@@ -504,20 +483,16 @@ fn fire_weapon(
                 shurikens
                     .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
                 if let Some((oldest_entity, _)) = shurikens.first() {
-                    params.commands.entity(*oldest_entity).despawn_recursive();
+                    if let Ok(mut e) = params.commands.get_entity(*oldest_entity) {
+                        e.despawn();
+                    }
                 }
             }
 
             params.commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: params
-                        .meshes
-                        .add(Mesh::from(Rectangle::new(10.0, 10.0)))
-                        .into(),
-                    material: params.materials.add(Color::from(AZURE)),
-                    transform: Transform::from_translation(spawn_pos.extend(0.0)),
-                    ..default()
-                },
+                Mesh2d(params.meshes.add(Rectangle::new(10.0, 10.0))),
+                MeshMaterial2d(params.materials.add(Color::from(AZURE))),
+                Transform::from_translation(spawn_pos.extend(0.0)),
                 RigidBody::Dynamic,
                 Collider::ball(5.0),
                 Sensor,
@@ -546,10 +521,9 @@ fn fire_weapon(
                     params
                         .commands
                         .spawn((
-                            SpatialBundle {
-                                transform: Transform::from_translation(spawn_pos.extend(0.0)),
-                                ..default()
-                            },
+                            Transform::from_translation(spawn_pos.extend(0.0)),
+                            Visibility::Visible,
+                            InheritedVisibility::default(),
                             SwordSwing {
                                 state: SwingState::Swinging,
                                 timer: Timer::from_seconds(sword::NORMAL_TIMER, TimerMode::Once),
@@ -562,15 +536,13 @@ fn fire_weapon(
                             },
                         ))
                         .with_children(|parent| {
-                            parent.spawn((MaterialMesh2dBundle {
-                                mesh: params
-                                    .meshes
-                                    .add(Mesh::from(Rectangle::new(140.0, 10.0)))
-                                    .into(),
-                                material: params.materials.add(Color::srgba(1.0, 1.0, 1.0, 0.8)),
-                                transform: Transform::from_xyz(70.0, 0.0, 0.0),
-                                ..default()
-                            },));
+                            parent.spawn((
+                                Mesh2d(params.meshes.add(Rectangle::new(140.0, 10.0))),
+                                MeshMaterial2d(
+                                    params.materials.add(Color::srgba(1.0, 1.0, 1.0, 0.8)),
+                                ),
+                                Transform::from_xyz(70.0, 0.0, 0.0),
+                            ));
                         });
                 }
                 SwordMode::Shattered => {
@@ -578,10 +550,9 @@ fn fire_weapon(
                     params
                         .commands
                         .spawn((
-                            SpatialBundle {
-                                transform: Transform::from_translation(spawn_pos.extend(0.0)),
-                                ..default()
-                            },
+                            Transform::from_translation(spawn_pos.extend(0.0)),
+                            Visibility::Visible,
+                            InheritedVisibility::default(),
                             SwordSwing {
                                 state: SwingState::Swinging,
                                 timer: Timer::from_seconds(sword::SHATTERED_TIMER, TimerMode::Once),
@@ -599,17 +570,13 @@ fn fire_weapon(
                             for _ in 0..40 {
                                 let dist = rng.gen_range(50.0..sword::SHATTERED_RANGE);
                                 let jitter_y = rng.gen_range(-15.0..15.0);
-                                parent.spawn(MaterialMesh2dBundle {
-                                    mesh: params
-                                        .meshes
-                                        .add(Mesh::from(Circle::new(rng.gen_range(2.0..4.0))))
-                                        .into(),
-                                    material: params
-                                        .materials
-                                        .add(Color::srgba(1.0, 1.0, 1.0, 0.9)),
-                                    transform: Transform::from_xyz(dist, jitter_y, 0.0),
-                                    ..default()
-                                });
+                                parent.spawn((
+                                    Mesh2d(params.meshes.add(Circle::new(rng.gen_range(2.0..4.0)))),
+                                    MeshMaterial2d(
+                                        params.materials.add(Color::srgba(1.0, 1.0, 1.0, 0.9)),
+                                    ),
+                                    Transform::from_xyz(dist, jitter_y, 0.0),
+                                ));
                             }
                         });
                 }
@@ -639,16 +606,10 @@ fn fire_weapon(
                 let dir = Vec2::new(angle.cos(), angle.sin());
 
                 params.commands.spawn((
-                    MaterialMesh2dBundle {
-                        mesh: params
-                            .meshes
-                            .add(Mesh::from(Rectangle::new(20.0, 5.0)))
-                            .into(),
-                        material: params.materials.add(Color::from(YELLOW)),
-                        transform: Transform::from_translation(spawn_pos.extend(0.0))
-                            .with_rotation(Quat::from_rotation_z(angle)),
-                        ..default()
-                    },
+                    Mesh2d(params.meshes.add(Rectangle::new(20.0, 5.0))),
+                    MeshMaterial2d(params.materials.add(Color::from(YELLOW))),
+                    Transform::from_translation(spawn_pos.extend(0.0))
+                        .with_rotation(Quat::from_rotation_z(angle)),
                     RigidBody::Dynamic,
                     Collider::cuboid(10.0, 2.5),
                     Sensor,
@@ -675,22 +636,22 @@ fn fire_weapon(
 }
 
 #[derive(SystemParam)]
-pub struct CombatResources<'w> {
+pub struct CombatResources<'w, 's> {
     pub shake: ResMut<'w, crate::resources::polish::ScreenShake>,
     pub meshes: ResMut<'w, Assets<Mesh>>,
     pub materials: ResMut<'w, Assets<ColorMaterial>>,
+    pub exploding_query: Query<'w, 's, &'static ExplodingProjectile>,
 }
 
 #[allow(clippy::too_many_lines)]
 #[allow(clippy::needless_pass_by_value)]
 pub fn resolve_damage(
     mut commands: Commands,
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadRapierContext,
     projectile_query: Query<(Entity, &Projectile, &Transform)>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // Keep mutable for direct damage
     mut res: CombatResources,
-    exploding_query: Query<&ExplodingProjectile>,
-    mut damage_events: EventWriter<DamageEvent>,
+    mut damage_events: MessageWriter<DamageEvent>,
 ) {
     // 2. Check Projectile vs Enemy
     for (proj_entity, projectile, projectile_transform) in projectile_query.iter() {
@@ -699,33 +660,28 @@ pub fn resolve_damage(
         // Let's rely on standard intersections.
 
         for (enemy_entity, enemy_transform, mut enemy) in &mut enemy_query {
-            if rapier_context.intersection_pair(proj_entity, enemy_entity) == Some(true)
+            // ReadRapierContext wraps a query for a tuple of physics components.
+            let (simulation, colliders, ..) = rapier_context.rapier_context.single().unwrap();
+            if simulation.intersection_pair(colliders, proj_entity, enemy_entity) == Some(true)
                 && projectile.owner_entity != enemy_entity
             {
                 // Don't hit self if reflected?
                 enemy.health -= projectile.damage;
-                damage_events.send(DamageEvent {
+                damage_events.write(DamageEvent {
                     damage: projectile.damage,
                     position: enemy_transform.translation.truncate(),
                 });
                 res.shake.add_trauma(0.1); // Small shake on hit
 
                 // Explosion Logic
-                if let Ok(exploding) = exploding_query.get(proj_entity) {
+                if let Ok(exploding) = res.exploding_query.get(proj_entity) {
                     commands.spawn((
-                        MaterialMesh2dBundle {
-                            mesh: res
-                                .meshes
-                                .add(Mesh::from(Circle::new(exploding.radius)))
-                                .into(),
-                            material: res
-                                .materials
+                        Mesh2d(res.meshes.add(Circle::new(exploding.radius))),
+                        MeshMaterial2d(
+                            res.materials
                                 .add(Color::srgb(1.0, 0.5, 0.0).with_alpha(0.6)),
-                            transform: Transform::from_translation(
-                                projectile_transform.translation,
-                            ),
-                            ..default()
-                        },
+                        ),
+                        Transform::from_translation(projectile_transform.translation),
                         Collider::ball(exploding.radius),
                         Sensor,
                         Projectile {
@@ -747,7 +703,7 @@ pub fn resolve_damage(
                 commands.entity(proj_entity).despawn();
 
                 if enemy.health <= 0.0 {
-                    commands.entity(enemy_entity).despawn_recursive();
+                    commands.entity(enemy_entity).despawn();
                     res.shake.add_trauma(0.3); // Big shake on kill
                     println!("Enemy Killed!");
 
@@ -757,12 +713,9 @@ pub fn resolve_damage(
                         let dir = Vec2::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0))
                             .normalize_or_zero();
                         commands.spawn((
-                            MaterialMesh2dBundle {
-                                mesh: res.meshes.add(Mesh::from(Circle::new(3.0))).into(),
-                                material: res.materials.add(Color::srgb(1.0, 0.0, 0.0)),
-                                transform: Transform::from_translation(enemy_transform.translation),
-                                ..default()
-                            },
+                            Mesh2d(res.meshes.add(Circle::new(3.0))),
+                            MeshMaterial2d(res.materials.add(Color::srgb(1.0, 0.0, 0.0))),
+                            Transform::from_translation(enemy_transform.translation),
                             Velocity {
                                 linvel: dir * 100.0,
                                 angvel: 0.0,
@@ -786,7 +739,7 @@ pub fn update_sword_mechanics(
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<SwordSwing>>,
     hand_query: Query<&GlobalTransform, With<Hand>>,
     mut res: CombatResources,
-    mut damage_events: EventWriter<DamageEvent>,
+    mut damage_events: MessageWriter<DamageEvent>,
 ) {
     for (entity, mut swing, mut transform) in &mut sword_query {
         // Sync Position with Hand
@@ -818,7 +771,7 @@ pub fn update_sword_mechanics(
 
                             if angle_diff.abs() <= sweep_arc / 2.0 {
                                 enemy.health -= swing.damage;
-                                damage_events.send(DamageEvent {
+                                damage_events.write(DamageEvent {
                                     damage: swing.damage,
                                     position: enemy_tf.translation.truncate(),
                                 });
@@ -832,17 +785,11 @@ pub fn update_sword_mechanics(
                                     )
                                     .normalize_or_zero();
                                     commands.spawn((
-                                        MaterialMesh2dBundle {
-                                            mesh: res
-                                                .meshes
-                                                .add(Mesh::from(Circle::new(2.0)))
-                                                .into(),
-                                            material: res.materials.add(Color::srgb(1.0, 0.5, 0.0)),
-                                            transform: Transform::from_translation(
-                                                enemy_tf.translation,
-                                            ),
-                                            ..default()
-                                        },
+                                        Mesh2d(res.meshes.add(Circle::new(2.0))),
+                                        MeshMaterial2d(
+                                            res.materials.add(Color::srgb(1.0, 0.5, 0.0)),
+                                        ),
+                                        Transform::from_translation(enemy_tf.translation),
                                         Velocity {
                                             linvel: dir * 150.0,
                                             angvel: 0.0,
@@ -854,7 +801,7 @@ pub fn update_sword_mechanics(
                                 }
 
                                 if enemy.health <= 0.0 {
-                                    commands.entity(enemy_entity).despawn_recursive();
+                                    commands.entity(enemy_entity).despawn();
                                     res.shake.add_trauma(0.2);
                                 }
                             }
@@ -871,14 +818,14 @@ pub fn update_sword_mechanics(
                     (end_angle - start_angle).mul_add(progress, swing.base_angle + start_angle);
                 transform.rotation = Quat::from_rotation_z(current_angle);
 
-                if swing.timer.finished() {
+                if swing.timer.is_finished() {
                     swing.state = SwingState::Recover;
                     swing.timer = Timer::from_seconds(0.1, TimerMode::Once);
                 }
             }
             SwingState::Recover => {
-                if swing.timer.finished() {
-                    commands.entity(entity).despawn_recursive();
+                if swing.timer.is_finished() {
+                    commands.entity(entity).despawn();
                 }
             }
         }
@@ -893,8 +840,8 @@ pub fn manage_lifetime(
 ) {
     for (entity, mut lifetime) in &mut query {
         lifetime.timer.tick(time.delta());
-        if lifetime.timer.finished() {
-            commands.entity(entity).despawn_recursive();
+        if lifetime.timer.is_finished() {
+            commands.entity(entity).despawn();
         }
     }
 }

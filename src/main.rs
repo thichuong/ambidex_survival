@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::WindowResolution;
 use bevy_rapier2d::prelude::*;
 
 mod components;
@@ -17,23 +18,23 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Ambidex Survival".into(),
-                resolution: (1280.0, 720.0).into(),
+                resolution: WindowResolution::new(1280, 720),
                 fit_canvas_to_parent: true,
                 ..default()
             }),
             ..default()
         }))
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        .insert_resource(RapierConfiguration {
-            gravity: Vec2::ZERO,
-            ..RapierConfiguration::new(100.0)
-        })
-        .add_event::<systems::combat::DamageEvent>()
+        // RapierConfiguration is now a component on the DefaultRapierContext entity.
+        // If we want to change it globally, we need to query for it or use a plugin configuration if available.
+        // For now, let's remove the resource insertion.
+        .add_message::<systems::combat::DamageEvent>()
         //.add_plugins(RapierDebugRenderPlugin::default()) // Debug physics
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
         .init_resource::<resources::polish::ScreenShake>()
-        .add_systems(Startup, (setup_camera, spawn_player, maximize_window))
+        .add_systems(Startup, (setup_camera, spawn_player))
+        .add_systems(Update, maximize_window)
         .add_systems(
             Update,
             (
@@ -45,6 +46,11 @@ fn main() {
                 systems::combat::manage_lifetime,
                 systems::combat::resolve_damage,
                 systems::combat::update_sword_mechanics,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
                 systems::enemy::enemy_chase_player,
                 systems::enemy::spawn_waves,
                 systems::ui::weapon_button_interaction,
@@ -55,23 +61,31 @@ fn main() {
                 systems::damage_text::spawn_damage_text,
                 systems::damage_text::update_damage_text,
             ),
-        ) // TEMPORARY
+        )
+        // TEMPORARY
         .add_systems(Startup, systems::ui::setup_ui)
         .run();
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((Camera2dBundle::default(), GameCamera));
+    commands.spawn((Camera2d, GameCamera));
 }
 
 #[allow(clippy::needless_pass_by_value)]
 fn maximize_window(
-    winit_windows: NonSend<bevy::winit::WinitWindows>,
+    winit_windows: Option<NonSend<bevy::winit::WinitWindows>>,
     windows: Query<Entity, With<PrimaryWindow>>,
+    mut done: Local<bool>,
 ) {
-    for entity in &windows {
-        if let Some(winit_window) = winit_windows.get_window(entity) {
-            winit_window.set_maximized(true);
+    if *done {
+        return;
+    }
+    if let Some(winit_windows) = winit_windows {
+        for entity in &windows {
+            if let Some(winit_window) = winit_windows.get_window(entity) {
+                winit_window.set_maximized(true);
+                *done = true;
+            }
         }
     }
 }

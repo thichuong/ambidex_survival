@@ -1,6 +1,5 @@
 use bevy::color::palettes::css::AQUA;
 use bevy::prelude::*;
-use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
 
 use crate::components::player::{GameCamera, Hand, HandType, Player};
@@ -13,12 +12,11 @@ pub fn spawn_player(
 ) {
     commands
         .spawn((
-            MaterialMesh2dBundle {
-                mesh: meshes.add(Mesh::from(Circle::new(20.0))).into(),
-                material: materials.add(Color::from(AQUA)),
-                transform: Transform::from_xyz(0.0, 0.0, 0.0),
-                ..default()
-            },
+            (
+                Mesh2d(meshes.add(Circle::new(20.0))),
+                MeshMaterial2d(materials.add(Color::from(AQUA))),
+                Transform::from_xyz(0.0, 0.0, 0.0),
+            ),
             RigidBody::Dynamic,
             Collider::ball(20.0),
             Velocity::zero(),
@@ -46,7 +44,10 @@ pub fn spawn_player(
                 MagicLoadout::default(),
                 SwordState::default(),
                 GunState::default(),
-                SpatialBundle::default(),
+                Visibility::Visible,
+                InheritedVisibility::default(),
+                Transform::default(),
+                GlobalTransform::default(),
             ));
 
             // Right Hand
@@ -63,7 +64,10 @@ pub fn spawn_player(
                 MagicLoadout::default(),
                 SwordState::default(),
                 GunState::default(),
-                SpatialBundle::default(),
+                Visibility::Visible,
+                InheritedVisibility::default(),
+                Transform::default(),
+                GlobalTransform::default(),
             ));
         });
 }
@@ -104,17 +108,17 @@ pub fn aim_player(
     camera_query: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
     mut player_query: Query<&mut Transform, With<Player>>,
 ) {
-    let Ok((camera, camera_transform)) = camera_query.get_single() else {
+    let Ok((camera, camera_transform)) = camera_query.single() else {
         return;
     };
 
-    let Ok(window) = window_query.get_single() else {
+    let Ok(window) = window_query.single() else {
         return;
     };
 
     if let Some(world_position) = window
         .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
+        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
         .map(|ray| ray.origin.truncate())
     {
         for mut player_transform in &mut player_query {

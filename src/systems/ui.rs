@@ -2,6 +2,10 @@ use crate::components::player::{Hand, HandType};
 
 use crate::components::weapon::WeaponType;
 use bevy::prelude::*;
+// ChildBuilder is in bevy::ecs::system or bevy::prelude.
+// Let's try to find it via grep if this fails, but for now let's try the common path.
+// ChildBuilder has been replaced by ChildSpawnerCommands in Bevy 0.17
+// No longer importing EntityCommands if not needed.
 
 #[derive(Component)]
 pub struct WeaponButton {
@@ -35,22 +39,19 @@ use crate::components::weapon::{MagicLoadout, SpellType};
 pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Root UI Node
     commands
-        .spawn(NodeBundle {
-            style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::FlexEnd, // Align to bottom
-                align_items: AlignItems::Center,
-                ..default()
-            },
+        .spawn((Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::FlexEnd, // Align to bottom
+            align_items: AlignItems::Center,
             ..default()
-        })
+        },))
         .with_children(|parent| {
             // Weapon Select Panel
             parent
-                .spawn(NodeBundle {
-                    style: Style {
+                .spawn((
+                    Node {
                         width: Val::Px(600.0),
                         height: Val::Px(100.0),
                         justify_content: JustifyContent::SpaceEvenly,
@@ -58,18 +59,17 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                         margin: UiRect::bottom(Val::Px(20.0)),
                         ..default()
                     },
-                    background_color: BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
-                    ..default()
-                })
+                    BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+                ))
                 .with_children(|panel| {
                     // Text Label
-                    panel.spawn(TextBundle::from_section(
-                        "Left Hand (Q) [Click to Set]:",
-                        TextStyle {
+                    panel.spawn((
+                        Text::new("Left Hand (Q) [Click to Set]:"),
+                        TextFont {
                             font_size: 16.0,
-                            color: Color::WHITE,
                             ..default()
                         },
+                        TextColor(Color::WHITE),
                     ));
 
                     // Buttons for Left Hand
@@ -79,22 +79,19 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                     spawn_weapon_button(panel, HandType::Left, WeaponType::Magic, "Magic");
 
                     // Spacer
-                    panel.spawn(NodeBundle {
-                        style: Style {
-                            width: Val::Px(20.0),
-                            ..default()
-                        },
+                    panel.spawn((Node {
+                        width: Val::Px(20.0),
                         ..default()
-                    });
+                    },));
 
                     // Text Label
-                    panel.spawn(TextBundle::from_section(
-                        "Right Hand (E) [Click to Set]:",
-                        TextStyle {
+                    panel.spawn((
+                        Text::new("Right Hand (E) [Click to Set]:"),
+                        TextFont {
                             font_size: 16.0,
-                            color: Color::WHITE,
                             ..default()
                         },
+                        TextColor(Color::WHITE),
                     ));
 
                     // Buttons for Right Hand
@@ -110,8 +107,8 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
 
             // Shop Menu (Initially Hidden)
             parent
-                .spawn(NodeBundle {
-                    style: Style {
+                .spawn((
+                    Node {
                         width: Val::Px(400.0),
                         height: Val::Px(300.0),
                         position_type: PositionType::Absolute,
@@ -124,18 +121,17 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                         display: Display::None, // Hidden by default
                         ..default()
                     },
-                    background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
-                    ..default()
-                })
+                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
+                ))
                 .insert(ShopMenu)
                 .with_children(|shop| {
-                    shop.spawn(TextBundle::from_section(
-                        "--- SHOP ---",
-                        TextStyle {
+                    shop.spawn((
+                        Text::new("--- SHOP ---"),
+                        TextFont {
                             font_size: 30.0,
-                            color: Color::WHITE,
                             ..default()
                         },
+                        TextColor(Color::WHITE),
                     ));
 
                     spawn_shop_button(shop, ShopButton::Heal, "Heal (+30 HP)");
@@ -145,10 +141,11 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
         });
 }
 
-fn spawn_shop_button(parent: &mut ChildBuilder, btn_type: ShopButton, label: &str) {
+fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, label: &str) {
     parent
-        .spawn(ButtonBundle {
-            style: Style {
+        .spawn((
+            Button,
+            Node {
                 width: Val::Px(250.0),
                 height: Val::Px(50.0),
                 margin: UiRect::all(Val::Px(10.0)),
@@ -156,26 +153,31 @@ fn spawn_shop_button(parent: &mut ChildBuilder, btn_type: ShopButton, label: &st
                 align_items: AlignItems::Center,
                 ..default()
             },
-            background_color: BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
-            ..default()
-        })
+            BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
+        ))
         .insert(btn_type)
         .with_children(|btn| {
-            btn.spawn(TextBundle::from_section(
-                label,
-                TextStyle {
+            btn.spawn((
+                Text::new(label),
+                TextFont {
                     font_size: 20.0,
-                    color: Color::WHITE,
                     ..default()
                 },
+                TextColor(Color::WHITE),
             ));
         });
 }
 
-fn spawn_weapon_button(parent: &mut ChildBuilder, side: HandType, kind: WeaponType, label: &str) {
+fn spawn_weapon_button(
+    parent: &mut ChildSpawnerCommands,
+    side: HandType,
+    kind: WeaponType,
+    label: &str,
+) {
     parent
-        .spawn(ButtonBundle {
-            style: Style {
+        .spawn((
+            Button,
+            Node {
                 width: Val::Px(80.0),
                 height: Val::Px(40.0),
                 justify_content: JustifyContent::Center,
@@ -183,26 +185,25 @@ fn spawn_weapon_button(parent: &mut ChildBuilder, side: HandType, kind: WeaponTy
                 margin: UiRect::all(Val::Px(5.0)),
                 ..default()
             },
-            background_color: BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
-            ..default()
-        })
+            BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
+        ))
         .insert(WeaponButton { side, kind })
         .with_children(|btn| {
-            btn.spawn(TextBundle::from_section(
-                label,
-                TextStyle {
+            btn.spawn((
+                Text::new(label),
+                TextFont {
                     font_size: 14.0,
-                    color: Color::WHITE,
                     ..default()
                 },
+                TextColor(Color::WHITE),
             ));
         });
 }
 
-fn spawn_magic_panel(parent: &mut ChildBuilder, side: HandType) {
+fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
     parent
-        .spawn(NodeBundle {
-            style: Style {
+        .spawn((
+            Node {
                 width: Val::Px(600.0),
                 height: Val::Px(60.0),
                 justify_content: JustifyContent::Center,
@@ -211,28 +212,28 @@ fn spawn_magic_panel(parent: &mut ChildBuilder, side: HandType) {
                 display: Display::None, // Hidden by default
                 ..default()
             },
-            background_color: BackgroundColor(Color::srgba(0.2, 0.0, 0.2, 0.8)),
-            ..default()
-        })
+            BackgroundColor(Color::srgba(0.2, 0.0, 0.2, 0.8)),
+        ))
         .insert(MagicPanel { side })
         .with_children(|panel| {
             let label = match side {
                 HandType::Left => "Left Magic (Q): ",
                 HandType::Right => "Right Magic (E): ",
             };
-            panel.spawn(TextBundle::from_section(
-                label,
-                TextStyle {
+            panel.spawn((
+                Text::new(label),
+                TextFont {
                     font_size: 16.0,
-                    color: Color::WHITE,
                     ..default()
                 },
+                TextColor(Color::WHITE),
             ));
 
             // Primary Cycle Button
             panel
-                .spawn(ButtonBundle {
-                    style: Style {
+                .spawn((
+                    Button,
+                    Node {
                         width: Val::Px(180.0),
                         height: Val::Px(40.0),
                         justify_content: JustifyContent::Center,
@@ -240,28 +241,28 @@ fn spawn_magic_panel(parent: &mut ChildBuilder, side: HandType) {
                         margin: UiRect::all(Val::Px(10.0)),
                         ..default()
                     },
-                    background_color: BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
-                    ..default()
-                })
+                    BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
+                ))
                 .insert(MagicCycleButton {
                     side,
                     is_primary: true,
                 })
                 .with_children(|btn| {
-                    btn.spawn(TextBundle::from_section(
-                        "Primary: Bolt",
-                        TextStyle {
+                    btn.spawn((
+                        Text::new("Primary: Bolt"),
+                        TextFont {
                             font_size: 14.0,
-                            color: Color::WHITE,
                             ..default()
                         },
+                        TextColor(Color::WHITE),
                     ));
                 });
 
             // Secondary Cycle Button
             panel
-                .spawn(ButtonBundle {
-                    style: Style {
+                .spawn((
+                    Button,
+                    Node {
                         width: Val::Px(180.0),
                         height: Val::Px(40.0),
                         justify_content: JustifyContent::Center,
@@ -269,21 +270,20 @@ fn spawn_magic_panel(parent: &mut ChildBuilder, side: HandType) {
                         margin: UiRect::all(Val::Px(10.0)),
                         ..default()
                     },
-                    background_color: BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
-                    ..default()
-                })
+                    BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
+                ))
                 .insert(MagicCycleButton {
                     side,
                     is_primary: false,
                 })
                 .with_children(|btn| {
-                    btn.spawn(TextBundle::from_section(
-                        "Secondary: Blink",
-                        TextStyle {
+                    btn.spawn((
+                        Text::new("Secondary: Blink"),
+                        TextFont {
                             font_size: 14.0,
-                            color: Color::WHITE,
                             ..default()
                         },
+                        TextColor(Color::WHITE),
                     ));
                 });
         });
@@ -351,16 +351,16 @@ pub fn weapon_button_interaction(
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_shop_visibility(
-    mut shop_query: Query<&mut Style, With<ShopMenu>>,
+    mut shop_query: Query<&mut Node, With<ShopMenu>>,
     round_manager: Res<crate::resources::round::RoundManager>,
 ) {
-    for mut style in &mut shop_query {
+    for mut node in &mut shop_query {
         match round_manager.round_state {
             crate::resources::round::RoundState::Shop => {
-                style.display = Display::Flex;
+                node.display = Display::Flex;
             }
             _ => {
-                style.display = Display::None;
+                node.display = Display::None;
             }
         }
     }
@@ -388,7 +388,7 @@ pub fn shop_button_interaction(
                 *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
                 match btn_type {
                     ShopButton::Heal => {
-                        if let Ok(mut player) = player_query.get_single_mut() {
+                        if let Ok(mut player) = player_query.single_mut() {
                             player.health = (player.health + 30.0).min(100.0);
                             println!("Healed! Health: {}", player.health);
                         }
@@ -416,7 +416,7 @@ pub fn shop_button_interaction(
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_magic_ui(
-    mut panel_query: Query<(&mut Style, &MagicPanel)>,
+    mut panel_query: Query<(&mut Node, &MagicPanel)>,
     hand_query: Query<&Hand>,
     // button_query: Query<(&mut Text, &MagicCycleButton), Without<MagicPanel>>,
     button_node_query: Query<(&Children, &MagicCycleButton)>,
@@ -424,7 +424,7 @@ pub fn update_magic_ui(
     loadout_query: Query<&MagicLoadout>,
 ) {
     // 1. Update Panel Visibility
-    for (mut style, panel) in &mut panel_query {
+    for (mut node, panel) in &mut panel_query {
         let mut is_magic = false;
         for hand in hand_query.iter() {
             if hand.side == panel.side && hand.equipped_weapon == Some(WeaponType::Magic) {
@@ -432,9 +432,9 @@ pub fn update_magic_ui(
             }
         }
         if is_magic {
-            style.display = Display::Flex;
+            node.display = Display::Flex;
         } else {
-            style.display = Display::None;
+            node.display = Display::None;
         }
     }
 
@@ -469,7 +469,7 @@ pub fn update_magic_ui(
 
             for &child in children {
                 if let Ok(mut text) = text_query.get_mut(child) {
-                    text.sections[0].value = format!("{prefix}: {spell_name}");
+                    **text = format!("{prefix}: {spell_name}");
                 }
             }
         }

@@ -26,7 +26,7 @@ pub fn update_camera_shake(
     >,
 ) {
     // Decay trauma
-    shake.trauma = (shake.trauma - time.delta_seconds()).max(0.0);
+    shake.trauma = (shake.trauma - time.delta_secs()).max(0.0);
 
     let shake_amount = shake.trauma.powi(2) * 20.0; // Max 20px shake
 
@@ -35,7 +35,7 @@ pub fn update_camera_shake(
     let offset_y = rng.gen_range(-1.0..1.0) * shake_amount;
 
     // Camera follows player + Shake
-    if let Ok(player_tf) = player_query.get_single() {
+    if let Ok(player_tf) = player_query.single() {
         for mut cam_tf in &mut camera_query {
             cam_tf.translation.x = player_tf.translation.x + offset_x;
             cam_tf.translation.y = player_tf.translation.y + offset_y;
@@ -67,14 +67,11 @@ pub fn spawn_trails(
         if proj.speed > 100.0 {
             // Only moving projectiles
             commands.spawn((
-                bevy::sprite::MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(Circle::new(3.0))).into(), // Small dot
-                    material: materials.add(Color::srgba(1.0, 1.0, 1.0, 0.3)), // Faint white
-                    transform: Transform::from_translation(
-                        transform.translation - transform.local_x() * 10.0,
-                    ), // Behind slightly?
-                    ..default()
-                },
+                (
+                    Mesh2d(meshes.add(Circle::new(3.0))), // Small dot
+                    MeshMaterial2d(materials.add(Color::srgba(1.0, 1.0, 1.0, 0.3))), // Faint white
+                    Transform::from_translation(transform.translation - transform.local_x() * 10.0), // Behind slightly?
+                ),
                 crate::components::weapon::Lifetime {
                     timer: Timer::from_seconds(0.3, TimerMode::Once),
                 },

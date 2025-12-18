@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::sprite::MaterialMesh2dBundle;
 use bevy_rapier2d::prelude::*;
 use rand::Rng;
 
@@ -18,7 +17,7 @@ pub fn spawn_waves(
     enemy_query: Query<&Enemy>, // To count alive enemies
     player_query: Query<&Transform, With<Player>>,
 ) {
-    let Ok(tf) = player_query.get_single() else {
+    let Ok(tf) = player_query.single() else {
         return;
     };
     let player_pos = tf.translation.truncate();
@@ -26,7 +25,7 @@ pub fn spawn_waves(
     match round_manager.round_state {
         RoundState::Spawning => {
             round_manager.spawn_timer.tick(time.delta());
-            if round_manager.spawn_timer.finished() {
+            if round_manager.spawn_timer.is_finished() {
                 if round_manager.enemies_to_spawn > 0 {
                     spawn_random_enemy(&mut commands, &mut meshes, &mut materials, player_pos);
                     round_manager.enemies_to_spawn -= 1;
@@ -48,7 +47,7 @@ pub fn spawn_waves(
         }
         RoundState::Shop => {
             round_manager.round_timer.tick(time.delta());
-            if round_manager.round_timer.finished() {
+            if round_manager.round_timer.is_finished() {
                 // Next Round
                 round_manager.current_round += 1;
                 round_manager.enemies_to_spawn = 10 + (round_manager.current_round * 5); // Scale up
@@ -80,12 +79,11 @@ fn spawn_random_enemy(
     let spawn_pos = player_pos + Vec2::new(x, y);
 
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(Mesh::from(Circle::new(15.0))).into(),
-            material: materials.add(Color::from(bevy::color::palettes::css::RED)),
-            transform: Transform::from_translation(spawn_pos.extend(0.1)),
-            ..default()
-        },
+        (
+            Mesh2d(meshes.add(Circle::new(15.0))),
+            MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::RED))),
+            Transform::from_translation(spawn_pos.extend(0.1)),
+        ),
         RigidBody::Dynamic,
         Collider::ball(15.0),
         Velocity::default(),
@@ -108,7 +106,7 @@ pub fn enemy_chase_player(
     mut enemy_query: Query<(&mut Velocity, &Transform, &Enemy)>,
     player_query: Query<&Transform, With<Player>>,
 ) {
-    let Ok(player_transform) = player_query.get_single() else {
+    let Ok(player_transform) = player_query.single() else {
         return;
     };
     let player_pos = player_transform.translation.truncate();
