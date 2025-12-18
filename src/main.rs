@@ -52,8 +52,7 @@ fn main() {
                 systems::ui::magic_button_interaction,
                 systems::damage_text::spawn_damage_text,
                 systems::damage_text::update_damage_text,
-            )
-                .run_if(in_state(GameState::AssetLoading)),
+            ),
         ) // TEMPORARY
         .add_systems(Startup, systems::ui::setup_ui)
         .run();
