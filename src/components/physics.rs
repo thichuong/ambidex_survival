@@ -60,7 +60,29 @@ impl UniformGrid {
 
         result
     }
+    /// Query all entities in grid cells intersecting the given AABB (min, max)
+    #[must_use]
+    pub fn query_aabb(&self, min: Vec2, max: Vec2) -> Vec<Entity> {
+        let (min_x, min_y) = self.cell_coords(min);
+        let (max_x, max_y) = self.cell_coords(max);
+        let mut result = Vec::new();
+
+        for x in min_x..=max_x {
+            for y in min_y..=max_y {
+                if let Some(entities) = self.cells.get(&(x, y)) {
+                    result.extend(entities.iter().copied());
+                }
+            }
+        }
+
+        result
+    }
 }
+
+/// Component to mark entities that should ignore the grid for collision checks
+/// Used for global or very large/long projectiles (like Laser/Global spells)
+#[derive(Component)]
+pub struct IgnoreGrid;
 
 /// Custom velocity component for physics simulation
 #[derive(Component, Default, Clone, Copy)]

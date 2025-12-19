@@ -1,5 +1,5 @@
 use crate::components::enemy::Enemy;
-use crate::components::physics::{Collider, UniformGrid, Velocity, check_collision};
+use crate::components::physics::{Collider, IgnoreGrid, UniformGrid, Velocity, check_collision};
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{
     ActiveSpellSlot, AoEProjectile, ExplodingProjectile, GunMode, GunState, Lifetime, MagicLoadout,
@@ -280,6 +280,7 @@ fn cast_spell(
                         timer: Timer::from_seconds(laser::LIFETIME, TimerMode::Once),
                     },
                     AoEProjectile::default(),
+                    IgnoreGrid,
                 ))
                 .with_children(|parent| {
                     parent.spawn((
@@ -334,6 +335,7 @@ fn cast_spell(
                     timer: Timer::from_seconds(global::LIFETIME, TimerMode::Once),
                 },
                 AoEProjectile::default(),
+                IgnoreGrid,
             ));
         }
     }
@@ -593,23 +595,48 @@ pub fn resolve_damage(
         &Transform,
         &Collider,
         Option<&mut AoEProjectile>,
+        Option<&IgnoreGrid>,
     )>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy, &Collider), Without<Player>>,
     grid: Res<UniformGrid>,
     mut res: CombatResources,
     mut damage_events: MessageWriter<DamageEvent>,
 ) -> Result<(), String> {
-    for (proj_entity, projectile, projectile_transform, proj_collider, mut aoe_opt) in
+    for (proj_entity, projectile, projectile_transform, proj_collider, mut aoe_opt, ignore_grid) in
         &mut projectile_query
     {
         let proj_pos = projectile_transform.translation.truncate();
         let is_aoe = aoe_opt.is_some();
         let mut hits: Vec<(Entity, f32, Vec3)> = Vec::new();
 
-        // Use spatial grid to check only nearby enemies
-        let nearby_enemies = grid.query_nearby(proj_pos);
+        // Use spatial grid to check only nearby enemies, unless ignoring grid implies wider search
+        let candidates = if ignore_grid.is_some() {
+            let (min, max) = match proj_collider {
+                Collider::Circle { radius } => (proj_pos - *radius, proj_pos + *radius),
+                Collider::Rectangle {
+                    half_width,
+                    half_height,
+                } => {
+                    let half = Vec2::new(*half_width, *half_height);
+                    (proj_pos - half, proj_pos + half)
+                }
+                Collider::Line {
+                    direction,
+                    length,
+                    width,
+                } => {
+                    let end_pos = proj_pos + *direction * *length;
+                    let min_pos = proj_pos.min(end_pos) - *width;
+                    let max_pos = proj_pos.max(end_pos) + *width;
+                    (min_pos, max_pos)
+                }
+            };
+            grid.query_aabb(min, max)
+        } else {
+            grid.query_nearby(proj_pos)
+        };
 
-        for enemy_entity in nearby_enemies {
+        for enemy_entity in candidates {
             if let Ok((entity, enemy_transform, enemy, enemy_collider)) =
                 enemy_query.get(enemy_entity)
             {
