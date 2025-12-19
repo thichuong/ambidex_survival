@@ -697,43 +697,64 @@ pub fn update_sword_mechanics(
 
         match swing.state {
             SwingState::Swinging => {
+                // Calculate current swing progress (0.0 to 1.0)
+                let progress = swing.timer.fraction();
+
+                // Swing from -90 degrees to +90 degrees (180-degree arc)
+                // Mouse cursor is at the center (base_angle)
+                let current_angle = swing.base_angle + (progress - 0.5) * std::f32::consts::PI;
+                transform.rotation = Quat::from_rotation_z(current_angle);
+
                 if !swing.damage_dealt {
                     let sweep_radius = swing.range;
+
                     for (enemy_entity, enemy_tf, mut enemy) in &mut enemy_query {
                         let to_enemy =
                             enemy_tf.translation.truncate() - transform.translation.truncate();
-                        if to_enemy.length_squared() <= sweep_radius * sweep_radius {
-                            enemy.health -= swing.damage;
-                            damage_events.write(DamageEvent {
-                                damage: swing.damage,
-                                position: enemy_tf.translation.truncate(),
-                            });
-                            res.shake.add_trauma(0.2);
-                            if enemy.health <= 0.0 {
-                                commands.entity(enemy_entity).despawn();
-                                res.shake.add_trauma(0.4);
+                        let distance = to_enemy.length();
 
-                                let mut rng = rand::thread_rng();
-                                for _ in 0..5 {
-                                    let dir = Vec2::new(
-                                        rng.gen_range(-1.0..1.0),
-                                        rng.gen_range(-1.0..1.0),
-                                    )
-                                    .normalize_or_zero();
-                                    commands.spawn((
-                                        Mesh2d(res.meshes.add(Circle::new(3.0))),
-                                        MeshMaterial2d(
-                                            res.materials.add(Color::srgb(1.0, 0.0, 0.0)),
-                                        ),
-                                        Transform::from_translation(enemy_tf.translation),
-                                        Velocity {
-                                            linvel: dir * 100.0,
-                                            angvel: 0.0,
-                                        },
-                                        Lifetime {
-                                            timer: Timer::from_seconds(0.5, TimerMode::Once),
-                                        },
-                                    ));
+                        if distance <= sweep_radius && distance > 0.0 {
+                            // Check if enemy is within the 180-degree arc
+                            let enemy_direction = to_enemy / distance;
+                            let base_direction =
+                                Vec2::new(swing.base_angle.cos(), swing.base_angle.sin());
+                            let dot = enemy_direction.dot(base_direction);
+
+                            // dot > 0 means the angle is less than 90 degrees from base_angle
+                            // This creates a 180-degree arc centered on the mouse cursor
+                            if dot > 0.0 {
+                                enemy.health -= swing.damage;
+                                damage_events.write(DamageEvent {
+                                    damage: swing.damage,
+                                    position: enemy_tf.translation.truncate(),
+                                });
+                                res.shake.add_trauma(0.2);
+                                if enemy.health <= 0.0 {
+                                    commands.entity(enemy_entity).despawn();
+                                    res.shake.add_trauma(0.4);
+
+                                    let mut rng = rand::thread_rng();
+                                    for _ in 0..5 {
+                                        let dir = Vec2::new(
+                                            rng.gen_range(-1.0..1.0),
+                                            rng.gen_range(-1.0..1.0),
+                                        )
+                                        .normalize_or_zero();
+                                        commands.spawn((
+                                            Mesh2d(res.meshes.add(Circle::new(3.0))),
+                                            MeshMaterial2d(
+                                                res.materials.add(Color::srgb(1.0, 0.0, 0.0)),
+                                            ),
+                                            Transform::from_translation(enemy_tf.translation),
+                                            Velocity {
+                                                linvel: dir * 100.0,
+                                                angvel: 0.0,
+                                            },
+                                            Lifetime {
+                                                timer: Timer::from_seconds(0.5, TimerMode::Once),
+                                            },
+                                        ));
+                                    }
                                 }
                             }
                         }
