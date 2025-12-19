@@ -64,14 +64,17 @@
             }
         }
     </style>
-    <!-- Service Worker Cleanup (To fix offline asset issue during dev) -->
+    <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function (registrations) {
-                for (let registration of registrations) {
-                    console.log('Unregistering sw:', registration);
-                    registration.unregister();
-                }
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => {
+                        console.log('Service Worker registered', reg);
+                        // Optional: Check for updates
+                        reg.update();
+                    })
+                    .catch(err => console.error('Service Worker registration failed', err));
             });
         }
     </script>
