@@ -23,6 +23,7 @@ pub struct WeaponMenuUI;
 
 #[derive(Component)]
 pub struct HUDHandIndicator {
+    #[allow(dead_code)]
     pub side: HandType,
 }
 
@@ -31,6 +32,7 @@ pub struct MenuButton;
 
 #[derive(Component)]
 pub struct MagicPanel {
+    #[allow(dead_code)]
     pub side: HandType,
 }
 
@@ -45,6 +47,7 @@ pub struct HUDIcon {
     pub side: HandType,
 }
 
+#[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Root UI Node (HUD)
     commands
@@ -639,7 +642,7 @@ pub fn update_ui_visibility(
     Ok(())
 }
 
-#[allow(clippy::unnecessary_wraps)]
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn update_hud_indicators(
     mut icon_query: Query<(&HUDIcon, &mut ImageNode)>,
     hand_query: Query<(
@@ -655,7 +658,7 @@ pub fn update_hud_indicators(
             hand_query.iter().find(|(h, _, _, _)| h.side == icon.side)
         {
             let icon_path = match hand.equipped_weapon {
-                Some(WeaponType::Shuriken) => "ui/icons/shuriken.png",
+                Some(WeaponType::Shuriken) | None => "ui/icons/shuriken.png", // Default fallback
                 Some(WeaponType::Sword) => match sword.mode {
                     crate::components::weapon::SwordMode::Normal => "ui/icons/sword_normal.png",
                     crate::components::weapon::SwordMode::Shattered => {
@@ -683,7 +686,6 @@ pub fn update_hud_indicators(
                         SpellType::Global => "ui/icons/magic_global.png",
                     }
                 }
-                None => "ui/icons/shuriken.png", // Default fallback
             };
 
             image_node.image = asset_server.load(icon_path);
