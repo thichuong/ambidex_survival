@@ -24,22 +24,80 @@
             height: 100% !important;
             display: block;
         }
+
+        /* Loading Screen Styles */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-family: monospace;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #333;
+            border-top: 5px solid #00ff00;
+            /* Hacker green */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
-    <!-- Service Worker commented out for debugging
+    <!-- Service Worker Cleanup (To fix offline asset issue during dev) -->
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker registered', reg))
-                    .catch(err => console.error('Service Worker registration failed', err));
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (let registration of registrations) {
+                    console.log('Unregistering sw:', registration);
+                    registration.unregister();
+                }
             });
         }
     </script>
-    -->
     <link data-trunk rel="copy-dir" href="assets" />
 </head>
 
 <body>
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p>Loading Game Assets...</p>
+    </div>
+
+    <!-- Script to hide loading screen when Canvas appears (game starts) -->
+    <script>
+        const observer = new MutationObserver((mutations) => {
+            if (document.querySelector('canvas')) {
+                const loader = document.getElementById('loading-screen');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.remove(), 500);
+                    observer.disconnect();
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    </script>
 </body>
 
 </html>

@@ -3,7 +3,7 @@ target = "index.html"
 dist = "dist"
 public_url = "/"
 no_sri = true
-wasm_opt = "-O4"
+wasm_opt = "-Oz"
 
 [watch]
 ignore = ["./dist"]

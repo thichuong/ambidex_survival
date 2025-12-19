@@ -22,9 +22,11 @@ wasm-bindgen = "0.2"
 opt-level = 3
 
 [profile.release]
+opt-level = "z"
 lto = true
 codegen-units = 1
 panic = "abort"
+strip = true
 
 [lints.clippy]
 pedantic = "warn"
