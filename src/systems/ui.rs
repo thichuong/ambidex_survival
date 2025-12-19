@@ -40,7 +40,12 @@ pub struct MagicCycleButton {
     pub is_primary: bool, // true = primary, false = secondary
 }
 
-pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
+#[derive(Component)]
+pub struct HUDIcon {
+    pub side: HandType,
+}
+
+pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Root UI Node (HUD)
     commands
         .spawn((
@@ -75,12 +80,13 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                 ))
                 .with_children(|btn| {
                     btn.spawn((
-                        Text::new(""),
-                        TextFont {
-                            font_size: 40.0,
+                        ImageNode::new(asset_server.load("ui/icons/shuriken.png")),
+                        Node {
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
                             ..default()
                         },
-                        TextColor(Color::WHITE),
+                        HUDIcon { side: HandType::Left },
                     ));
                 });
 
@@ -133,12 +139,13 @@ pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
                 ))
                 .with_children(|btn| {
                     btn.spawn((
-                        Text::new(""),
-                        TextFont {
-                            font_size: 40.0,
+                        ImageNode::new(asset_server.load("ui/icons/shuriken.png")),
+                        Node {
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
                             ..default()
                         },
-                        TextColor(Color::WHITE),
+                        HUDIcon { side: HandType::Right },
                     ));
                 });
         });
@@ -634,51 +641,32 @@ pub fn update_ui_visibility(
 
 #[allow(clippy::unnecessary_wraps)]
 pub fn update_hud_indicators(
-    mut indicator_query: Query<(&Children, &HUDHandIndicator, &mut BackgroundColor)>,
-    mut text_query: Query<(&mut Text, &mut TextColor)>,
+    mut icon_query: Query<(&HUDIcon, &mut ImageNode)>,
     hand_query: Query<(
         &Hand,
         &crate::components::weapon::SwordState,
         &crate::components::weapon::GunState,
         &MagicLoadout,
     )>,
+    asset_server: Res<AssetServer>,
 ) -> Result<(), String> {
-    for (children, indicator, mut bg_color) in &mut indicator_query {
-        if let Some((hand, sword, gun, magic)) = hand_query
-            .iter()
-            .find(|(h, _, _, _)| h.side == indicator.side)
+    for (icon, mut image_node) in &mut icon_query {
+        if let Some((hand, sword, gun, magic)) =
+            hand_query.iter().find(|(h, _, _, _)| h.side == icon.side)
         {
-            let (symbol, color, bg) = match hand.equipped_weapon {
-                Some(WeaponType::Shuriken) => (
-                    "SHR\n(*)".to_string(),
-                    Color::srgba(0.0, 1.0, 1.0, 1.0), // Cyan
-                    Color::srgba(0.0, 0.2, 0.2, 0.8),
-                ),
-                Some(WeaponType::Sword) => {
-                    let (s, c) = match sword.mode {
-                        crate::components::weapon::SwordMode::Normal => {
-                            ("SWD\n[ | ]", Color::WHITE)
-                        }
-                        crate::components::weapon::SwordMode::Shattered => {
-                            ("SWD\n[/ /]", Color::srgba(0.8, 0.8, 1.0, 1.0))
-                        }
-                    };
-                    (s.to_string(), c, Color::srgba(0.2, 0.2, 0.3, 0.8))
-                }
-                Some(WeaponType::Gun) => {
-                    let (s, c) = match gun.mode {
-                        crate::components::weapon::GunMode::Single => {
-                            ("GUN\n< - >", Color::srgb(1.0, 0.8, 0.0))
-                        }
-                        crate::components::weapon::GunMode::Shotgun => {
-                            ("GUN\n< = >", Color::srgb(1.0, 0.6, 0.0))
-                        }
-                        crate::components::weapon::GunMode::Rapid => {
-                            ("GUN\n< >> >", Color::srgb(1.0, 0.4, 0.0))
-                        }
-                    };
-                    (s.to_string(), c, Color::srgba(0.3, 0.2, 0.0, 0.8))
-                }
+            let icon_path = match hand.equipped_weapon {
+                Some(WeaponType::Shuriken) => "ui/icons/shuriken.png",
+                Some(WeaponType::Sword) => match sword.mode {
+                    crate::components::weapon::SwordMode::Normal => "ui/icons/sword_normal.png",
+                    crate::components::weapon::SwordMode::Shattered => {
+                        "ui/icons/sword_shattered.png"
+                    }
+                },
+                Some(WeaponType::Gun) => match gun.mode {
+                    crate::components::weapon::GunMode::Single => "ui/icons/gun_single.png",
+                    crate::components::weapon::GunMode::Shotgun => "ui/icons/gun_shotgun.png",
+                    crate::components::weapon::GunMode::Rapid => "ui/icons/gun_rapid.png",
+                },
                 Some(WeaponType::Magic) => {
                     let spell = if magic.active_slot
                         == crate::components::weapon::ActiveSpellSlot::Primary
@@ -687,34 +675,18 @@ pub fn update_hud_indicators(
                     } else {
                         magic.secondary
                     };
-                    let (spell_sym, spell_color) = match spell {
-                        SpellType::EnergyBolt => ("BOLT", Color::srgb(0.8, 0.0, 1.0)),
-                        SpellType::Laser => ("LASER", Color::srgb(0.0, 1.0, 1.0)),
-                        SpellType::Nova => ("NOVA", Color::srgb(1.0, 0.0, 1.0)),
-                        SpellType::Blink => ("BLINK", Color::WHITE),
-                        SpellType::Global => ("ALL", Color::srgb(1.0, 1.0, 0.5)),
-                    };
-                    (
-                        format!("MAG\n{spell_sym}"),
-                        spell_color,
-                        Color::srgba(0.2, 0.0, 0.2, 0.8),
-                    )
+                    match spell {
+                        SpellType::EnergyBolt => "ui/icons/magic_bolt.png",
+                        SpellType::Laser => "ui/icons/magic_laser.png",
+                        SpellType::Nova => "ui/icons/magic_nova.png",
+                        SpellType::Blink => "ui/icons/magic_blink.png",
+                        SpellType::Global => "ui/icons/magic_global.png",
+                    }
                 }
-                None => (
-                    "EMPTY".to_string(),
-                    Color::WHITE,
-                    Color::srgba(0.1, 0.1, 0.1, 0.8),
-                ),
+                None => "ui/icons/shuriken.png", // Default fallback
             };
 
-            *bg_color = BackgroundColor(bg);
-
-            for &child in children {
-                if let Ok((mut text, mut text_color)) = text_query.get_mut(child) {
-                    **text = symbol.clone();
-                    *text_color = TextColor(color);
-                }
-            }
+            image_node.image = asset_server.load(icon_path);
         }
     }
     Ok(())
