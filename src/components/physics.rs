@@ -35,6 +35,12 @@ pub enum Collider {
     },
 }
 
+impl Default for Collider {
+    fn default() -> Self {
+        Self::Circle { radius: 15.0 }
+    }
+}
+
 impl Collider {
     #[must_use]
     pub const fn ball(radius: f32) -> Self {

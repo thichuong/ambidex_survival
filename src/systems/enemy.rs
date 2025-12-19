@@ -16,10 +16,10 @@ pub fn spawn_waves(
     mut materials: ResMut<Assets<ColorMaterial>>,
     enemy_query: Query<&Enemy>, // To count alive enemies
     player_query: Query<&Transform, With<Player>>,
-) {
-    let Ok(tf) = player_query.single() else {
-        return;
-    };
+) -> Result<(), String> {
+    let tf = player_query
+        .single()
+        .map_err(|e| format!("Player not found: {e:?}"))?;
     let player_pos = tf.translation.truncate();
 
     match round_manager.round_state {
@@ -60,6 +60,7 @@ pub fn spawn_waves(
             }
         }
     }
+    Ok(())
 }
 
 fn spawn_random_enemy(
@@ -99,10 +100,10 @@ fn spawn_random_enemy(
 pub fn enemy_chase_player(
     mut enemy_query: Query<(&mut Velocity, &Transform, &Enemy)>,
     player_query: Query<&Transform, With<Player>>,
-) {
-    let Ok(player_transform) = player_query.single() else {
-        return;
-    };
+) -> Result<(), String> {
+    let player_transform = player_query
+        .single()
+        .map_err(|e| format!("Player not found: {e:?}"))?;
     let player_pos = player_transform.translation.truncate();
 
     for (mut velocity, transform, enemy) in &mut enemy_query {
@@ -110,4 +111,5 @@ pub fn enemy_chase_player(
         let dir = (player_pos - pos).normalize_or_zero();
         velocity.linvel = dir * enemy.speed;
     }
+    Ok(())
 }

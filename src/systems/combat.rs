@@ -12,7 +12,7 @@ use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use rand::Rng;
 
-#[derive(Event, Message)]
+#[derive(Event, Message, Debug)]
 pub struct DamageEvent {
     pub damage: f32,
     pub position: Vec2,
@@ -43,8 +43,6 @@ pub struct CombatInputParams<'w, 's> {
     >,
 }
 
-#[allow(clippy::too_many_lines)]
-#[allow(clippy::needless_pass_by_value)]
 pub fn handle_combat_input(
     mut params: CombatInputParams,
     mut player_query: Query<(Entity, &mut Transform), With<Player>>,
@@ -57,30 +55,26 @@ pub fn handle_combat_input(
         &mut GunState,
         &mut Weapon,
     )>,
-    _enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<Player>>, // For Global spell
-) {
-    // ... (Keep early returns)
-    let Ok((camera, camera_transform)) = params.camera_query.single() else {
-        return;
-    };
-    let Ok(window) = params.window_query.single() else {
-        return;
-    };
+) -> Result<(), String> {
+    let (camera, camera_transform) = params
+        .camera_query
+        .single()
+        .map_err(|e| format!("Camera not found: {e:?}"))?;
+    let window = params
+        .window_query
+        .single()
+        .map_err(|e| format!("Window not found: {e:?}"))?;
 
-    let Some(cursor_pos) = window
+    let cursor_pos = window
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
         .map(|ray| ray.origin.truncate())
-    else {
-        return;
-    };
+        .ok_or_else(|| "Cursor position not available".to_string())?;
 
-    let Ok((player_entity, mut player_transform)) = player_query.single_mut() else {
-        return;
-    };
-    let _player_pos = player_transform.translation.truncate();
+    let (player_entity, mut player_transform) = player_query
+        .single_mut()
+        .map_err(|e| format!("Player not found: {e:?}"))?;
 
-    // Input States
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
     let right_pressed = params.mouse_input.pressed(MouseButton::Right);
     let left_just_pressed = params.mouse_input.just_pressed(MouseButton::Left);
@@ -100,10 +94,7 @@ pub fn handle_combat_input(
     ) in &mut hand_query
     {
         let hand_pos = hand_transform.translation().truncate();
-        let direction = (cursor_pos - hand_pos).normalize_or_zero();
-        let _angle = direction.y.atan2(direction.x);
 
-        // Input mapping
         let (is_pressed, is_just_pressed, skill_pressed) = match hand.side {
             HandType::Left => (left_pressed, left_just_pressed, q_just_pressed),
             HandType::Right => (right_pressed, right_just_pressed, e_just_pressed),
@@ -112,22 +103,17 @@ pub fn handle_combat_input(
         if let Some(weapon_type) = hand.equipped_weapon {
             match weapon_type {
                 WeaponType::Magic => {
-                    // Toggle Active Slot (Skill Key)
-                    // Magic Swap is instant (no cooldown) or very short? Let's keep it instant for fluidity.
                     if skill_pressed {
                         match magic_loadout.active_slot {
                             ActiveSpellSlot::Primary => {
-                                magic_loadout.active_slot = ActiveSpellSlot::Secondary;
-                                println!("Magic: Switched to Secondary Spell");
+                                magic_loadout.active_slot = ActiveSpellSlot::Secondary
                             }
                             ActiveSpellSlot::Secondary => {
-                                magic_loadout.active_slot = ActiveSpellSlot::Primary;
-                                println!("Magic: Switched to Primary Spell");
+                                magic_loadout.active_slot = ActiveSpellSlot::Primary
                             }
                         }
                     }
 
-                    // Cast Active Spell (Click)
                     let now = params.time.elapsed_secs();
                     if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
                         let spell_to_cast = match magic_loadout.active_slot {
@@ -147,7 +133,6 @@ pub fn handle_combat_input(
                     }
                 }
                 WeaponType::Gun => {
-                    // Gun Logic (Supports Rapid Fire)
                     let cooldown = match gun_state.mode {
                         GunMode::Rapid => gun::RAPID_COOLDOWN,
                         _ => gun::STANDARD_COOLDOWN,
@@ -168,15 +153,13 @@ pub fn handle_combat_input(
                             player_entity,
                             sword_state.mode,
                             gun_state.mode,
-                            hand_entity, // Pass Hand Entity
+                            hand_entity,
                         );
                         weapon_data.last_shot = params.time.elapsed_secs();
                     }
 
                     let now = params.time.elapsed_secs();
                     if skill_pressed {
-                        // Gun Mode Switch is instant/tactical, maybe small cooldown?
-                        // Let's add small cooldown to prevent accidental double taps
                         if now - weapon_data.last_skill_use >= gun::MODE_SWITCH_COOLDOWN
                             && perform_skill(
                                 &mut params,
@@ -195,7 +178,6 @@ pub fn handle_combat_input(
                     }
                 }
                 _ => {
-                    // Standard Weapons (Sword, Shuriken)
                     let now = params.time.elapsed_secs();
                     if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
                         fire_weapon(
@@ -204,9 +186,9 @@ pub fn handle_combat_input(
                             hand_pos,
                             cursor_pos,
                             player_entity,
-                            sword_state.mode, // Pass Mode
-                            gun_state.mode,   // Pass Gun Mode
-                            hand_entity,      // Pass Hand Entity
+                            sword_state.mode,
+                            gun_state.mode,
+                            hand_entity,
                         );
                         weapon_data.last_shot = now;
                     }
@@ -219,8 +201,8 @@ pub fn handle_combat_input(
                             cursor_pos,
                             player_entity,
                             &magic_loadout,
-                            &mut sword_state, // Pass State
-                            &mut gun_state,   // Pass Gun State
+                            &mut sword_state,
+                            &mut gun_state,
                             &mut player_transform,
                         )
                     {
@@ -230,9 +212,9 @@ pub fn handle_combat_input(
             }
         }
     }
+    Ok(())
 }
 
-#[allow(clippy::too_many_lines)]
 fn cast_spell(
     params: &mut CombatInputParams,
     spell: SpellType,
@@ -274,15 +256,12 @@ fn cast_spell(
             ));
         }
         SpellType::Laser => {
-            // Raycast / Long line - starts at spawn_pos, extends in direction
             params
                 .commands
                 .spawn((
                     Transform::from_translation(spawn_pos.extend(0.0))
                         .with_rotation(Quat::from_rotation_z(angle)),
                     Visibility::Visible,
-                    InheritedVisibility::default(),
-                    // Use Line collider - starts at spawn_pos and extends in direction
                     Collider::line(direction, laser::LENGTH, laser::WIDTH / 2.0),
                     Velocity::default(),
                     Projectile {
@@ -295,10 +274,9 @@ fn cast_spell(
                     Lifetime {
                         timer: Timer::from_seconds(laser::LIFETIME, TimerMode::Once),
                     },
-                    AoEProjectile::default(), // Damages all enemies without despawning
+                    AoEProjectile::default(),
                 ))
                 .with_children(|parent| {
-                    // Visual mesh offset to align with line collider
                     parent.spawn((
                         Mesh2d(
                             params
@@ -306,18 +284,14 @@ fn cast_spell(
                                 .add(Rectangle::new(laser::LENGTH, laser::WIDTH)),
                         ),
                         MeshMaterial2d(params.materials.add(Color::from(AQUA))),
-                        Transform::from_xyz(laser::LENGTH / 2.0, 0.0, 0.0), // Offset half-length to align
+                        Transform::from_xyz(laser::LENGTH / 2.0, 0.0, 0.0),
                     ));
                 });
         }
         SpellType::Nova => {
             params.commands.spawn((
                 Mesh2d(params.meshes.add(Circle::new(nova::RADIUS))),
-                MeshMaterial2d(
-                    params
-                        .materials
-                        .add(Color::srgb(1.0, 0.0, 1.0).with_alpha(0.4)),
-                ),
+                MeshMaterial2d(params.materials.add(Color::srgba(1.0, 0.0, 1.0, 0.4))),
                 Transform::from_translation(player_transform.translation),
                 Collider::ball(nova::RADIUS),
                 Velocity::default(),
@@ -331,23 +305,16 @@ fn cast_spell(
                 Lifetime {
                     timer: Timer::from_seconds(nova::LIFETIME, TimerMode::Once),
                 },
-                AoEProjectile::default(), // Damages all enemies without despawning
+                AoEProjectile::default(),
             ));
         }
         SpellType::Blink => {
             player_transform.translation = cursor_pos.extend(0.0);
-            println!("Blink!");
         }
         SpellType::Global => {
-            println!("Global Spell Used!");
-            // Global is now a massive Nova
             params.commands.spawn((
                 Mesh2d(params.meshes.add(Circle::new(global::RADIUS))),
-                MeshMaterial2d(
-                    params
-                        .materials
-                        .add(Color::srgb(1.0, 1.0, 1.0).with_alpha(0.1)),
-                ),
+                MeshMaterial2d(params.materials.add(Color::srgba(1.0, 1.0, 1.0, 0.1))),
                 Transform::from_translation(player_transform.translation),
                 Collider::ball(global::RADIUS),
                 Velocity::default(),
@@ -361,14 +328,12 @@ fn cast_spell(
                 Lifetime {
                     timer: Timer::from_seconds(global::LIFETIME, TimerMode::Once),
                 },
-                AoEProjectile::default(), // Damages all enemies without despawning
+                AoEProjectile::default(),
             ));
         }
     }
 }
 
-// ... (Keep existing perform_skill and fire_weapon functions, they are fine)
-#[allow(clippy::too_many_arguments)]
 fn perform_skill(
     params: &mut CombatInputParams,
     weapon_type: WeaponType,
@@ -382,14 +347,11 @@ fn perform_skill(
 ) -> bool {
     match weapon_type {
         WeaponType::Shuriken => {
-            // Teleport to closest projectile
             let mut closest_proj: Option<(Entity, Vec3)> = None;
-            let mut min_dist_sq = f32::MAX; // Use MAX to ensure we find any shuriken
+            let mut min_dist_sq = f32::MAX;
 
-            let mut count = 0;
             for (entity, proj_tf, proj, _) in params.projectile_query.iter() {
                 if proj.kind == WeaponType::Shuriken && proj.owner_entity == player_entity {
-                    count += 1;
                     let translation = proj_tf.translation();
                     let dist_sq = translation.truncate().distance_squared(cursor_pos);
                     if dist_sq < min_dist_sq {
@@ -400,7 +362,6 @@ fn perform_skill(
             }
 
             if let Some((entity, location)) = closest_proj {
-                // Teleport FX (at old position)
                 params.commands.spawn((
                     Mesh2d(params.meshes.add(Circle::new(15.0))),
                     MeshMaterial2d(params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5))),
@@ -409,12 +370,7 @@ fn perform_skill(
                         timer: Timer::from_seconds(0.2, TimerMode::Once),
                     },
                 ));
-
-                // Move Player
                 player_transform.translation = location;
-                println!("Skill: Shuriken Teleport to {location:?}");
-
-                // Teleport FX (at new position)
                 params.commands.spawn((
                     Mesh2d(params.meshes.add(Circle::new(15.0))),
                     MeshMaterial2d(params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5))),
@@ -423,44 +379,24 @@ fn perform_skill(
                         timer: Timer::from_seconds(0.2, TimerMode::Once),
                     },
                 ));
-
-                // Despawn the projectile used as anchor
                 params.commands.entity(entity).despawn();
                 true
             } else {
-                println!("Skill: No Shuriken found to teleport to! (Checked {count} shurikens)");
                 false
             }
         }
         WeaponType::Sword => {
-            // Toggle Mode
             match sword_state.mode {
-                SwordMode::Normal => {
-                    sword_state.mode = SwordMode::Shattered;
-                    println!("Sword Mode: Shattered!");
-                }
-                SwordMode::Shattered => {
-                    sword_state.mode = SwordMode::Normal;
-                    println!("Sword Mode: Normal!");
-                }
+                SwordMode::Normal => sword_state.mode = SwordMode::Shattered,
+                SwordMode::Shattered => sword_state.mode = SwordMode::Normal,
             }
             true
         }
         WeaponType::Gun => {
-            // Toggle Gun Mode
             match gun_state.mode {
-                GunMode::Single => {
-                    gun_state.mode = GunMode::Shotgun;
-                    println!("Gun Mode: Shotgun (Triple Shot)!");
-                }
-                GunMode::Shotgun => {
-                    gun_state.mode = GunMode::Rapid;
-                    println!("Gun Mode: Rapid Fire (Machine Gun)!");
-                }
-                GunMode::Rapid => {
-                    gun_state.mode = GunMode::Single;
-                    println!("Gun Mode: Single (Precision)!");
-                }
+                GunMode::Single => gun_state.mode = GunMode::Shotgun,
+                GunMode::Shotgun => gun_state.mode = GunMode::Rapid,
+                GunMode::Rapid => gun_state.mode = GunMode::Single,
             }
             true
         }
@@ -468,22 +404,19 @@ fn perform_skill(
     }
 }
 
-#[allow(clippy::too_many_lines)]
-#[allow(clippy::too_many_arguments)]
 fn fire_weapon(
     params: &mut CombatInputParams,
     weapon_type: WeaponType,
     spawn_pos: Vec2,
     target_pos: Vec2,
     owner: Entity,
-    sword_mode: SwordMode, // Added mode
-    gun_mode: GunMode,     // Added Gun Mode
-    hand_entity: Entity,   // Added Hand Entity
+    sword_mode: SwordMode,
+    gun_mode: GunMode,
+    hand_entity: Entity,
 ) {
     let direction = (target_pos - spawn_pos).normalize_or_zero();
     match weapon_type {
         WeaponType::Shuriken => {
-            // Limit number of shurikens
             let mut shurikens: Vec<(Entity, f32)> = params
                 .projectile_query
                 .iter()
@@ -492,13 +425,12 @@ fn fire_weapon(
                 .collect();
 
             if shurikens.len() >= shuriken::MAX_COUNT {
-                // Find oldest (one with least time remaining)
                 shurikens
                     .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
-                if let Some((oldest_entity, _)) = shurikens.first()
-                    && let Ok(mut e) = params.commands.get_entity(*oldest_entity)
-                {
-                    e.despawn();
+                if let Some((oldest_entity, _)) = shurikens.first() {
+                    if let Ok(mut e) = params.commands.get_entity(*oldest_entity) {
+                        e.despawn();
+                    }
                 }
             }
 
@@ -527,13 +459,11 @@ fn fire_weapon(
             let start_angle = direction.y.atan2(direction.x);
             match sword_mode {
                 SwordMode::Normal => {
-                    // Normal 2-Phase Sweep
                     params
                         .commands
                         .spawn((
                             Transform::from_translation(spawn_pos.extend(0.0)),
                             Visibility::Visible,
-                            InheritedVisibility::default(),
                             SwordSwing {
                                 state: SwingState::Swinging,
                                 timer: Timer::from_seconds(sword::NORMAL_TIMER, TimerMode::Once),
@@ -556,13 +486,11 @@ fn fire_weapon(
                         });
                 }
                 SwordMode::Shattered => {
-                    // Shattered 2-Phase Sweep (Skill Visuals/Stats)
                     params
                         .commands
                         .spawn((
                             Transform::from_translation(spawn_pos.extend(0.0)),
                             Visibility::Visible,
-                            InheritedVisibility::default(),
                             SwordSwing {
                                 state: SwingState::Swinging,
                                 timer: Timer::from_seconds(sword::SHATTERED_TIMER, TimerMode::Once),
@@ -575,7 +503,6 @@ fn fire_weapon(
                             },
                         ))
                         .with_children(|parent| {
-                            // Shattered Visuals
                             let mut rng = rand::thread_rng();
                             for _ in 0..40 {
                                 let dist = rng.gen_range(50.0..sword::SHATTERED_RANGE);
@@ -594,8 +521,6 @@ fn fire_weapon(
         }
         WeaponType::Gun => {
             let base_angle = direction.y.atan2(direction.x);
-
-            // Refactoring to handle dynamic spread or just handle it inside the loop
             let mut projectiles = Vec::new();
             match gun_mode {
                 GunMode::Single => projectiles.push((0.0, gun::SINGLE_DAMAGE, gun::SINGLE_SPEED)),
@@ -650,8 +575,6 @@ pub struct CombatResources<'w, 's> {
     pub exploding_query: Query<'w, 's, &'static ExplodingProjectile>,
 }
 
-#[allow(clippy::too_many_lines)]
-#[allow(clippy::needless_pass_by_value)]
 pub fn resolve_damage(
     mut commands: Commands,
     mut projectile_query: Query<(
@@ -664,42 +587,34 @@ pub fn resolve_damage(
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy, &Collider), Without<Player>>,
     mut res: CombatResources,
     mut damage_events: MessageWriter<DamageEvent>,
-) {
-    // Check Projectile vs Enemy using custom collision
+) -> Result<(), String> {
     for (proj_entity, projectile, projectile_transform, proj_collider, mut aoe_opt) in
         &mut projectile_query
     {
         let proj_pos = projectile_transform.translation.truncate();
         let is_aoe = aoe_opt.is_some();
-
-        // Collect entities to damage (avoiding borrow issues)
         let mut hits: Vec<(Entity, f32, Vec3)> = Vec::new();
 
         for (enemy_entity, enemy_transform, enemy, enemy_collider) in &enemy_query {
             let enemy_pos = enemy_transform.translation.truncate();
-
-            // Custom collision detection
             if check_collision(proj_pos, proj_collider, enemy_pos, enemy_collider)
                 && projectile.owner_entity != enemy_entity
             {
-                // For AoE projectiles, check if already damaged
-                if let Some(ref aoe) = aoe_opt
-                    && aoe.damaged_entities.contains(&enemy_entity) {
-                        continue; // Skip already damaged entities
+                if let Some(ref aoe) = aoe_opt {
+                    if aoe.damaged_entities.contains(&enemy_entity) {
+                        continue;
                     }
+                }
                 hits.push((enemy_entity, enemy.health, enemy_transform.translation));
             }
         }
 
-        // Apply damage
         let mut should_despawn = false;
-        for (enemy_entity, _old_health, enemy_pos) in &hits {
-            // Mark as damaged for AoE
+        for (enemy_entity, _, enemy_pos) in &hits {
             if let Some(ref mut aoe) = aoe_opt {
                 aoe.damaged_entities.push(*enemy_entity);
             }
 
-            // Get enemy again to apply damage
             if let Ok((_, _, mut enemy, _)) = enemy_query.get_mut(*enemy_entity) {
                 enemy.health -= projectile.damage;
                 damage_events.write(DamageEvent {
@@ -708,15 +623,11 @@ pub fn resolve_damage(
                 });
                 res.shake.add_trauma(0.1);
 
-                // Explosion Logic (only for non-AoE projectiles)
                 if !is_aoe {
                     if let Ok(exploding) = res.exploding_query.get(proj_entity) {
                         commands.spawn((
                             Mesh2d(res.meshes.add(Circle::new(exploding.radius))),
-                            MeshMaterial2d(
-                                res.materials
-                                    .add(Color::srgb(1.0, 0.5, 0.0).with_alpha(0.6)),
-                            ),
+                            MeshMaterial2d(res.materials.add(Color::srgba(1.0, 0.5, 0.0, 0.6))),
                             Transform::from_translation(projectile_transform.translation),
                             Collider::ball(exploding.radius),
                             Velocity::default(),
@@ -739,9 +650,7 @@ pub fn resolve_damage(
                 if enemy.health <= 0.0 {
                     commands.entity(*enemy_entity).despawn();
                     res.shake.add_trauma(0.3);
-                    println!("Enemy Killed!");
 
-                    // Spawn Particles
                     let mut rng = rand::thread_rng();
                     for _ in 0..5 {
                         let dir = Vec2::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0))
@@ -763,14 +672,13 @@ pub fn resolve_damage(
             }
         }
 
-        // Only despawn non-AoE projectiles after hit
         if should_despawn && !is_aoe {
             commands.entity(proj_entity).despawn();
         }
     }
+    Ok(())
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn update_sword_mechanics(
     mut commands: Commands,
     time: Res<Time>,
@@ -779,9 +687,8 @@ pub fn update_sword_mechanics(
     hand_query: Query<&GlobalTransform, With<Hand>>,
     mut res: CombatResources,
     mut damage_events: MessageWriter<DamageEvent>,
-) {
+) -> Result<(), String> {
     for (entity, mut swing, mut transform) in &mut sword_query {
-        // Sync Position with Hand
         if let Ok(hand_transform) = hand_query.get(swing.hand_entity) {
             transform.translation = hand_transform.translation().truncate().extend(0.0);
         }
@@ -790,58 +697,43 @@ pub fn update_sword_mechanics(
 
         match swing.state {
             SwingState::Swinging => {
-                // Damage Scan (First Frame)
                 if !swing.damage_dealt {
                     let sweep_radius = swing.range;
-                    let sweep_arc = std::f32::consts::PI; // 180 degrees
-
                     for (enemy_entity, enemy_tf, mut enemy) in &mut enemy_query {
                         let to_enemy =
                             enemy_tf.translation.truncate() - transform.translation.truncate();
-
-                        let dist_sq = to_enemy.length_squared();
-                        if dist_sq < sweep_radius * sweep_radius {
-                            let angle_to_enemy = to_enemy.y.atan2(to_enemy.x);
-                            let mut angle_diff = angle_to_enemy - swing.base_angle;
-                            // Normalize angle_diff to [-PI, PI]
-                            angle_diff = (angle_diff + std::f32::consts::PI)
-                                .rem_euclid(2.0 * std::f32::consts::PI)
-                                - std::f32::consts::PI;
-
-                            if angle_diff.abs() <= sweep_arc / 2.0 {
-                                enemy.health -= swing.damage;
-                                damage_events.write(DamageEvent {
-                                    damage: swing.damage,
-                                    position: enemy_tf.translation.truncate(),
-                                });
-                                res.shake.add_trauma(0.05);
+                        if to_enemy.length_squared() <= sweep_radius * sweep_radius {
+                            enemy.health -= swing.damage;
+                            damage_events.write(DamageEvent {
+                                damage: swing.damage,
+                                position: enemy_tf.translation.truncate(),
+                            });
+                            res.shake.add_trauma(0.2);
+                            if enemy.health <= 0.0 {
+                                commands.entity(enemy_entity).despawn();
+                                res.shake.add_trauma(0.4);
 
                                 let mut rng = rand::thread_rng();
-                                for _ in 0..3 {
+                                for _ in 0..5 {
                                     let dir = Vec2::new(
                                         rng.gen_range(-1.0..1.0),
                                         rng.gen_range(-1.0..1.0),
                                     )
                                     .normalize_or_zero();
                                     commands.spawn((
-                                        Mesh2d(res.meshes.add(Circle::new(2.0))),
+                                        Mesh2d(res.meshes.add(Circle::new(3.0))),
                                         MeshMaterial2d(
-                                            res.materials.add(Color::srgb(1.0, 0.5, 0.0)),
+                                            res.materials.add(Color::srgb(1.0, 0.0, 0.0)),
                                         ),
                                         Transform::from_translation(enemy_tf.translation),
                                         Velocity {
-                                            linvel: dir * 150.0,
+                                            linvel: dir * 100.0,
                                             angvel: 0.0,
                                         },
                                         Lifetime {
-                                            timer: Timer::from_seconds(0.3, TimerMode::Once),
+                                            timer: Timer::from_seconds(0.5, TimerMode::Once),
                                         },
                                     ));
-                                }
-
-                                if enemy.health <= 0.0 {
-                                    commands.entity(enemy_entity).despawn();
-                                    res.shake.add_trauma(0.2);
                                 }
                             }
                         }
@@ -849,17 +741,12 @@ pub fn update_sword_mechanics(
                     swing.damage_dealt = true;
                 }
 
-                // Animation
-                let progress = 1.0 - swing.timer.fraction_remaining();
-                let start_angle = -std::f32::consts::FRAC_PI_2;
-                let end_angle = std::f32::consts::FRAC_PI_2;
-                let current_angle =
-                    (end_angle - start_angle).mul_add(progress, swing.base_angle + start_angle);
-                transform.rotation = Quat::from_rotation_z(current_angle);
-
                 if swing.timer.is_finished() {
                     swing.state = SwingState::Recover;
-                    swing.timer = Timer::from_seconds(0.1, TimerMode::Once);
+                    swing
+                        .timer
+                        .set_duration(std::time::Duration::from_secs_f32(0.1));
+                    swing.timer.reset();
                 }
             }
             SwingState::Recover => {
@@ -869,18 +756,19 @@ pub fn update_sword_mechanics(
             }
         }
     }
+    Ok(())
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn manage_lifetime(
     mut commands: Commands,
     time: Res<Time>,
     mut query: Query<(Entity, &mut Lifetime)>,
-) {
+) -> Result<(), String> {
     for (entity, mut lifetime) in &mut query {
         lifetime.timer.tick(time.delta());
         if lifetime.timer.is_finished() {
             commands.entity(entity).despawn();
         }
     }
+    Ok(())
 }

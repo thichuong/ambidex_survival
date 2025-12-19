@@ -1,3 +1,4 @@
+use super::physics::{Collider, Velocity};
 use bevy::prelude::*;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
@@ -68,7 +69,7 @@ impl Default for MagicLoadout {
 }
 
 #[derive(Component)]
-#[allow(dead_code)]
+#[require(Transform, Visibility, Velocity, Collider)]
 pub struct Projectile {
     pub kind: WeaponType,
     pub damage: f32,
@@ -103,6 +104,7 @@ pub enum SwingState {
 }
 
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct SwordSwing {
     pub state: SwingState,
     pub timer: Timer,

@@ -1,11 +1,6 @@
 use crate::components::player::{Hand, HandType};
-
-use crate::components::weapon::WeaponType;
+use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
 use bevy::prelude::*;
-// ChildBuilder is in bevy::ecs::system or bevy::prelude.
-// Let's try to find it via grep if this fails, but for now let's try the common path.
-// ChildBuilder has been replaced by ChildSpawnerCommands in Bevy 0.17
-// No longer importing EntityCommands if not needed.
 
 #[derive(Component)]
 pub struct WeaponButton {
@@ -33,8 +28,6 @@ pub struct MagicCycleButton {
     pub side: HandType,
     pub is_primary: bool, // true = primary, false = secondary
 }
-
-use crate::components::weapon::{MagicLoadout, SpellType};
 
 pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Root UI Node
@@ -154,8 +147,52 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
                 ..default()
             },
             BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
+            btn_type,
         ))
-        .insert(btn_type)
+        .observe(
+            |trigger: On<Pointer<Click>>,
+             btn_query: Query<&ShopButton>,
+             mut round_manager: ResMut<crate::resources::round::RoundManager>,
+             mut player_query: Query<&mut crate::components::player::Player>,
+             mut color_query: Query<&mut BackgroundColor>| {
+                if let Ok(btn_type) = btn_query.get(trigger.entity) {
+                    if let Ok(mut color) = color_query.get_mut(trigger.entity) {
+                        *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
+                    }
+                    match btn_type {
+                        ShopButton::Heal => {
+                            if let Ok(mut player) = player_query.single_mut() {
+                                player.health = (player.health + 30.0).min(100.0);
+                                println!("Healed! Health: {}", player.health);
+                            }
+                        }
+                        ShopButton::DamageUp => {
+                            println!("Damage Upgraded! (Placeholder)");
+                        }
+                        ShopButton::NextRound => {
+                            round_manager
+                                .round_timer
+                                .set_duration(std::time::Duration::from_secs(0));
+                            round_manager.round_timer.reset();
+                        }
+                    }
+                }
+            },
+        )
+        .observe(
+            |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                    *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 1.0));
+                }
+            },
+        )
+        .observe(
+            |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                    *color = BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0));
+                }
+            },
+        )
         .with_children(|btn| {
             btn.spawn((
                 Text::new(label),
@@ -186,8 +223,60 @@ fn spawn_weapon_button(
                 ..default()
             },
             BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
+            WeaponButton { side, kind },
         ))
-        .insert(WeaponButton { side, kind })
+        .observe(
+            |trigger: On<Pointer<Click>>,
+             button_query: Query<&WeaponButton>,
+             mut hand_query: Query<(&mut Hand, &mut crate::components::weapon::Weapon)>,
+             mut color_query: Query<&mut BackgroundColor>| {
+                if let Ok(button_data) = button_query.get(trigger.entity) {
+                    if let Ok(mut color) = color_query.get_mut(trigger.entity) {
+                        *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
+                    }
+
+                    for (mut hand, mut weapon) in &mut hand_query {
+                        if hand.side == button_data.side {
+                            hand.equipped_weapon = Some(button_data.kind);
+                            weapon.kind = button_data.kind;
+                            match button_data.kind {
+                                WeaponType::Magic => {
+                                    weapon.cooldown = 0.8;
+                                    weapon.damage = 0.0;
+                                }
+                                WeaponType::Gun => {
+                                    weapon.cooldown = 0.5;
+                                    weapon.damage = 0.0;
+                                }
+                                WeaponType::Shuriken => {
+                                    weapon.cooldown = crate::configs::weapons::shuriken::COOLDOWN;
+                                    weapon.skill_cooldown =
+                                        crate::configs::weapons::shuriken::SKILL_COOLDOWN;
+                                }
+                                WeaponType::Sword => {
+                                    weapon.cooldown = 0.5;
+                                }
+                            }
+                            println!("Equipped {:?} to {:?}", button_data.kind, button_data.side);
+                        }
+                    }
+                }
+            },
+        )
+        .observe(
+            |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                    *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 1.0));
+                }
+            },
+        )
+        .observe(
+            |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                    *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0));
+                }
+            },
+        )
         .with_children(|btn| {
             btn.spawn((
                 Text::new(label),
@@ -213,8 +302,8 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
                 ..default()
             },
             BackgroundColor(Color::srgba(0.2, 0.0, 0.2, 0.8)),
+            MagicPanel { side },
         ))
-        .insert(MagicPanel { side })
         .with_children(|panel| {
             let label = match side {
                 HandType::Left => "Left Magic (Q): ",
@@ -242,11 +331,26 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
                         ..default()
                     },
                     BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
+                    MagicCycleButton {
+                        side,
+                        is_primary: true,
+                    },
                 ))
-                .insert(MagicCycleButton {
-                    side,
-                    is_primary: true,
-                })
+                .observe(magic_button_observer)
+                .observe(
+                    |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                        if let Ok(mut color) = color.get_mut(trigger.entity) {
+                            *color = BackgroundColor(Color::srgba(0.5, 0.0, 0.5, 1.0));
+                        }
+                    },
+                )
+                .observe(
+                    |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                        if let Ok(mut color) = color.get_mut(trigger.entity) {
+                            *color = BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0));
+                        }
+                    },
+                )
                 .with_children(|btn| {
                     btn.spawn((
                         Text::new("Primary: Bolt"),
@@ -271,11 +375,26 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
                         ..default()
                     },
                     BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
+                    MagicCycleButton {
+                        side,
+                        is_primary: false,
+                    },
                 ))
-                .insert(MagicCycleButton {
-                    side,
-                    is_primary: false,
-                })
+                .observe(magic_button_observer)
+                .observe(
+                    |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                        if let Ok(mut color) = color.get_mut(trigger.entity) {
+                            *color = BackgroundColor(Color::srgba(0.5, 0.0, 0.5, 1.0));
+                        }
+                    },
+                )
+                .observe(
+                    |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                        if let Ok(mut color) = color.get_mut(trigger.entity) {
+                            *color = BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0));
+                        }
+                    },
+                )
                 .with_children(|btn| {
                     btn.spawn((
                         Text::new("Secondary: Blink"),
@@ -289,71 +408,47 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
         });
 }
 
-type WeaponButtonQuery<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static Interaction,
-        &'static mut BackgroundColor,
-        &'static WeaponButton,
-    ),
-    (Changed<Interaction>, With<Button>),
->;
-
-pub fn weapon_button_interaction(
-    mut interaction_query: WeaponButtonQuery,
-    mut hand_query: Query<(&mut Hand, &mut crate::components::weapon::Weapon)>,
+fn magic_button_observer(
+    trigger: On<Pointer<Click>>,
+    btn_query: Query<&MagicCycleButton>,
+    mut loadout_query: Query<(&Hand, &mut MagicLoadout)>,
+    mut color_query: Query<&mut BackgroundColor>,
 ) {
-    for (interaction, mut color, button_data) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0)); // Green clicked
+    if let Ok(btn_data) = btn_query.get(trigger.entity) {
+        if let Ok(mut color) = color_query.get_mut(trigger.entity) {
+            *color = BackgroundColor(Color::srgba(0.6, 0.0, 0.6, 1.0));
+        }
 
-                // Update Player Hand
-                for (mut hand, mut weapon) in &mut hand_query {
-                    if hand.side == button_data.side {
-                        hand.equipped_weapon = Some(button_data.kind);
+        // Cycle Spell
+        for (hand, mut loadout) in &mut loadout_query {
+            if hand.side == btn_data.side {
+                let current = if btn_data.is_primary {
+                    loadout.primary
+                } else {
+                    loadout.secondary
+                };
+                let next = match current {
+                    SpellType::EnergyBolt => SpellType::Laser,
+                    SpellType::Laser => SpellType::Nova,
+                    SpellType::Nova => SpellType::Blink,
+                    SpellType::Blink => SpellType::Global,
+                    SpellType::Global => SpellType::EnergyBolt,
+                };
 
-                        // Update Weapon Stats based on Type
-                        weapon.kind = button_data.kind;
-                        match button_data.kind {
-                            WeaponType::Magic => {
-                                weapon.cooldown = 0.8; // Slower magic (User Request)
-                                weapon.damage = 0.0; // Handled by spell projectile
-                            }
-                            WeaponType::Gun => {
-                                weapon.cooldown = 0.5;
-                                weapon.damage = 0.0; // Handled by projectile
-                            }
-                            WeaponType::Shuriken => {
-                                weapon.cooldown = crate::configs::weapons::shuriken::COOLDOWN;
-                                weapon.skill_cooldown =
-                                    crate::configs::weapons::shuriken::SKILL_COOLDOWN;
-                            }
-                            WeaponType::Sword => {
-                                weapon.cooldown = 0.5; // Default
-                            }
-                        }
-
-                        println!("Equipped {:?} to {:?}", button_data.kind, button_data.side);
-                    }
+                if btn_data.is_primary {
+                    loadout.primary = next;
+                } else {
+                    loadout.secondary = next;
                 }
-            }
-            Interaction::Hovered => {
-                *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 1.0));
-            }
-            Interaction::None => {
-                *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0));
             }
         }
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn update_shop_visibility(
     mut shop_query: Query<&mut Node, With<ShopMenu>>,
     round_manager: Res<crate::resources::round::RoundManager>,
-) {
+) -> Result<(), String> {
     for mut node in &mut shop_query {
         match round_manager.round_state {
             crate::resources::round::RoundState::Shop => {
@@ -364,91 +459,35 @@ pub fn update_shop_visibility(
             }
         }
     }
+    Ok(())
 }
 
-type ShopButtonQuery<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static Interaction,
-        &'static mut BackgroundColor,
-        &'static ShopButton,
-    ),
-    (Changed<Interaction>, With<Button>),
->;
-
-pub fn shop_button_interaction(
-    mut interaction_query: ShopButtonQuery,
-    mut round_manager: ResMut<crate::resources::round::RoundManager>,
-    mut player_query: Query<&mut crate::components::player::Player>,
-) {
-    for (interaction, mut color, btn_type) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
-                match btn_type {
-                    ShopButton::Heal => {
-                        if let Ok(mut player) = player_query.single_mut() {
-                            player.health = (player.health + 30.0).min(100.0);
-                            println!("Healed! Health: {}", player.health);
-                        }
-                    }
-                    ShopButton::DamageUp => {
-                        // Needs global damage modifier or per-weapon?
-                        // For now, print placeholder
-                        println!("Damage Upgraded! (Placeholder)");
-                    }
-                    ShopButton::NextRound => {
-                        // Force next round
-                        round_manager
-                            .round_timer
-                            .set_duration(std::time::Duration::from_secs(0));
-                        round_manager.round_timer.reset();
-                        // The spawn_waves system checks finished() on this timer to switch state
-                    }
-                }
-            }
-            Interaction::Hovered => *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 1.0)),
-            Interaction::None => *color = BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
-        }
-    }
-}
-
-#[allow(clippy::needless_pass_by_value)]
 pub fn update_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
     hand_query: Query<&Hand>,
-    // button_query: Query<(&mut Text, &MagicCycleButton), Without<MagicPanel>>,
     button_node_query: Query<(&Children, &MagicCycleButton)>,
     mut text_query: Query<&mut Text>,
     loadout_query: Query<&MagicLoadout>,
-) {
+) -> Result<(), String> {
     // 1. Update Panel Visibility
     for (mut node, panel) in &mut panel_query {
-        let mut is_magic = false;
-        for hand in hand_query.iter() {
-            if hand.side == panel.side && hand.equipped_weapon == Some(WeaponType::Magic) {
-                is_magic = true;
-            }
-        }
-        if is_magic {
-            node.display = Display::Flex;
+        let is_magic = hand_query
+            .iter()
+            .any(|hand| hand.side == panel.side && hand.equipped_weapon == Some(WeaponType::Magic));
+        node.display = if is_magic {
+            Display::Flex
         } else {
-            node.display = Display::None;
-        }
+            Display::None
+        };
     }
 
     // 2. Update Button Text from Loadout
     for (children, btn_data) in button_node_query.iter() {
-        // Find Loadout for this hand
-        let mut current_loadout = None;
-        for (hand, loadout) in hand_query.iter().zip(loadout_query.iter()) {
-            if hand.side == btn_data.side {
-                current_loadout = Some(loadout);
-            }
-        }
-
-        if let Some(loadout) = current_loadout {
+        if let Some((_, loadout)) = hand_query
+            .iter()
+            .zip(loadout_query.iter())
+            .find(|(hand, _)| hand.side == btn_data.side)
+        {
             let spell = if btn_data.is_primary {
                 loadout.primary
             } else {
@@ -474,54 +513,5 @@ pub fn update_magic_ui(
             }
         }
     }
-}
-
-type MagicButtonQuery<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static Interaction,
-        &'static mut BackgroundColor,
-        &'static MagicCycleButton,
-    ),
-    (Changed<Interaction>, With<Button>),
->;
-
-pub fn magic_button_interaction(
-    mut interaction_query: MagicButtonQuery,
-    mut loadout_query: Query<(&Hand, &mut MagicLoadout)>,
-) {
-    for (interaction, mut color, btn_data) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                *color = BackgroundColor(Color::srgba(0.6, 0.0, 0.6, 1.0));
-
-                // Cycle Spell
-                for (hand, mut loadout) in &mut loadout_query {
-                    if hand.side == btn_data.side {
-                        let current = if btn_data.is_primary {
-                            loadout.primary
-                        } else {
-                            loadout.secondary
-                        };
-                        let next = match current {
-                            SpellType::EnergyBolt => SpellType::Laser,
-                            SpellType::Laser => SpellType::Nova,
-                            SpellType::Nova => SpellType::Blink,
-                            SpellType::Blink => SpellType::Global,
-                            SpellType::Global => SpellType::EnergyBolt,
-                        };
-
-                        if btn_data.is_primary {
-                            loadout.primary = next;
-                        } else {
-                            loadout.secondary = next;
-                        }
-                    }
-                }
-            }
-            Interaction::Hovered => *color = BackgroundColor(Color::srgba(0.5, 0.0, 0.5, 1.0)),
-            Interaction::None => *color = BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
-        }
-    }
+    Ok(())
 }

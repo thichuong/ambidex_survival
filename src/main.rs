@@ -8,9 +8,10 @@ mod systems;
 mod utils;
 
 use bevy::window::PrimaryWindow;
-use components::player::GameCamera; // Import GameCamera from components
+use components::player::GameCamera;
 use resources::game_state::GameState;
 use systems::player::{aim_player, move_player, spawn_player};
+use utils::log_error;
 
 fn main() {
     App::new()
@@ -24,7 +25,6 @@ fn main() {
             ..default()
         }))
         .add_message::<systems::combat::DamageEvent>()
-        //.add_plugins(RapierDebugRenderPlugin::default()) // Debug physics
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
         .init_resource::<resources::polish::ScreenShake>()
@@ -33,32 +33,28 @@ fn main() {
         .add_systems(
             Update,
             (
-                systems::physics::apply_velocity,
-                move_player,
-                aim_player,
+                systems::physics::apply_velocity.pipe(log_error),
+                move_player.pipe(log_error),
+                aim_player.pipe(log_error),
                 resources::polish::update_camera_shake,
                 resources::polish::spawn_trails,
-                systems::combat::handle_combat_input,
-                systems::combat::manage_lifetime,
-                systems::combat::resolve_damage,
-                systems::combat::update_sword_mechanics,
+                systems::combat::handle_combat_input.pipe(log_error),
+                systems::combat::manage_lifetime.pipe(log_error),
+                systems::combat::resolve_damage.pipe(log_error),
+                systems::combat::update_sword_mechanics.pipe(log_error),
             ),
         )
         .add_systems(
             Update,
             (
-                systems::enemy::enemy_chase_player,
-                systems::enemy::spawn_waves,
-                systems::ui::weapon_button_interaction,
-                systems::ui::update_shop_visibility,
-                systems::ui::shop_button_interaction,
-                systems::ui::update_magic_ui,
-                systems::ui::magic_button_interaction,
-                systems::damage_text::spawn_damage_text,
-                systems::damage_text::update_damage_text,
+                systems::enemy::enemy_chase_player.pipe(log_error),
+                systems::enemy::spawn_waves.pipe(log_error),
+                systems::ui::update_shop_visibility.pipe(log_error),
+                systems::ui::update_magic_ui.pipe(log_error),
+                systems::damage_text::spawn_damage_text.pipe(log_error),
+                systems::damage_text::update_damage_text.pipe(log_error),
             ),
         )
-        // TEMPORARY
         .add_systems(Startup, systems::ui::setup_ui)
         .run();
 }

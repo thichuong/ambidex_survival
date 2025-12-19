@@ -71,7 +71,7 @@ pub fn move_player(
     _time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Velocity, &Player)>,
-) {
+) -> Result<(), String> {
     for (mut velocity, player) in &mut query {
         let mut direction = Vec2::ZERO;
 
@@ -94,6 +94,7 @@ pub fn move_player(
 
         velocity.linvel = direction * player.speed;
     }
+    Ok(())
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -101,24 +102,26 @@ pub fn aim_player(
     window_query: Query<&Window, With<bevy::window::PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
     mut player_query: Query<&mut Transform, With<Player>>,
-) {
-    let Ok((camera, camera_transform)) = camera_query.single() else {
-        return;
-    };
+) -> Result<(), String> {
+    let (camera, camera_transform) = camera_query
+        .single()
+        .map_err(|e| format!("Camera not found: {e:?}"))?;
 
-    let Ok(window) = window_query.single() else {
-        return;
-    };
+    let window = window_query
+        .single()
+        .map_err(|e| format!("Window not found: {e:?}"))?;
 
     if let Some(world_position) = window
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
         .map(|ray| ray.origin.truncate())
     {
-        for mut player_transform in &mut player_query {
-            let diff = world_position - player_transform.translation.truncate();
-            let angle = diff.y.atan2(diff.x);
-            player_transform.rotation = Quat::from_rotation_z(angle);
-        }
+        let mut player_transform = player_query
+            .single_mut()
+            .map_err(|e| format!("Player not found: {e:?}"))?;
+        let diff = world_position - player_transform.translation.truncate();
+        let angle = diff.y.atan2(diff.x);
+        player_transform.rotation = Quat::from_rotation_z(angle);
     }
+    Ok(())
 }
