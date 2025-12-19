@@ -7,6 +7,7 @@ use bevy::prelude::*;
 pub struct Player {
     pub speed: f32,
     pub health: f32,
+    pub invulnerability_timer: Timer,
 }
 
 impl Default for Player {
@@ -14,6 +15,7 @@ impl Default for Player {
         Self {
             speed: 300.0,
             health: 100.0,
+            invulnerability_timer: Timer::from_seconds(1.0, TimerMode::Once),
         }
     }
 }

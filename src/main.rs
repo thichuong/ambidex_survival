@@ -61,6 +61,7 @@ fn main() {
                 systems::combat::manage_lifetime.pipe(log_error),
                 systems::combat::resolve_damage.pipe(log_error),
                 systems::combat::update_sword_mechanics.pipe(log_error),
+                systems::combat::handle_player_collision.pipe(log_error),
             )
                 .run_if(in_state(GameState::Playing)),
         )
@@ -80,6 +81,7 @@ fn main() {
                 systems::ui::update_ui_visibility.pipe(log_error),
                 systems::ui::update_hud_indicators.pipe(log_error),
                 systems::ui::update_magic_ui.pipe(log_error),
+                systems::ui::update_health_ui.pipe(log_error),
             ),
         )
         .add_systems(Startup, systems::ui::setup_ui)

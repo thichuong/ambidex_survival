@@ -800,3 +800,37 @@ pub fn manage_lifetime(
     }
     Ok(())
 }
+
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
+pub fn handle_player_collision(
+    mut player_query: Query<(&mut Player, &Transform, &Collider)>,
+    enemy_query: Query<(&Enemy, &Transform, &Collider), Without<Player>>,
+    time: Res<Time>,
+    mut res: CombatResources,
+    mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>,
+) -> Result<(), String> {
+    if let Ok((mut player, player_transform, player_collider)) = player_query.single_mut() {
+        player.invulnerability_timer.tick(time.delta());
+
+        if !player.invulnerability_timer.is_finished() {
+            return Ok(());
+        }
+
+        let player_pos = player_transform.translation.truncate();
+        for (enemy, enemy_transform, enemy_collider) in &enemy_query {
+            let enemy_pos = enemy_transform.translation.truncate();
+            if check_collision(player_pos, player_collider, enemy_pos, enemy_collider) {
+                player.health -= enemy.damage;
+                player.invulnerability_timer.reset();
+                res.shake.add_trauma(0.5);
+
+                if player.health <= 0.0 {
+                    player.health = 0.0;
+                    next_state.set(crate::resources::game_state::GameState::GameOver);
+                }
+                break; // One hit per frame max to avoid instant multiple collisions
+            }
+        }
+    }
+    Ok(())
+}

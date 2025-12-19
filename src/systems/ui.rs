@@ -1,5 +1,6 @@
 use crate::components::player::{Hand, HandType};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
+
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -47,6 +48,15 @@ pub struct HUDIcon {
     pub side: HandType,
 }
 
+#[derive(Component)]
+pub struct HealthBar;
+
+#[derive(Component)]
+pub struct GameOverUI;
+
+#[derive(Component)]
+pub struct NewGameButton;
+
 #[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Root UI Node (HUD)
@@ -63,6 +73,31 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             Pickable::IGNORE,
         ))
         .with_children(|parent| {
+            // Health Bar (Top Center)
+            parent
+                .spawn(Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(20.0),
+                    left: Val::Percent(50.0),
+                    margin: UiRect::left(Val::Px(-100.0)), // Center alignment (half of width)
+                    width: Val::Px(200.0),
+                    height: Val::Px(20.0),
+                    border: UiRect::all(Val::Px(2.0)),
+                    ..default()
+                })
+                .insert(BorderColor::all(Color::WHITE))
+                .insert(BackgroundColor(Color::BLACK))
+                .with_children(|bar| {
+                    bar.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(100.0),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.0, 1.0, 0.0)),
+                        HealthBar,
+                    ));
+                });
             // Left Hand Indicator
             parent
                 .spawn((
@@ -301,6 +336,112 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             spawn_shop_button(shop, ShopButton::Heal, "Heal (+30 HP)");
             spawn_shop_button(shop, ShopButton::DamageUp, "Damage Up (+10%)");
             spawn_shop_button(shop, ShopButton::NextRound, "Start Next Round");
+        });
+
+    // Game Over Menu (Initially Hidden)
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                position_type: PositionType::Absolute,
+                display: Display::None,
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
+            GameOverUI,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("GAME OVER"),
+                TextFont {
+                    font_size: 100.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 0.0, 0.0)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(40.0)),
+                    ..default()
+                },
+            ));
+
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(240.0),
+                        height: Val::Px(80.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
+                    NewGameButton,
+                ))
+                .observe(
+                    |_trigger: On<Pointer<Click>>,
+                     mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>,
+                     mut player_query: Query<(
+                        &mut crate::components::player::Player,
+                        &mut Transform,
+                    )>,
+                     mut round_manager: ResMut<crate::resources::round::RoundManager>,
+                     enemy_query: Query<Entity, With<crate::components::enemy::Enemy>>,
+                     projectile_query: Query<
+                        Entity,
+                        With<crate::components::weapon::Projectile>,
+                    >,
+                     mut commands: Commands| {
+                        // Reset Player
+                        if let Some((mut player, mut transform)) = player_query.iter_mut().next() {
+                            player.health = 100.0;
+                            transform.translation = Vec3::ZERO;
+                        }
+
+                        // Reset Round
+                        *round_manager = crate::resources::round::RoundManager::default();
+
+                        // Despawn Enemies
+                        for entity in &enemy_query {
+                            commands.entity(entity).despawn();
+                        }
+
+                        // Despawn Projectiles
+                        for entity in &projectile_query {
+                            commands.entity(entity).despawn();
+                        }
+
+                        // Restart Game
+                        next_state.set(crate::resources::game_state::GameState::Playing);
+                    },
+                )
+                .observe(
+                    |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                        if let Ok(mut color) = color.get_mut(trigger.entity) {
+                            *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 1.0));
+                        }
+                    },
+                )
+                .observe(
+                    |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                        if let Ok(mut color) = color.get_mut(trigger.entity) {
+                            *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0));
+                        }
+                    },
+                )
+                .with_children(|btn| {
+                    btn.spawn((
+                        Text::new("NEW GAME"),
+                        TextFont {
+                            font_size: 32.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
         });
 }
 
@@ -612,10 +753,21 @@ fn magic_button_observer(
     }
 }
 
-#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
+#[allow(
+    clippy::unnecessary_wraps,
+    clippy::needless_pass_by_value,
+    clippy::type_complexity
+)]
 pub fn update_ui_visibility(
-    mut shop_query: Query<&mut Node, (With<ShopMenu>, Without<WeaponMenuUI>)>,
-    mut weapon_menu_query: Query<&mut Node, (With<WeaponMenuUI>, Without<ShopMenu>)>,
+    mut shop_query: Query<&mut Node, (With<ShopMenu>, Without<WeaponMenuUI>, Without<GameOverUI>)>,
+    mut weapon_menu_query: Query<
+        &mut Node,
+        (With<WeaponMenuUI>, Without<ShopMenu>, Without<GameOverUI>),
+    >,
+    mut game_over_query: Query<
+        &mut Node,
+        (With<GameOverUI>, Without<ShopMenu>, Without<WeaponMenuUI>),
+    >,
     game_state: Res<State<crate::resources::game_state::GameState>>,
     round_manager: Res<crate::resources::round::RoundManager>,
 ) -> Result<(), String> {
@@ -633,6 +785,15 @@ pub fn update_ui_visibility(
     // 2. Weapon Menu Visibility
     for mut node in &mut weapon_menu_query {
         node.display = if *game_state.get() == crate::resources::game_state::GameState::WeaponMenu {
+            Display::Flex
+        } else {
+            Display::None
+        };
+    }
+
+    // 3. Game Over Visibility
+    for mut node in &mut game_over_query {
+        node.display = if *game_state.get() == crate::resources::game_state::GameState::GameOver {
             Display::Flex
         } else {
             Display::None
@@ -733,6 +894,21 @@ pub fn update_magic_ui(
                     **text = format!("{prefix}: {spell_name}");
                 }
             }
+        }
+    }
+    Ok(())
+}
+
+#[allow(clippy::unnecessary_wraps)]
+pub fn update_health_ui(
+    mut health_bar_query: Query<&mut Node, With<HealthBar>>,
+    player_query: Query<&crate::components::player::Player>,
+) -> Result<(), String> {
+    if let Ok(player) = player_query.single() {
+        for mut node in &mut health_bar_query {
+            // Player health is 0..100
+            let percent = (player.health / 100.0).clamp(0.0, 1.0) * 100.0;
+            node.width = Val::Percent(percent);
         }
     }
     Ok(())
