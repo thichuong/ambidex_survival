@@ -323,8 +323,10 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     if round_manager.round_state == crate::resources::round::RoundState::Shop {
                         round_manager.current_round += 1;
                         round_manager.enemies_to_spawn = 10 + (round_manager.current_round * 5);
+                        #[allow(clippy::cast_precision_loss)]
+                        let exponent = round_manager.current_round as f32;
                         round_manager.spawn_timer = bevy::time::Timer::from_seconds(
-                            1.0 * (0.95_f32).powi(round_manager.current_round as i32),
+                            1.0 * (0.95_f32).powf(exponent),
                             bevy::time::TimerMode::Repeating,
                         );
                         round_manager.round_state = crate::resources::round::RoundState::Spawning;

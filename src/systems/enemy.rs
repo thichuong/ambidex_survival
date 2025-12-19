@@ -1,3 +1,4 @@
+use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use rand::Rng;
 
@@ -7,44 +8,53 @@ use crate::components::player::Player;
 use crate::resources::game_state::GameState;
 use crate::resources::round::{RoundManager, RoundState};
 
+#[derive(SystemParam)]
+pub struct SpawnWavesParams<'w, 's> {
+    pub commands: Commands<'w, 's>,
+    pub time: Res<'w, Time>,
+    pub round_manager: ResMut<'w, RoundManager>,
+    pub meshes: ResMut<'w, Assets<Mesh>>,
+    pub materials: ResMut<'w, Assets<ColorMaterial>>,
+    pub enemy_query: Query<'w, 's, &'static Enemy>,
+    pub player_query: Query<'w, 's, &'static Transform, With<Player>>,
+    pub next_state: ResMut<'w, NextState<GameState>>,
+}
+
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::cast_possible_wrap)]
-pub fn spawn_waves(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut round_manager: ResMut<RoundManager>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    enemy_query: Query<&Enemy>, // To count alive enemies
-    player_query: Query<&Transform, With<Player>>,
-    mut next_state: ResMut<NextState<GameState>>,
-) -> Result<(), String> {
-    let tf = player_query
+pub fn spawn_waves(mut params: SpawnWavesParams) -> Result<(), String> {
+    let tf = params
+        .player_query
         .single()
         .map_err(|e| format!("Player not found: {e:?}"))?;
     let player_pos = tf.translation.truncate();
 
-    match round_manager.round_state {
+    match params.round_manager.round_state {
         RoundState::Spawning => {
-            round_manager.spawn_timer.tick(time.delta());
-            if round_manager.spawn_timer.is_finished() {
-                if round_manager.enemies_to_spawn > 0 {
-                    spawn_random_enemy(&mut commands, &mut meshes, &mut materials, player_pos);
-                    round_manager.enemies_to_spawn -= 1;
+            params.round_manager.spawn_timer.tick(params.time.delta());
+            if params.round_manager.spawn_timer.is_finished() {
+                if params.round_manager.enemies_to_spawn > 0 {
+                    spawn_random_enemy(
+                        &mut params.commands,
+                        &mut params.meshes,
+                        &mut params.materials,
+                        player_pos,
+                    );
+                    params.round_manager.enemies_to_spawn -= 1;
                 } else {
-                    round_manager.round_state = RoundState::Fighting;
+                    params.round_manager.round_state = RoundState::Fighting;
                     println!("Wave Spawning Finished! Fighting...");
                 }
             }
         }
         RoundState::Fighting => {
             // Check if all enemies are dead
-            let alive_count = enemy_query.iter().count();
+            let alive_count = params.enemy_query.iter().count();
             if alive_count == 0 {
                 println!("Round Cleared! Opening Menu...");
-                round_manager.round_state = RoundState::Shop;
+                params.round_manager.round_state = RoundState::Shop;
                 // Tự động hiện Menu khi hết round
-                next_state.set(GameState::WeaponMenu);
+                params.next_state.set(GameState::WeaponMenu);
             }
         }
         RoundState::Shop => {
