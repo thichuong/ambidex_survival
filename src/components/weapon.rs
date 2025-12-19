@@ -74,6 +74,7 @@ pub struct Projectile {
     pub kind: WeaponType,
     pub damage: f32,
     pub speed: f32,
+    #[allow(dead_code)]
     pub direction: Vec2,
     pub owner_entity: Entity,
 }

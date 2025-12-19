@@ -289,6 +289,7 @@ fn spawn_weapon_button(
         });
 }
 
+#[allow(clippy::too_many_lines)]
 fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
     parent
         .spawn((
@@ -408,6 +409,7 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
         });
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn magic_button_observer(
     trigger: On<Pointer<Click>>,
     btn_query: Query<&MagicCycleButton>,
@@ -445,6 +447,7 @@ fn magic_button_observer(
     }
 }
 
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn update_shop_visibility(
     mut shop_query: Query<&mut Node, With<ShopMenu>>,
     round_manager: Res<crate::resources::round::RoundManager>,
@@ -462,6 +465,7 @@ pub fn update_shop_visibility(
     Ok(())
 }
 
+#[allow(clippy::unnecessary_wraps)]
 pub fn update_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
     hand_query: Query<&Hand>,

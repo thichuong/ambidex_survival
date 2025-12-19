@@ -8,6 +8,7 @@ pub struct DamageText {
 }
 
 #[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::unnecessary_wraps)]
 pub fn spawn_damage_text(
     mut commands: Commands,
     mut damage_events: MessageReader<DamageEvent>,
@@ -31,6 +32,7 @@ pub fn spawn_damage_text(
 }
 
 #[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::unnecessary_wraps)]
 pub fn update_damage_text(
     mut commands: Commands,
     time: Res<Time>,

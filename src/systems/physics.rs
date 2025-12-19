@@ -4,6 +4,7 @@ use crate::components::physics::Velocity;
 
 /// Apply velocity to transform for all entities with Velocity component
 #[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::unnecessary_wraps)]
 pub fn apply_velocity(
     time: Res<Time>,
     mut query: Query<(&Velocity, &mut Transform)>,

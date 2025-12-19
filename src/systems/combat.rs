@@ -43,6 +43,7 @@ pub struct CombatInputParams<'w, 's> {
     >,
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn handle_combat_input(
     mut params: CombatInputParams,
     mut player_query: Query<(Entity, &mut Transform), With<Player>>,
@@ -106,10 +107,10 @@ pub fn handle_combat_input(
                     if skill_pressed {
                         match magic_loadout.active_slot {
                             ActiveSpellSlot::Primary => {
-                                magic_loadout.active_slot = ActiveSpellSlot::Secondary
+                                magic_loadout.active_slot = ActiveSpellSlot::Secondary;
                             }
                             ActiveSpellSlot::Secondary => {
-                                magic_loadout.active_slot = ActiveSpellSlot::Primary
+                                magic_loadout.active_slot = ActiveSpellSlot::Primary;
                             }
                         }
                     }
@@ -159,22 +160,21 @@ pub fn handle_combat_input(
                     }
 
                     let now = params.time.elapsed_secs();
-                    if skill_pressed {
-                        if now - weapon_data.last_skill_use >= gun::MODE_SWITCH_COOLDOWN
-                            && perform_skill(
-                                &mut params,
-                                weapon_type,
-                                hand_pos,
-                                cursor_pos,
-                                player_entity,
-                                &magic_loadout,
-                                &mut sword_state,
-                                &mut gun_state,
-                                &mut player_transform,
-                            )
-                        {
-                            weapon_data.last_skill_use = now;
-                        }
+                    if skill_pressed
+                        && now - weapon_data.last_skill_use >= gun::MODE_SWITCH_COOLDOWN
+                        && perform_skill(
+                            &mut params,
+                            weapon_type,
+                            hand_pos,
+                            cursor_pos,
+                            player_entity,
+                            &magic_loadout,
+                            &mut sword_state,
+                            &mut gun_state,
+                            &mut player_transform,
+                        )
+                    {
+                        weapon_data.last_skill_use = now;
                     }
                 }
                 _ => {
@@ -215,6 +215,7 @@ pub fn handle_combat_input(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 fn cast_spell(
     params: &mut CombatInputParams,
     spell: SpellType,
@@ -334,6 +335,7 @@ fn cast_spell(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn perform_skill(
     params: &mut CombatInputParams,
     weapon_type: WeaponType,
@@ -404,6 +406,7 @@ fn perform_skill(
     }
 }
 
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 fn fire_weapon(
     params: &mut CombatInputParams,
     weapon_type: WeaponType,
@@ -427,10 +430,10 @@ fn fire_weapon(
             if shurikens.len() >= shuriken::MAX_COUNT {
                 shurikens
                     .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
-                if let Some((oldest_entity, _)) = shurikens.first() {
-                    if let Ok(mut e) = params.commands.get_entity(*oldest_entity) {
-                        e.despawn();
-                    }
+                if let Some((oldest_entity, _)) = shurikens.first()
+                    && let Ok(mut e) = params.commands.get_entity(*oldest_entity)
+                {
+                    e.despawn();
                 }
             }
 
@@ -575,6 +578,7 @@ pub struct CombatResources<'w, 's> {
     pub exploding_query: Query<'w, 's, &'static ExplodingProjectile>,
 }
 
+#[allow(clippy::unnecessary_wraps)]
 pub fn resolve_damage(
     mut commands: Commands,
     mut projectile_query: Query<(
@@ -600,10 +604,10 @@ pub fn resolve_damage(
             if check_collision(proj_pos, proj_collider, enemy_pos, enemy_collider)
                 && projectile.owner_entity != enemy_entity
             {
-                if let Some(ref aoe) = aoe_opt {
-                    if aoe.damaged_entities.contains(&enemy_entity) {
-                        continue;
-                    }
+                if let Some(ref aoe) = aoe_opt
+                    && aoe.damaged_entities.contains(&enemy_entity)
+                {
+                    continue;
                 }
                 hits.push((enemy_entity, enemy.health, enemy_transform.translation));
             }
@@ -679,6 +683,7 @@ pub fn resolve_damage(
     Ok(())
 }
 
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn update_sword_mechanics(
     mut commands: Commands,
     time: Res<Time>,
@@ -702,7 +707,8 @@ pub fn update_sword_mechanics(
 
                 // Swing from -90 degrees to +90 degrees (180-degree arc)
                 // Mouse cursor is at the center (base_angle)
-                let current_angle = swing.base_angle + (progress - 0.5) * std::f32::consts::PI;
+                let current_angle =
+                    (progress - 0.5).mul_add(std::f32::consts::PI, swing.base_angle);
                 transform.rotation = Quat::from_rotation_z(current_angle);
 
                 if !swing.damage_dealt {
@@ -780,6 +786,7 @@ pub fn update_sword_mechanics(
     Ok(())
 }
 
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn manage_lifetime(
     mut commands: Commands,
     time: Res<Time>,

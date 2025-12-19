@@ -67,6 +67,7 @@ pub fn spawn_player(
 }
 
 #[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::unnecessary_wraps)]
 pub fn move_player(
     _time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
