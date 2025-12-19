@@ -44,12 +44,6 @@ pub fn update_camera_shake(
     }
 }
 
-#[derive(Component)]
-#[allow(dead_code)]
-pub struct Trail {
-    pub timer: Timer,
-}
-
 #[allow(clippy::needless_pass_by_value)]
 pub fn spawn_trails(
     mut commands: Commands,

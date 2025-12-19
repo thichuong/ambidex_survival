@@ -26,7 +26,7 @@ pub fn spawn_player(
             parent.spawn((
                 Hand {
                     side: HandType::Left,
-                    offset: Vec3::new(-20.0, 20.0, 1.0),
+
                     equipped_weapon: Some(WeaponType::Shuriken), // Default Left
                 },
                 Weapon {
@@ -48,7 +48,7 @@ pub fn spawn_player(
             parent.spawn((
                 Hand {
                     side: HandType::Right,
-                    offset: Vec3::new(20.0, 20.0, 1.0),
+
                     equipped_weapon: Some(WeaponType::Sword), // Default Right
                 },
                 Weapon {

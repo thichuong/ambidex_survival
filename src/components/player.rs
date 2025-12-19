@@ -35,8 +35,7 @@ pub enum HandType {
 #[require(Transform, Visibility, Weapon, MagicLoadout, SwordState, GunState)]
 pub struct Hand {
     pub side: HandType,
-    #[allow(dead_code)]
-    pub offset: Vec3,
+
     pub equipped_weapon: Option<WeaponType>,
 }
 
