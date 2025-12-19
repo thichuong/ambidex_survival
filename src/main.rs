@@ -1,4 +1,8 @@
 use bevy::prelude::*;
+use bevy::render::{
+    RenderPlugin,
+    settings::{Backends, RenderCreation, WgpuSettings},
+};
 use bevy::window::WindowResolution;
 
 mod components;
@@ -15,15 +19,25 @@ use utils::log_error;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Ambidex Survival".into(),
-                resolution: WindowResolution::new(1280, 720),
-                fit_canvas_to_parent: true,
-                ..default()
-            }),
-            ..default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Ambidex Survival".into(),
+                        resolution: WindowResolution::new(1280, 720),
+                        fit_canvas_to_parent: true,
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(RenderPlugin {
+                    render_creation: RenderCreation::Automatic(WgpuSettings {
+                        backends: Some(Backends::all()),
+                        ..default()
+                    }),
+                    ..default()
+                }),
+        )
         .add_message::<systems::combat::DamageEvent>()
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
