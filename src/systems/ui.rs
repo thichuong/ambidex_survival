@@ -19,6 +19,17 @@ pub enum ShopButton {
 }
 
 #[derive(Component)]
+pub struct WeaponMenuUI;
+
+#[derive(Component)]
+pub struct HUDHandIndicator {
+    pub side: HandType,
+}
+
+#[derive(Component)]
+pub struct MenuButton;
+
+#[derive(Component)]
 pub struct MagicPanel {
     pub side: HandType,
 }
@@ -30,107 +41,256 @@ pub struct MagicCycleButton {
 }
 
 pub fn setup_ui(mut commands: Commands, _asset_server: Res<AssetServer>) {
-    // Root UI Node
+    // Root UI Node (HUD)
     commands
-        .spawn((Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::FlexEnd, // Align to bottom
-            align_items: AlignItems::Center,
-            ..default()
-        },))
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::FlexEnd,
+                padding: UiRect::all(Val::Px(20.0)),
+                ..default()
+            },
+            Pickable::IGNORE,
+        ))
         .with_children(|parent| {
-            // Weapon Select Panel
+            // Left Hand Indicator
             parent
                 .spawn((
+                    Button,
                     Node {
-                        width: Val::Px(600.0),
-                        height: Val::Px(100.0),
-                        justify_content: JustifyContent::SpaceEvenly,
+                        width: Val::Px(120.0),
+                        height: Val::Px(120.0),
+                        justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        margin: UiRect::bottom(Val::Px(20.0)),
+                        border: UiRect::all(Val::Px(4.0)),
                         ..default()
                     },
                     BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+                    BorderColor::all(Color::WHITE),
+                    HUDHandIndicator {
+                        side: HandType::Left,
+                    },
                 ))
-                .with_children(|panel| {
-                    // Text Label
-                    panel.spawn((
-                        Text::new("Left Hand (Q) [Click to Set]:"),
+                .with_children(|btn| {
+                    btn.spawn((
+                        Text::new(""),
                         TextFont {
-                            font_size: 16.0,
+                            font_size: 40.0,
                             ..default()
                         },
                         TextColor(Color::WHITE),
                     ));
-
-                    // Buttons for Left Hand
-                    spawn_weapon_button(panel, HandType::Left, WeaponType::Shuriken, "Shuriken");
-                    spawn_weapon_button(panel, HandType::Left, WeaponType::Sword, "Sword");
-                    spawn_weapon_button(panel, HandType::Left, WeaponType::Gun, "Gun");
-                    spawn_weapon_button(panel, HandType::Left, WeaponType::Magic, "Magic");
-
-                    // Spacer
-                    panel.spawn((Node {
-                        width: Val::Px(20.0),
-                        ..default()
-                    },));
-
-                    // Text Label
-                    panel.spawn((
-                        Text::new("Right Hand (E) [Click to Set]:"),
-                        TextFont {
-                            font_size: 16.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ));
-
-                    // Buttons for Right Hand
-                    spawn_weapon_button(panel, HandType::Right, WeaponType::Shuriken, "Shuriken");
-                    spawn_weapon_button(panel, HandType::Right, WeaponType::Sword, "Sword");
-                    spawn_weapon_button(panel, HandType::Right, WeaponType::Gun, "Gun");
-                    spawn_weapon_button(panel, HandType::Right, WeaponType::Magic, "Magic");
                 });
 
-            // Magic Loadout Panels (Dynamic)
-            spawn_magic_panel(parent, HandType::Left);
-            spawn_magic_panel(parent, HandType::Right);
-
-            // Shop Menu (Initially Hidden)
+            // Center Menu Button
             parent
                 .spawn((
+                    Button,
                     Node {
-                        width: Val::Px(400.0),
-                        height: Val::Px(300.0),
-                        position_type: PositionType::Absolute,
-                        left: Val::Percent(50.0),              // Center X
-                        top: Val::Percent(30.0),               // Center Y
-                        margin: UiRect::left(Val::Px(-200.0)), // Offset by half width
-                        flex_direction: FlexDirection::Column,
+                        width: Val::Px(120.0),
+                        height: Val::Px(50.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        display: Display::None, // Hidden by default
+                        margin: UiRect::bottom(Val::Px(10.0)),
                         ..default()
                     },
-                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
+                    BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.9)),
+                    MenuButton,
                 ))
-                .insert(ShopMenu)
-                .with_children(|shop| {
-                    shop.spawn((
-                        Text::new("--- SHOP ---"),
+                .observe(|_: On<Pointer<Click>>, mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
+                    next_state.set(crate::resources::game_state::GameState::WeaponMenu);
+                })
+                .with_children(|btn| {
+                    btn.spawn((
+                        Text::new("MENU"),
                         TextFont {
-                            font_size: 30.0,
+                            font_size: 24.0,
                             ..default()
                         },
                         TextColor(Color::WHITE),
                     ));
-
-                    spawn_shop_button(shop, ShopButton::Heal, "Heal (+30 HP)");
-                    spawn_shop_button(shop, ShopButton::DamageUp, "Damage Up (+10%)");
-                    spawn_shop_button(shop, ShopButton::NextRound, "Start Next Round");
                 });
+
+            // Right Hand Indicator
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(120.0),
+                        height: Val::Px(120.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border: UiRect::all(Val::Px(4.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+                    BorderColor::all(Color::WHITE),
+                    HUDHandIndicator {
+                        side: HandType::Right,
+                    },
+                ))
+                .with_children(|btn| {
+                    btn.spawn((
+                        Text::new(""),
+                        TextFont {
+                            font_size: 40.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+        });
+
+    // Weapon Selection Menu (Full Screen)
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                position_type: PositionType::Absolute,
+                display: Display::None,
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
+            WeaponMenuUI,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("WEAPON SELECTION"),
+                TextFont {
+                    font_size: 40.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    margin: UiRect::bottom(Val::Px(40.0)),
+                    ..default()
+                },
+            ));
+
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                })
+                .with_children(|row| {
+                    // Left Column
+                    row.spawn(Node {
+                        flex_direction: FlexDirection::Column,
+                        margin: UiRect::right(Val::Px(50.0)),
+                        ..default()
+                    })
+                    .with_children(|col| {
+                        col.spawn((
+                            Text::new("LEFT HAND"),
+                            TextFont::default(),
+                            TextColor(Color::WHITE),
+                        ));
+                        spawn_weapon_button(col, HandType::Left, WeaponType::Shuriken, "Shuriken ❄");
+                        spawn_weapon_button(col, HandType::Left, WeaponType::Sword, "Sword 🗡");
+                        spawn_weapon_button(col, HandType::Left, WeaponType::Gun, "Gun 🔫");
+                        spawn_weapon_button(col, HandType::Left, WeaponType::Magic, "Magic 🔮");
+                    });
+
+                    // Right Column
+                    row.spawn(Node {
+                        flex_direction: FlexDirection::Column,
+                        margin: UiRect::left(Val::Px(50.0)),
+                        ..default()
+                    })
+                    .with_children(|col| {
+                        col.spawn((
+                            Text::new("RIGHT HAND"),
+                            TextFont::default(),
+                            TextColor(Color::WHITE),
+                        ));
+                        spawn_weapon_button(col, HandType::Right, WeaponType::Shuriken, "Shuriken ❄");
+                        spawn_weapon_button(col, HandType::Right, WeaponType::Sword, "Sword 🗡");
+                        spawn_weapon_button(col, HandType::Right, WeaponType::Gun, "Gun 🔫");
+                        spawn_weapon_button(col, HandType::Right, WeaponType::Magic, "Magic 🔮");
+                    });
+                });
+
+            // Magic Loadout in Menu
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    margin: UiRect::top(Val::Px(40.0)),
+                    ..default()
+                })
+                .with_children(|row| {
+                    spawn_magic_panel(row, HandType::Left);
+                    spawn_magic_panel(row, HandType::Right);
+                });
+
+            // Close Button
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(200.0),
+                        height: Val::Px(60.0),
+                        margin: UiRect::top(Val::Px(40.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
+                ))
+                .observe(|_: On<Pointer<Click>>, mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
+                    next_state.set(crate::resources::game_state::GameState::Playing);
+                })
+                .with_children(|btn| {
+                    btn.spawn((
+                        Text::new("BACK TO GAME"),
+                        TextFont {
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+        });
+
+    // Shop Menu (Initially Hidden)
+    commands
+        .spawn((
+            Node {
+                width: Val::Px(400.0),
+                height: Val::Px(300.0),
+                position_type: PositionType::Absolute,
+                left: Val::Percent(50.0),              // Center X
+                top: Val::Percent(30.0),               // Center Y
+                margin: UiRect::left(Val::Px(-200.0)), // Offset by half width
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                display: Display::None, // Hidden by default
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
+        ))
+        .insert(ShopMenu)
+        .with_children(|shop| {
+            shop.spawn((
+                Text::new("--- SHOP ---"),
+                TextFont {
+                    font_size: 30.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+
+            spawn_shop_button(shop, ShopButton::Heal, "Heal (+30 HP)");
+            spawn_shop_button(shop, ShopButton::DamageUp, "Damage Up (+10%)");
+            spawn_shop_button(shop, ShopButton::NextRound, "Start Next Round");
         });
 }
 
@@ -414,13 +574,8 @@ fn magic_button_observer(
     trigger: On<Pointer<Click>>,
     btn_query: Query<&MagicCycleButton>,
     mut loadout_query: Query<(&Hand, &mut MagicLoadout)>,
-    mut color_query: Query<&mut BackgroundColor>,
 ) {
     if let Ok(btn_data) = btn_query.get(trigger.entity) {
-        if let Ok(mut color) = color_query.get_mut(trigger.entity) {
-            *color = BackgroundColor(Color::srgba(0.6, 0.0, 0.6, 1.0));
-        }
-
         // Cycle Spell
         for (hand, mut loadout) in &mut loadout_query {
             if hand.side == btn_data.side {
@@ -448,17 +603,117 @@ fn magic_button_observer(
 }
 
 #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
-pub fn update_shop_visibility(
-    mut shop_query: Query<&mut Node, With<ShopMenu>>,
+pub fn update_ui_visibility(
+    mut shop_query: Query<&mut Node, (With<ShopMenu>, Without<WeaponMenuUI>)>,
+    mut weapon_menu_query: Query<&mut Node, (With<WeaponMenuUI>, Without<ShopMenu>)>,
+    game_state: Res<State<crate::resources::game_state::GameState>>,
     round_manager: Res<crate::resources::round::RoundManager>,
 ) -> Result<(), String> {
+    // 1. Shop Visibility
     for mut node in &mut shop_query {
-        match round_manager.round_state {
-            crate::resources::round::RoundState::Shop => {
-                node.display = Display::Flex;
-            }
-            _ => {
-                node.display = Display::None;
+        node.display = if *game_state.get() == crate::resources::game_state::GameState::Shop
+            || round_manager.round_state == crate::resources::round::RoundState::Shop
+        {
+            Display::Flex
+        } else {
+            Display::None
+        };
+    }
+
+    // 2. Weapon Menu Visibility
+    for mut node in &mut weapon_menu_query {
+        node.display = if *game_state.get() == crate::resources::game_state::GameState::WeaponMenu {
+            Display::Flex
+        } else {
+            Display::None
+        };
+    }
+
+    Ok(())
+}
+
+#[allow(clippy::unnecessary_wraps)]
+pub fn update_hud_indicators(
+    mut indicator_query: Query<(&Children, &HUDHandIndicator, &mut BackgroundColor)>,
+    mut text_query: Query<(&mut Text, &mut TextColor)>,
+    hand_query: Query<(
+        &Hand,
+        &crate::components::weapon::SwordState,
+        &crate::components::weapon::GunState,
+        &MagicLoadout,
+    )>,
+) -> Result<(), String> {
+    for (children, indicator, mut bg_color) in &mut indicator_query {
+        if let Some((hand, sword, gun, magic)) = hand_query
+            .iter()
+            .find(|(h, _, _, _)| h.side == indicator.side)
+        {
+            let (symbol, color, bg) = match hand.equipped_weapon {
+                Some(WeaponType::Shuriken) => (
+                    "SHR\n(*)".to_string(),
+                    Color::srgba(0.0, 1.0, 1.0, 1.0), // Cyan
+                    Color::srgba(0.0, 0.2, 0.2, 0.8),
+                ),
+                Some(WeaponType::Sword) => {
+                    let (s, c) = match sword.mode {
+                        crate::components::weapon::SwordMode::Normal => {
+                            ("SWD\n[ | ]", Color::WHITE)
+                        }
+                        crate::components::weapon::SwordMode::Shattered => {
+                            ("SWD\n[/ /]", Color::srgba(0.8, 0.8, 1.0, 1.0))
+                        }
+                    };
+                    (s.to_string(), c, Color::srgba(0.2, 0.2, 0.3, 0.8))
+                }
+                Some(WeaponType::Gun) => {
+                    let (s, c) = match gun.mode {
+                        crate::components::weapon::GunMode::Single => {
+                            ("GUN\n< - >", Color::srgb(1.0, 0.8, 0.0))
+                        }
+                        crate::components::weapon::GunMode::Shotgun => {
+                            ("GUN\n< = >", Color::srgb(1.0, 0.6, 0.0))
+                        }
+                        crate::components::weapon::GunMode::Rapid => {
+                            ("GUN\n< >> >", Color::srgb(1.0, 0.4, 0.0))
+                        }
+                    };
+                    (s.to_string(), c, Color::srgba(0.3, 0.2, 0.0, 0.8))
+                }
+                Some(WeaponType::Magic) => {
+                    let spell = if magic.active_slot
+                        == crate::components::weapon::ActiveSpellSlot::Primary
+                    {
+                        magic.primary
+                    } else {
+                        magic.secondary
+                    };
+                    let (spell_sym, spell_color) = match spell {
+                        SpellType::EnergyBolt => ("BOLT", Color::srgb(0.8, 0.0, 1.0)),
+                        SpellType::Laser => ("LASER", Color::srgb(0.0, 1.0, 1.0)),
+                        SpellType::Nova => ("NOVA", Color::srgb(1.0, 0.0, 1.0)),
+                        SpellType::Blink => ("BLINK", Color::WHITE),
+                        SpellType::Global => ("ALL", Color::srgb(1.0, 1.0, 0.5)),
+                    };
+                    (
+                        format!("MAG\n{spell_sym}"),
+                        spell_color,
+                        Color::srgba(0.2, 0.0, 0.2, 0.8),
+                    )
+                }
+                None => (
+                    "EMPTY".to_string(),
+                    Color::WHITE,
+                    Color::srgba(0.1, 0.1, 0.1, 0.8),
+                ),
+            };
+
+            *bg_color = BackgroundColor(bg);
+
+            for &child in children {
+                if let Ok((mut text, mut text_color)) = text_query.get_mut(child) {
+                    **text = symbol.clone();
+                    *text_color = TextColor(color);
+                }
             }
         }
     }
@@ -473,16 +728,9 @@ pub fn update_magic_ui(
     mut text_query: Query<&mut Text>,
     loadout_query: Query<&MagicLoadout>,
 ) -> Result<(), String> {
-    // 1. Update Panel Visibility
-    for (mut node, panel) in &mut panel_query {
-        let is_magic = hand_query
-            .iter()
-            .any(|hand| hand.side == panel.side && hand.equipped_weapon == Some(WeaponType::Magic));
-        node.display = if is_magic {
-            Display::Flex
-        } else {
-            Display::None
-        };
+    // 1. Update Panel Visibility (Always visible in Menu)
+    for (mut node, _) in &mut panel_query {
+        node.display = Display::Flex;
     }
 
     // 2. Update Button Text from Loadout
@@ -504,11 +752,7 @@ pub fn update_magic_ui(
                 SpellType::Blink => "Blink",
                 SpellType::Global => "Global",
             };
-            let prefix = if btn_data.is_primary {
-                "Primary"
-            } else {
-                "Secondary"
-            };
+            let prefix = if btn_data.is_primary { "Pri" } else { "Sec" };
 
             for &child in children {
                 if let Ok(mut text) = text_query.get_mut(child) {
