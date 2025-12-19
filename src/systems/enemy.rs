@@ -4,6 +4,7 @@ use rand::Rng;
 use crate::components::enemy::Enemy;
 use crate::components::physics::{Collider, Velocity};
 use crate::components::player::Player;
+use crate::resources::game_state::GameState;
 use crate::resources::round::{RoundManager, RoundState};
 
 #[allow(clippy::needless_pass_by_value)]
@@ -16,6 +17,7 @@ pub fn spawn_waves(
     mut materials: ResMut<Assets<ColorMaterial>>,
     enemy_query: Query<&Enemy>, // To count alive enemies
     player_query: Query<&Transform, With<Player>>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) -> Result<(), String> {
     let tf = player_query
         .single()
@@ -37,27 +39,17 @@ pub fn spawn_waves(
         }
         RoundState::Fighting => {
             // Check if all enemies are dead
-            // Note: enemy_query.iter().count() is O(N), but N is small (<1000 usually)
             let alive_count = enemy_query.iter().count();
             if alive_count == 0 {
-                println!("Round Cleared! Entering Shop/Break...");
+                println!("Round Cleared! Opening Menu...");
                 round_manager.round_state = RoundState::Shop;
-                round_manager.round_timer.reset(); // Start break timer
+                // Tự động hiện Menu khi hết round
+                next_state.set(GameState::WeaponMenu);
             }
         }
         RoundState::Shop => {
-            round_manager.round_timer.tick(time.delta());
-            if round_manager.round_timer.is_finished() {
-                // Next Round
-                round_manager.current_round += 1;
-                round_manager.enemies_to_spawn = 10 + (round_manager.current_round * 5); // Scale up
-                round_manager.spawn_timer = Timer::from_seconds(
-                    1.0 * (0.95_f32).powi(round_manager.current_round as i32),
-                    TimerMode::Repeating,
-                ); // Spawn faster
-                round_manager.round_state = RoundState::Spawning;
-                println!("Starting Round {}!", round_manager.current_round);
-            }
+            // Không làm gì - chờ người chơi bấm "BACK TO GAME" trong Menu
+            // Logic chuyển round đã được xử lý ở nút "BACK TO GAME"
         }
     }
     Ok(())

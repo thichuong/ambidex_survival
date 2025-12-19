@@ -14,7 +14,6 @@ pub struct WeaponButton {
 pub enum ShopButton {
     Heal,
     DamageUp,
-    NextRound,
 }
 
 #[derive(Component)]
@@ -256,7 +255,12 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                             TextFont::default(),
                             TextColor(Color::WHITE),
                         ));
-                        spawn_weapon_button(col, HandType::Left, WeaponType::Shuriken, "Shuriken ❄");
+                        spawn_weapon_button(
+                            col,
+                            HandType::Left,
+                            WeaponType::Shuriken,
+                            "Shuriken ❄",
+                        );
                         spawn_weapon_button(col, HandType::Left, WeaponType::Sword, "Sword 🗡");
                         spawn_weapon_button(col, HandType::Left, WeaponType::Gun, "Gun 🔫");
                         spawn_weapon_button(col, HandType::Left, WeaponType::Magic, "Magic 🔮");
@@ -274,7 +278,12 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                             TextFont::default(),
                             TextColor(Color::WHITE),
                         ));
-                        spawn_weapon_button(col, HandType::Right, WeaponType::Shuriken, "Shuriken ❄");
+                        spawn_weapon_button(
+                            col,
+                            HandType::Right,
+                            WeaponType::Shuriken,
+                            "Shuriken ❄",
+                        );
                         spawn_weapon_button(col, HandType::Right, WeaponType::Sword, "Sword 🗡");
                         spawn_weapon_button(col, HandType::Right, WeaponType::Gun, "Gun 🔫");
                         spawn_weapon_button(col, HandType::Right, WeaponType::Magic, "Magic 🔮");
@@ -307,7 +316,20 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     },
                     BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
                 ))
-                .observe(|_: On<Pointer<Click>>, mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
+                .observe(|_: On<Pointer<Click>>,
+                    mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>,
+                    mut round_manager: ResMut<crate::resources::round::RoundManager>| {
+                    // Nếu đang ở Shop state thì bắt đầu round mới
+                    if round_manager.round_state == crate::resources::round::RoundState::Shop {
+                        round_manager.current_round += 1;
+                        round_manager.enemies_to_spawn = 10 + (round_manager.current_round * 5);
+                        round_manager.spawn_timer = bevy::time::Timer::from_seconds(
+                            1.0 * (0.95_f32).powi(round_manager.current_round as i32),
+                            bevy::time::TimerMode::Repeating,
+                        );
+                        round_manager.round_state = crate::resources::round::RoundState::Spawning;
+                        println!("Starting Round {}!", round_manager.current_round);
+                    }
                     next_state.set(crate::resources::game_state::GameState::Playing);
                 })
                 .with_children(|btn| {
@@ -332,7 +354,6 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 .with_children(|shop_row| {
                     spawn_shop_button(shop_row, ShopButton::Heal, "Heal (+30 HP) - 50G");
                     spawn_shop_button(shop_row, ShopButton::DamageUp, "Damage Up (+10%) - 100G");
-                    spawn_shop_button(shop_row, ShopButton::NextRound, "Start Next Round");
                 });
         });
 
@@ -463,64 +484,59 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
         .observe(
             |trigger: On<Pointer<Click>>,
              btn_query: Query<&ShopButton>,
-             mut round_manager: ResMut<crate::resources::round::RoundManager>,
              mut player_query: Query<&mut crate::components::player::Player>,
              mut color_query: Query<&mut BackgroundColor>,
              children_query: Query<&Children>,
-             mut text_query: Query<&mut Text>,
-             mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
+             mut text_query: Query<&mut Text>| {
                 if let Ok(btn_type) = btn_query.get(trigger.entity) {
                     let mut success = false;
-                    
+
                     match btn_type {
                         ShopButton::Heal => {
                             if let Ok(mut player) = player_query.single_mut() {
                                 if player.gold >= 50 && player.health < 100.0 {
                                     player.gold -= 50;
                                     player.health = (player.health + 30.0).min(100.0);
-                                    println!("Healed! Health: {}, Gold: {}", player.health, player.gold);
+                                    println!(
+                                        "Healed! Health: {}, Gold: {}",
+                                        player.health, player.gold
+                                    );
                                     success = true;
                                 } else {
-                                     println!("Not enough gold or full health!");
+                                    println!("Not enough gold or full health!");
                                 }
                             }
                         }
                         ShopButton::DamageUp => {
                             if let Ok(mut player) = player_query.single_mut() {
                                 if player.gold >= 100 {
-                                     player.gold -= 100;
-                                     player.damage_multiplier += 0.1;
-                                     println!("Damage Upgraded! Gold: {}", player.gold);
-                                     success = true;
+                                    player.gold -= 100;
+                                    player.damage_multiplier += 0.1;
+                                    println!("Damage Upgraded! Gold: {}", player.gold);
+                                    success = true;
 
-                                     // Update button text to show current multiplier
-                                     if let Ok(children) = children_query.get(trigger.entity) {
-                                         for &child in children {
-                                             if let Ok(mut text) = text_query.get_mut(child) {
-                                                 text.0 = format!("Damage Up (+10%) - 100G\n(Current: {:.0}%)", player.damage_multiplier * 100.0);
-                                             }
-                                         }
-                                     }
+                                    // Update button text to show current multiplier
+                                    if let Ok(children) = children_query.get(trigger.entity) {
+                                        for &child in children {
+                                            if let Ok(mut text) = text_query.get_mut(child) {
+                                                text.0 = format!(
+                                                    "Damage Up (+10%) - 100G\n(Current: {:.0}%)",
+                                                    player.damage_multiplier * 100.0
+                                                );
+                                            }
+                                        }
+                                    }
                                 } else {
                                     println!("Not enough gold!");
                                 }
                             }
                         }
-                        ShopButton::NextRound => {
-                            round_manager
-                                .round_timer
-                                .set_duration(std::time::Duration::from_secs(0));
-                            round_manager.round_timer.reset();
-                            // Close the menu when starting next round
-                             next_state.set(crate::resources::game_state::GameState::Playing);
-                             success = true; // Just for visual feedback
-                        }
                     }
 
                     if success {
                         if let Ok(mut color) = color_query.get_mut(trigger.entity) {
-                           *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
-                         }
+                            *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
+                        }
                     } else if let Ok(mut color) = color_query.get_mut(trigger.entity) {
                         *color = BackgroundColor(Color::srgba(0.8, 0.2, 0.2, 1.0)); // Flash red on fail
                     }

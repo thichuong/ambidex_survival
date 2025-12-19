@@ -3,7 +3,8 @@ use bevy::prelude::*;
 #[derive(Resource)]
 pub struct RoundManager {
     pub current_round: u32,
-    pub round_timer: Timer, // Time between rounds or wave spawning? Let's use it for spawn_timer.
+    #[allow(dead_code)]
+    pub round_timer: Timer, // Không còn sử dụng sau khi đơn giản hóa logic
     pub spawn_timer: Timer,
     pub enemies_to_spawn: u32,
 
