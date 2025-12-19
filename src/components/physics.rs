@@ -1,4 +1,66 @@
 use bevy::prelude::*;
+use std::collections::HashMap;
+
+/// Uniform Grid for spatial partitioning - used to optimize collision detection
+/// Only enemies are inserted into the grid for player-enemy collision checks
+#[derive(Resource)]
+pub struct UniformGrid {
+    pub cell_size: f32,
+    pub cells: HashMap<(i32, i32), Vec<Entity>>,
+}
+
+impl Default for UniformGrid {
+    fn default() -> Self {
+        Self::new(100.0) // Default cell size covers reasonable area
+    }
+}
+
+impl UniformGrid {
+    #[must_use]
+    pub fn new(cell_size: f32) -> Self {
+        Self {
+            cell_size,
+            cells: HashMap::default(),
+        }
+    }
+
+    /// Clear all entities from the grid
+    pub fn clear(&mut self) {
+        self.cells.clear();
+    }
+
+    /// Get cell coordinates for a world position
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn cell_coords(&self, pos: Vec2) -> (i32, i32) {
+        let x = (pos.x / self.cell_size).floor() as i32;
+        let y = (pos.y / self.cell_size).floor() as i32;
+        (x, y)
+    }
+
+    /// Insert an entity at a world position
+    pub fn insert(&mut self, entity: Entity, pos: Vec2) {
+        let coords = self.cell_coords(pos);
+        self.cells.entry(coords).or_default().push(entity);
+    }
+
+    /// Query all entities in the cell containing pos and its 8 neighbors (3x3 grid)
+    #[must_use]
+    pub fn query_nearby(&self, pos: Vec2) -> Vec<Entity> {
+        let (cx, cy) = self.cell_coords(pos);
+        let mut result = Vec::new();
+
+        for dx in -1..=1 {
+            for dy in -1..=1 {
+                if let Some(entities) = self.cells.get(&(cx + dx, cy + dy)) {
+                    result.extend(entities.iter().copied());
+                }
+            }
+        }
+
+        result
+    }
+}
 
 /// Custom velocity component for physics simulation
 #[derive(Component, Default, Clone, Copy)]

@@ -47,11 +47,13 @@ fn main() {
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
         .init_resource::<resources::polish::ScreenShake>()
+        .init_resource::<components::physics::UniformGrid>()
         .add_systems(Startup, (setup_camera, spawn_player))
         .add_systems(Update, maximize_window)
         .add_systems(
             Update,
             (
+                systems::combat::update_enemy_grid.pipe(log_error),
                 systems::physics::apply_velocity.pipe(log_error),
                 move_player.pipe(log_error),
                 aim_player.pipe(log_error),
@@ -82,6 +84,7 @@ fn main() {
                 systems::ui::update_hud_indicators.pipe(log_error),
                 systems::ui::update_magic_ui.pipe(log_error),
                 systems::ui::update_health_ui.pipe(log_error),
+                systems::ui::update_gold_ui,
             ),
         )
         .add_systems(Startup, systems::ui::setup_ui)

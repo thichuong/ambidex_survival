@@ -9,9 +9,7 @@ pub struct WeaponButton {
     pub kind: WeaponType,
 }
 
-#[derive(Component)]
-pub struct ShopMenu;
-
+// ShopMenu component removed
 #[derive(Component)]
 pub enum ShopButton {
     Heal,
@@ -57,6 +55,9 @@ pub struct GameOverUI;
 #[derive(Component)]
 pub struct NewGameButton;
 
+#[derive(Component)]
+pub struct GoldText;
+
 #[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Root UI Node (HUD)
@@ -73,6 +74,23 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             Pickable::IGNORE,
         ))
         .with_children(|parent| {
+            // Gold Display (Top Left)
+            parent.spawn((
+                Text::new("Gold: 0"),
+                TextFont {
+                    font_size: 24.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 0.843, 0.0)), // Gold Color
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(20.0),
+                    left: Val::Px(20.0),
+                    ..default()
+                },
+                GoldText,
+            ));
+
             // Health Bar (Top Center)
             parent
                 .spawn(Node {
@@ -302,42 +320,23 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         TextColor(Color::WHITE),
                     ));
                 });
-        });
 
-    // Shop Menu (Initially Hidden)
-    commands
-        .spawn((
-            Node {
-                width: Val::Px(400.0),
-                height: Val::Px(300.0),
-                position_type: PositionType::Absolute,
-                left: Val::Percent(50.0),              // Center X
-                top: Val::Percent(30.0),               // Center Y
-                margin: UiRect::left(Val::Px(-200.0)), // Offset by half width
-                flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                display: Display::None, // Hidden by default
-                ..default()
-            },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
-        ))
-        .insert(ShopMenu)
-        .with_children(|shop| {
-            shop.spawn((
-                Text::new("--- SHOP ---"),
-                TextFont {
-                    font_size: 30.0,
+            // --- SHOP SECTION IN MENU ---
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    margin: UiRect::top(Val::Px(40.0)),
+                    align_items: AlignItems::Center,
                     ..default()
-                },
-                TextColor(Color::WHITE),
-            ));
-
-            spawn_shop_button(shop, ShopButton::Heal, "Heal (+30 HP)");
-            spawn_shop_button(shop, ShopButton::DamageUp, "Damage Up (+10%)");
-            spawn_shop_button(shop, ShopButton::NextRound, "Start Next Round");
+                })
+                .with_children(|shop_row| {
+                    spawn_shop_button(shop_row, ShopButton::Heal, "Heal (+30 HP) - 50G");
+                    spawn_shop_button(shop_row, ShopButton::DamageUp, "Damage Up (+10%) - 100G");
+                    spawn_shop_button(shop_row, ShopButton::NextRound, "Start Next Round");
+                });
         });
 
+    // Shop Menu (Removed - merged into WeaponMenuUI)
     // Game Over Menu (Initially Hidden)
     commands
         .spawn((
@@ -398,6 +397,7 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         // Reset Player
                         if let Some((mut player, mut transform)) = player_query.iter_mut().next() {
                             player.health = 100.0;
+                            player.gold = 0; // Reset Gold
                             transform.translation = Vec3::ZERO;
                         }
 
@@ -465,27 +465,64 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
              btn_query: Query<&ShopButton>,
              mut round_manager: ResMut<crate::resources::round::RoundManager>,
              mut player_query: Query<&mut crate::components::player::Player>,
-             mut color_query: Query<&mut BackgroundColor>| {
+             mut color_query: Query<&mut BackgroundColor>,
+             children_query: Query<&Children>,
+             mut text_query: Query<&mut Text>,
+             mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
                 if let Ok(btn_type) = btn_query.get(trigger.entity) {
-                    if let Ok(mut color) = color_query.get_mut(trigger.entity) {
-                        *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
-                    }
+                    let mut success = false;
+                    
                     match btn_type {
                         ShopButton::Heal => {
                             if let Ok(mut player) = player_query.single_mut() {
-                                player.health = (player.health + 30.0).min(100.0);
-                                println!("Healed! Health: {}", player.health);
+                                if player.gold >= 50 && player.health < 100.0 {
+                                    player.gold -= 50;
+                                    player.health = (player.health + 30.0).min(100.0);
+                                    println!("Healed! Health: {}, Gold: {}", player.health, player.gold);
+                                    success = true;
+                                } else {
+                                     println!("Not enough gold or full health!");
+                                }
                             }
                         }
                         ShopButton::DamageUp => {
-                            println!("Damage Upgraded! (Placeholder)");
+                            if let Ok(mut player) = player_query.single_mut() {
+                                if player.gold >= 100 {
+                                     player.gold -= 100;
+                                     player.damage_multiplier += 0.1;
+                                     println!("Damage Upgraded! Gold: {}", player.gold);
+                                     success = true;
+
+                                     // Update button text to show current multiplier
+                                     if let Ok(children) = children_query.get(trigger.entity) {
+                                         for &child in children {
+                                             if let Ok(mut text) = text_query.get_mut(child) {
+                                                 text.0 = format!("Damage Up (+10%) - 100G\n(Current: {:.0}%)", player.damage_multiplier * 100.0);
+                                             }
+                                         }
+                                     }
+                                } else {
+                                    println!("Not enough gold!");
+                                }
+                            }
                         }
                         ShopButton::NextRound => {
                             round_manager
                                 .round_timer
                                 .set_duration(std::time::Duration::from_secs(0));
                             round_manager.round_timer.reset();
+                            // Close the menu when starting next round
+                             next_state.set(crate::resources::game_state::GameState::Playing);
+                             success = true; // Just for visual feedback
                         }
+                    }
+
+                    if success {
+                        if let Ok(mut color) = color_query.get_mut(trigger.entity) {
+                           *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
+                         }
+                    } else if let Ok(mut color) = color_query.get_mut(trigger.entity) {
+                        *color = BackgroundColor(Color::srgba(0.8, 0.2, 0.2, 1.0)); // Flash red on fail
                     }
                 }
             },
@@ -759,21 +796,16 @@ fn magic_button_observer(
     clippy::type_complexity
 )]
 pub fn update_ui_visibility(
-    mut shop_query: Query<&mut Node, (With<ShopMenu>, Without<WeaponMenuUI>, Without<GameOverUI>)>,
-    mut weapon_menu_query: Query<
-        &mut Node,
-        (With<WeaponMenuUI>, Without<ShopMenu>, Without<GameOverUI>),
-    >,
-    mut game_over_query: Query<
-        &mut Node,
-        (With<GameOverUI>, Without<ShopMenu>, Without<WeaponMenuUI>),
-    >,
+    // Removed ShopMenu query as it's no longer used separatedly
+    mut weapon_menu_query: Query<&mut Node, (With<WeaponMenuUI>, Without<GameOverUI>)>,
+    mut game_over_query: Query<&mut Node, (With<GameOverUI>, Without<WeaponMenuUI>)>,
     game_state: Res<State<crate::resources::game_state::GameState>>,
     round_manager: Res<crate::resources::round::RoundManager>,
 ) -> Result<(), String> {
-    // 1. Shop Visibility
-    for mut node in &mut shop_query {
-        node.display = if *game_state.get() == crate::resources::game_state::GameState::Shop
+    // 1. Weapon Menu / Shop Visibility
+    // Show if manually opened (GameState::WeaponMenu) OR if it's Shop phase (RoundState::Shop)
+    for mut node in &mut weapon_menu_query {
+        node.display = if *game_state.get() == crate::resources::game_state::GameState::WeaponMenu
             || round_manager.round_state == crate::resources::round::RoundState::Shop
         {
             Display::Flex
@@ -782,16 +814,7 @@ pub fn update_ui_visibility(
         };
     }
 
-    // 2. Weapon Menu Visibility
-    for mut node in &mut weapon_menu_query {
-        node.display = if *game_state.get() == crate::resources::game_state::GameState::WeaponMenu {
-            Display::Flex
-        } else {
-            Display::None
-        };
-    }
-
-    // 3. Game Over Visibility
+    // 2. Game Over Visibility
     for mut node in &mut game_over_query {
         node.display = if *game_state.get() == crate::resources::game_state::GameState::GameOver {
             Display::Flex
@@ -912,4 +935,16 @@ pub fn update_health_ui(
         }
     }
     Ok(())
+}
+
+#[allow(clippy::type_complexity)]
+pub fn update_gold_ui(
+    mut gold_text_query: Query<&mut Text, With<GoldText>>,
+    player_query: Query<&crate::components::player::Player>,
+) {
+    if let Some(player) = player_query.iter().next() {
+        for mut text in &mut gold_text_query {
+            **text = format!("Gold: {}", player.gold);
+        }
+    }
 }

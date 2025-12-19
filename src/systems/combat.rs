@@ -1,5 +1,5 @@
 use crate::components::enemy::Enemy;
-use crate::components::physics::{Collider, Velocity, check_collision};
+use crate::components::physics::{Collider, UniformGrid, Velocity, check_collision};
 use crate::components::player::{GameCamera, Hand, HandType, Player};
 use crate::components::weapon::{
     ActiveSpellSlot, AoEProjectile, ExplodingProjectile, GunMode, GunState, Lifetime, MagicLoadout,
@@ -46,7 +46,7 @@ pub struct CombatInputParams<'w, 's> {
 #[allow(clippy::too_many_lines)]
 pub fn handle_combat_input(
     mut params: CombatInputParams,
-    mut player_query: Query<(Entity, &mut Transform), With<Player>>,
+    mut player_query: Query<(Entity, &mut Transform, &Player), With<Player>>,
     mut hand_query: Query<(
         Entity,
         &GlobalTransform,
@@ -72,7 +72,7 @@ pub fn handle_combat_input(
         .map(|ray| ray.origin.truncate())
         .ok_or_else(|| "Cursor position not available".to_string())?;
 
-    let (player_entity, mut player_transform) = player_query
+    let (player_entity, mut player_transform, player) = player_query
         .single_mut()
         .map_err(|e| format!("Player not found: {e:?}"))?;
 
@@ -129,6 +129,7 @@ pub fn handle_combat_input(
                             &mut player_transform,
                             cursor_pos,
                             hand_pos,
+                            player.damage_multiplier,
                         );
                         weapon_data.last_shot = now;
                     }
@@ -155,6 +156,7 @@ pub fn handle_combat_input(
                             sword_state.mode,
                             gun_state.mode,
                             hand_entity,
+                            player.damage_multiplier,
                         );
                         weapon_data.last_shot = params.time.elapsed_secs();
                     }
@@ -189,6 +191,7 @@ pub fn handle_combat_input(
                             sword_state.mode,
                             gun_state.mode,
                             hand_entity,
+                            player.damage_multiplier,
                         );
                         weapon_data.last_shot = now;
                     }
@@ -223,6 +226,7 @@ fn cast_spell(
     player_transform: &mut Transform,
     cursor_pos: Vec2,
     spawn_pos: Vec2,
+    damage_multiplier: f32,
 ) {
     let direction = (cursor_pos - spawn_pos).normalize_or_zero();
     let angle = direction.y.atan2(direction.x);
@@ -242,7 +246,7 @@ fn cast_spell(
                 },
                 Projectile {
                     kind: WeaponType::Magic,
-                    damage: energy_bolt::DAMAGE,
+                    damage: energy_bolt::DAMAGE * damage_multiplier,
                     speed: energy_bolt::SPEED,
                     direction,
                     owner_entity: player_entity,
@@ -252,7 +256,7 @@ fn cast_spell(
                 },
                 ExplodingProjectile {
                     radius: energy_bolt::EXPLOSION_RADIUS,
-                    damage: energy_bolt::DAMAGE,
+                    damage: energy_bolt::DAMAGE * damage_multiplier,
                 },
             ));
         }
@@ -267,7 +271,7 @@ fn cast_spell(
                     Velocity::default(),
                     Projectile {
                         kind: WeaponType::Magic,
-                        damage: laser::DAMAGE,
+                        damage: laser::DAMAGE * damage_multiplier,
                         speed: 0.0,
                         direction,
                         owner_entity: player_entity,
@@ -298,7 +302,7 @@ fn cast_spell(
                 Velocity::default(),
                 Projectile {
                     kind: WeaponType::Magic,
-                    damage: nova::DAMAGE,
+                    damage: nova::DAMAGE * damage_multiplier,
                     speed: 0.0,
                     direction: Vec2::ZERO,
                     owner_entity: player_entity,
@@ -321,7 +325,7 @@ fn cast_spell(
                 Velocity::default(),
                 Projectile {
                     kind: WeaponType::Magic,
-                    damage: global::DAMAGE,
+                    damage: global::DAMAGE * damage_multiplier,
                     speed: 0.0,
                     direction: Vec2::ZERO,
                     owner_entity: player_entity,
@@ -416,6 +420,7 @@ fn fire_weapon(
     sword_mode: SwordMode,
     gun_mode: GunMode,
     hand_entity: Entity,
+    damage_multiplier: f32,
 ) {
     let direction = (target_pos - spawn_pos).normalize_or_zero();
     match weapon_type {
@@ -448,7 +453,7 @@ fn fire_weapon(
                 },
                 Projectile {
                     kind: WeaponType::Shuriken,
-                    damage: shuriken::DAMAGE,
+                    damage: shuriken::DAMAGE * damage_multiplier,
                     speed: shuriken::SPEED,
                     direction,
                     owner_entity: owner,
@@ -472,7 +477,7 @@ fn fire_weapon(
                                 timer: Timer::from_seconds(sword::NORMAL_TIMER, TimerMode::Once),
                                 base_angle: start_angle,
                                 owner_entity: owner,
-                                damage: sword::NORMAL_DAMAGE,
+                                damage: sword::NORMAL_DAMAGE * damage_multiplier,
                                 range: sword::NORMAL_RANGE,
                                 damage_dealt: false,
                                 hand_entity,
@@ -499,7 +504,7 @@ fn fire_weapon(
                                 timer: Timer::from_seconds(sword::SHATTERED_TIMER, TimerMode::Once),
                                 base_angle: start_angle,
                                 owner_entity: owner,
-                                damage: sword::SHATTERED_DAMAGE,
+                                damage: sword::SHATTERED_DAMAGE * damage_multiplier,
                                 range: sword::SHATTERED_RANGE,
                                 damage_dealt: false,
                                 hand_entity,
@@ -555,7 +560,7 @@ fn fire_weapon(
                     },
                     Projectile {
                         kind: WeaponType::Gun,
-                        damage,
+                        damage: damage * damage_multiplier,
                         speed,
                         direction: dir,
                         owner_entity: owner,
@@ -578,9 +583,10 @@ pub struct CombatResources<'w, 's> {
     pub exploding_query: Query<'w, 's, &'static ExplodingProjectile>,
 }
 
-#[allow(clippy::unnecessary_wraps)]
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn resolve_damage(
     mut commands: Commands,
+    mut player_query: Query<&mut Player>,
     mut projectile_query: Query<(
         Entity,
         &Projectile,
@@ -589,6 +595,7 @@ pub fn resolve_damage(
         Option<&mut AoEProjectile>,
     )>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy, &Collider), Without<Player>>,
+    grid: Res<UniformGrid>,
     mut res: CombatResources,
     mut damage_events: MessageWriter<DamageEvent>,
 ) -> Result<(), String> {
@@ -599,17 +606,24 @@ pub fn resolve_damage(
         let is_aoe = aoe_opt.is_some();
         let mut hits: Vec<(Entity, f32, Vec3)> = Vec::new();
 
-        for (enemy_entity, enemy_transform, enemy, enemy_collider) in &enemy_query {
-            let enemy_pos = enemy_transform.translation.truncate();
-            if check_collision(proj_pos, proj_collider, enemy_pos, enemy_collider)
-                && projectile.owner_entity != enemy_entity
+        // Use spatial grid to check only nearby enemies
+        let nearby_enemies = grid.query_nearby(proj_pos);
+
+        for enemy_entity in nearby_enemies {
+            if let Ok((entity, enemy_transform, enemy, enemy_collider)) =
+                enemy_query.get(enemy_entity)
             {
-                if let Some(ref aoe) = aoe_opt
-                    && aoe.damaged_entities.contains(&enemy_entity)
+                let enemy_pos = enemy_transform.translation.truncate();
+                if check_collision(proj_pos, proj_collider, enemy_pos, enemy_collider)
+                    && projectile.owner_entity != entity
                 {
-                    continue;
+                    if let Some(ref aoe) = aoe_opt
+                        && aoe.damaged_entities.contains(&entity)
+                    {
+                        continue;
+                    }
+                    hits.push((entity, enemy.health, enemy_transform.translation));
                 }
-                hits.push((enemy_entity, enemy.health, enemy_transform.translation));
             }
         }
 
@@ -652,6 +666,9 @@ pub fn resolve_damage(
                 }
 
                 if enemy.health <= 0.0 {
+                    if let Ok(mut player) = player_query.single_mut() {
+                        player.gold += 10;
+                    }
                     commands.entity(*enemy_entity).despawn();
                     res.shake.add_trauma(0.3);
 
@@ -683,7 +700,11 @@ pub fn resolve_damage(
     Ok(())
 }
 
-#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
+#[allow(
+    clippy::unnecessary_wraps,
+    clippy::needless_pass_by_value,
+    clippy::too_many_arguments
+)]
 pub fn update_sword_mechanics(
     mut commands: Commands,
     time: Res<Time>,
@@ -692,6 +713,7 @@ pub fn update_sword_mechanics(
     hand_query: Query<&GlobalTransform, With<Hand>>,
     mut res: CombatResources,
     mut damage_events: MessageWriter<DamageEvent>,
+    mut player_query: Query<&mut Player>,
 ) -> Result<(), String> {
     for (entity, mut swing, mut transform) in &mut sword_query {
         if let Ok(hand_transform) = hand_query.get(swing.hand_entity) {
@@ -736,6 +758,9 @@ pub fn update_sword_mechanics(
                                 });
                                 res.shake.add_trauma(0.2);
                                 if enemy.health <= 0.0 {
+                                    if let Ok(mut player) = player_query.single_mut() {
+                                        player.gold += 10;
+                                    }
                                     commands.entity(enemy_entity).despawn();
                                     res.shake.add_trauma(0.4);
 
@@ -801,34 +826,73 @@ pub fn manage_lifetime(
     Ok(())
 }
 
+/// Update enemy grid for spatial partitioning - rebuilds grid each frame
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
+pub fn update_enemy_grid(
+    mut grid: ResMut<UniformGrid>,
+    enemy_query: Query<(Entity, &Transform), With<Enemy>>,
+) -> Result<(), String> {
+    grid.clear();
+    for (entity, transform) in &enemy_query {
+        grid.insert(entity, transform.translation.truncate());
+    }
+    Ok(())
+}
+
+/// Constant for push strength when player and enemy collide
+const COLLISION_PUSH_STRENGTH: f32 = 200.0;
+
 #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn handle_player_collision(
-    mut player_query: Query<(&mut Player, &Transform, &Collider)>,
-    enemy_query: Query<(&Enemy, &Transform, &Collider), Without<Player>>,
+    mut player_query: Query<(&mut Player, &mut Transform, &Collider), Without<Enemy>>,
+    mut enemy_query: Query<(Entity, &mut Transform, &Enemy, &Collider), Without<Player>>,
+    grid: Res<UniformGrid>,
     time: Res<Time>,
     mut res: CombatResources,
     mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>,
 ) -> Result<(), String> {
-    if let Ok((mut player, player_transform, player_collider)) = player_query.single_mut() {
+    if let Ok((mut player, mut player_transform, player_collider)) = player_query.single_mut() {
         player.invulnerability_timer.tick(time.delta());
 
-        if !player.invulnerability_timer.is_finished() {
-            return Ok(());
-        }
-
         let player_pos = player_transform.translation.truncate();
-        for (enemy, enemy_transform, enemy_collider) in &enemy_query {
-            let enemy_pos = enemy_transform.translation.truncate();
-            if check_collision(player_pos, player_collider, enemy_pos, enemy_collider) {
-                player.health -= enemy.damage;
-                player.invulnerability_timer.reset();
-                res.shake.add_trauma(0.5);
 
-                if player.health <= 0.0 {
-                    player.health = 0.0;
-                    next_state.set(crate::resources::game_state::GameState::GameOver);
+        // Query nearby enemies using spatial grid instead of iterating all
+        let nearby_entities = grid.query_nearby(player_pos);
+
+        for enemy_entity in nearby_entities {
+            if let Ok((_, mut enemy_transform, enemy, enemy_collider)) =
+                enemy_query.get_mut(enemy_entity)
+            {
+                let enemy_pos = enemy_transform.translation.truncate();
+
+                if check_collision(player_pos, player_collider, enemy_pos, enemy_collider) {
+                    // Calculate push direction and apply separation
+                    let diff = player_pos - enemy_pos;
+                    let distance = diff.length();
+
+                    if distance > 0.0 {
+                        let push_dir = diff / distance;
+                        let push_amount = COLLISION_PUSH_STRENGTH * time.delta_secs();
+
+                        // Push both player and enemy apart
+                        player_transform.translation.x += push_dir.x * push_amount;
+                        player_transform.translation.y += push_dir.y * push_amount;
+                        enemy_transform.translation.x -= push_dir.x * push_amount;
+                        enemy_transform.translation.y -= push_dir.y * push_amount;
+                    }
+
+                    // Apply damage only if not invulnerable
+                    if player.invulnerability_timer.is_finished() {
+                        player.health -= enemy.damage;
+                        player.invulnerability_timer.reset();
+                        res.shake.add_trauma(0.5);
+
+                        if player.health <= 0.0 {
+                            player.health = 0.0;
+                            next_state.set(crate::resources::game_state::GameState::GameOver);
+                        }
+                    }
                 }
-                break; // One hit per frame max to avoid instant multiple collisions
             }
         }
     }
