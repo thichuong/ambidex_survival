@@ -46,6 +46,11 @@ pub struct HUDIcon {
 }
 
 #[derive(Component)]
+pub struct CooldownOverlay {
+    pub side: HandType,
+}
+
+#[derive(Component)]
 pub struct HealthBar;
 
 #[derive(Component)]
@@ -166,6 +171,21 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         },
                         HUDIcon { side: HandType::Left },
                     ));
+
+                    // Cooldown Overlay
+                    btn.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(0.0), // Start empty
+                            position_type: PositionType::Absolute,
+                            bottom: Val::Px(0.0),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+                        CooldownOverlay {
+                            side: HandType::Left,
+                        },
+                    ));
                 });
 
             // Center Menu Button
@@ -224,6 +244,21 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                             ..default()
                         },
                         HUDIcon { side: HandType::Right },
+                    ));
+
+                    // Cooldown Overlay
+                    btn.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(0.0), // Start empty
+                            position_type: PositionType::Absolute,
+                            bottom: Val::Px(0.0),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+                        CooldownOverlay {
+                            side: HandType::Right,
+                        },
                     ));
                 });
         });
@@ -1097,6 +1132,44 @@ pub fn update_menu_gold_text(
     if let Some(player) = player_query.iter().next() {
         for mut text in &mut query {
             text.0 = format!("Gold: {}", player.gold);
+        }
+    }
+}
+
+pub fn update_cooldown_indicators(
+    mut overlay_query: Query<(&mut Node, &CooldownOverlay)>,
+    hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
+    time: Res<Time>,
+) {
+    let now = time.elapsed_secs();
+    for (mut node, overlay) in &mut overlay_query {
+        if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == overlay.side) {
+            // Calculate primary cooldown progress
+            let primary_elapsed = now - weapon.last_shot;
+            let primary_progress = if weapon.cooldown > 0.0 {
+                (1.0 - (primary_elapsed / weapon.cooldown)).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+
+            // Calculate skill cooldown progress
+            let skill_elapsed = now - weapon.last_skill_use;
+            let skill_progress = if weapon.skill_cooldown > 0.0 {
+                (1.0 - (skill_elapsed / weapon.skill_cooldown)).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+
+            // Use the maximum of both cooldowns for the overlay
+            let max_progress = primary_progress.max(skill_progress);
+
+            if max_progress > 0.0 {
+                node.height = Val::Percent(max_progress * 100.0);
+                node.display = Display::Flex;
+            } else {
+                node.height = Val::Percent(0.0);
+                node.display = Display::None;
+            }
         }
     }
 }

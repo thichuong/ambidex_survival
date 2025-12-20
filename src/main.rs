@@ -91,6 +91,7 @@ fn main() {
                 systems::ui::update_gold_ui,
                 systems::ui::update_round_text,
                 systems::ui::update_menu_gold_text,
+                systems::ui::update_cooldown_indicators,
             ),
         )
         .add_systems(Startup, systems::ui::setup_ui)
