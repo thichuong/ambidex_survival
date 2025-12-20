@@ -59,6 +59,9 @@ pub struct ShurikenCountText {
 pub struct HealthBar;
 
 #[derive(Component)]
+pub struct HealthText;
+
+#[derive(Component)]
 pub struct GameOverUI;
 
 #[derive(Component)]
@@ -148,6 +151,24 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         HealthBar,
                     ));
                 });
+
+            // Health Text
+            parent.spawn((
+                Text::new("100 / 100"),
+                TextFont {
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(22.0), // Slightly below top align to center with bar visually or just beside
+                    left: Val::Percent(50.0),
+                    margin: UiRect::left(Val::Px(110.0)), // Offset to the right of the bar (100px half width + padding)
+                    ..default()
+                },
+                HealthText,
+            ));
             // Left Hand Indicator
             parent
                 .spawn((
@@ -1134,6 +1155,7 @@ pub fn update_magic_ui(
 #[allow(clippy::unnecessary_wraps)]
 pub fn update_health_ui(
     mut health_bar_query: Query<&mut Node, With<HealthBar>>,
+    mut health_text_query: Query<&mut Text, With<HealthText>>,
     player_query: Query<&crate::components::player::Player>,
 ) -> Result<(), String> {
     if let Ok(player) = player_query.single() {
@@ -1141,6 +1163,10 @@ pub fn update_health_ui(
             // Player health is 0..100
             let percent = (player.health / 100.0).clamp(0.0, 1.0) * 100.0;
             node.width = Val::Percent(percent);
+        }
+
+        for mut text in &mut health_text_query {
+            **text = format!("{:.0} / 100", player.health);
         }
     }
     Ok(())
