@@ -1233,12 +1233,12 @@ pub fn update_shuriken_count_ui(
                     .count();
 
                 if count > 0 {
-                    text.0 = format!("{}", count);
+                    text.0 = format!("{count}");
                 } else {
-                    text.0 = "".to_string();
+                    text.0 = String::new();
                 }
             } else {
-                text.0 = "".to_string();
+                text.0 = String::new();
             }
         }
     }
