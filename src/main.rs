@@ -30,7 +30,7 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "Ambidex Survival".into(),
-                        resolution: WindowResolution::new(1280, 720),
+                        resolution: WindowResolution::new(1920, 1080),
                         fit_canvas_to_parent: true,
                         ..default()
                     }),
