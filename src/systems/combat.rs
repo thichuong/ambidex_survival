@@ -7,6 +7,7 @@ use crate::components::weapon::{
 };
 use crate::configs::spells::{energy_bolt, global, laser, nova};
 use crate::configs::weapons::{gun, shuriken, sword};
+use crate::systems::object_pooling::{EffectType, PooledEffect, VisualEffectPool};
 use crate::systems::weapon_visuals::{
     spawn_bolt_explosion_visuals, spawn_energy_bolt_visuals, spawn_global_visuals,
     spawn_gun_bullet_visuals, spawn_laser_visuals, spawn_nova_visuals, spawn_shuriken_visuals,
@@ -32,8 +33,7 @@ pub struct CombatInputParams<'w, 's> {
     pub key_input: Res<'w, ButtonInput<KeyCode>>,
     pub window_query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
     pub camera_query: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<GameCamera>>,
-    pub meshes: ResMut<'w, Assets<Mesh>>,
-    pub materials: ResMut<'w, Assets<ColorMaterial>>,
+    pub cached_assets: Res<'w, crate::resources::cached_assets::CachedAssets>,
     pub projectile_query: Query<
         'w,
         's,
@@ -263,7 +263,7 @@ fn cast_spell(
                     },
                 ))
                 .with_children(|parent| {
-                    spawn_energy_bolt_visuals(parent, &mut params.meshes, &mut params.materials);
+                    spawn_energy_bolt_visuals(parent, &params.cached_assets);
                 });
         }
         SpellType::Laser => {
@@ -289,7 +289,7 @@ fn cast_spell(
                     IgnoreGrid,
                 ))
                 .with_children(|parent| {
-                    spawn_laser_visuals(parent, &mut params.meshes, &mut params.materials);
+                    spawn_laser_visuals(parent, &params.cached_assets);
                 });
         }
         SpellType::Nova => {
@@ -313,7 +313,7 @@ fn cast_spell(
                     AoEProjectile::default(),
                 ))
                 .with_children(|parent| {
-                    spawn_nova_visuals(parent, &mut params.meshes, &mut params.materials);
+                    spawn_nova_visuals(parent, &params.cached_assets);
                 });
         }
         SpellType::Blink => {
@@ -341,7 +341,7 @@ fn cast_spell(
                     IgnoreGrid,
                 ))
                 .with_children(|parent| {
-                    spawn_global_visuals(parent, &mut params.meshes, &mut params.materials);
+                    spawn_global_visuals(parent, &params.cached_assets);
                 });
         }
     }
@@ -377,18 +377,19 @@ fn perform_skill(
 
             if let Some((entity, location)) = closest_proj {
                 params.commands.spawn((
-                    Mesh2d(params.meshes.add(Circle::new(15.0))),
-                    MeshMaterial2d(params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5))),
-                    Transform::from_translation(player_transform.translation),
+                    Mesh2d(params.cached_assets.unit_circle.clone()),
+                    MeshMaterial2d(params.cached_assets.mat_cyan_50.clone()),
+                    Transform::from_translation(player_transform.translation)
+                        .with_scale(Vec3::splat(15.0)),
                     Lifetime {
                         timer: Timer::from_seconds(0.2, TimerMode::Once),
                     },
                 ));
                 player_transform.translation = location;
                 params.commands.spawn((
-                    Mesh2d(params.meshes.add(Circle::new(15.0))),
-                    MeshMaterial2d(params.materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5))),
-                    Transform::from_translation(location),
+                    Mesh2d(params.cached_assets.unit_circle.clone()),
+                    MeshMaterial2d(params.cached_assets.mat_cyan_50.clone()),
+                    Transform::from_translation(location).with_scale(Vec3::splat(15.0)),
                     Lifetime {
                         timer: Timer::from_seconds(0.2, TimerMode::Once),
                     },
@@ -472,7 +473,7 @@ fn fire_weapon(
                     },
                 ))
                 .with_children(|parent| {
-                    spawn_shuriken_visuals(parent, &mut params.meshes, &mut params.materials);
+                    spawn_shuriken_visuals(parent, &params.cached_assets);
                 });
         }
         WeaponType::Sword => {
@@ -496,11 +497,7 @@ fn fire_weapon(
                             },
                         ))
                         .with_children(|parent| {
-                            spawn_sword_normal_visuals(
-                                parent,
-                                &mut params.meshes,
-                                &mut params.materials,
-                            );
+                            spawn_sword_normal_visuals(parent, &params.cached_assets);
                         });
                 }
                 SwordMode::Shattered => {
@@ -521,11 +518,7 @@ fn fire_weapon(
                             },
                         ))
                         .with_children(|parent| {
-                            spawn_sword_shattered_visuals(
-                                parent,
-                                &mut params.meshes,
-                                &mut params.materials,
-                            );
+                            spawn_sword_shattered_visuals(parent, &params.cached_assets);
                         });
                 }
             }
@@ -574,7 +567,7 @@ fn fire_weapon(
                         },
                     ))
                     .with_children(|parent| {
-                        spawn_gun_bullet_visuals(parent, &mut params.meshes, &mut params.materials);
+                        spawn_gun_bullet_visuals(parent, &params.cached_assets);
                     });
             }
         }
@@ -587,7 +580,9 @@ pub struct CombatResources<'w, 's> {
     pub shake: ResMut<'w, crate::resources::polish::ScreenShake>,
     pub meshes: ResMut<'w, Assets<Mesh>>,
     pub materials: ResMut<'w, Assets<ColorMaterial>>,
+    pub cached_assets: Res<'w, crate::resources::cached_assets::CachedAssets>,
     pub exploding_query: Query<'w, 's, &'static ExplodingProjectile>,
+    pub effect_pool: ResMut<'w, VisualEffectPool>,
 }
 
 type ProjectileQueryItem<'a> = (
@@ -656,32 +651,42 @@ fn handle_projectile_hit(
 
     if !is_aoe {
         if let Ok(exploding) = res.exploding_query.get(proj_entity) {
-            commands
-                .spawn((
-                    Transform::from_translation(projectile_transform.translation),
-                    Visibility::Visible,
-                    Collider::ball(exploding.radius),
-                    Velocity::default(),
-                    Projectile {
-                        kind: projectile.kind,
-                        damage: exploding.damage,
-                        speed: 0.0,
-                        direction: Vec2::ZERO,
-                        owner_entity: projectile.owner_entity,
-                    },
-                    Lifetime {
-                        timer: Timer::from_seconds(0.1, TimerMode::Once),
-                    },
-                    AoEProjectile::default(),
-                ))
-                .with_children(|parent| {
-                    spawn_bolt_explosion_visuals(
-                        parent,
-                        &mut res.meshes,
-                        &mut res.materials,
-                        exploding.radius,
-                    );
-                });
+            let transform = Transform::from_translation(projectile_transform.translation);
+            let lifetime = Lifetime {
+                timer: Timer::from_seconds(0.1, TimerMode::Once),
+            };
+
+            let req = res.effect_pool.spawn_or_get(
+                commands,
+                EffectType::BoltExplosion,
+                transform,
+                lifetime,
+            );
+
+            if req.is_new {
+                commands
+                    .entity(req.entity)
+                    .insert((
+                        Velocity::default(),
+                        Projectile {
+                            kind: projectile.kind,
+                            damage: exploding.damage,
+                            speed: 0.0,
+                            direction: Vec2::ZERO,
+                            owner_entity: projectile.owner_entity,
+                        },
+                        AoEProjectile::default(),
+                    ))
+                    .with_children(|parent| {
+                        spawn_bolt_explosion_visuals(parent, &res.cached_assets, exploding.radius);
+                    });
+            } else {
+                let mut rng = rand::thread_rng();
+                let rotation = Quat::from_rotation_z(rng.gen_range(0.0..std::f32::consts::TAU));
+                commands
+                    .entity(req.entity)
+                    .insert(transform.with_rotation(rotation));
+            }
         }
         should_despawn = true;
     }
@@ -698,9 +703,9 @@ fn handle_projectile_hit(
             let dir =
                 Vec2::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalize_or_zero();
             commands.spawn((
-                Mesh2d(res.meshes.add(Circle::new(3.0))),
-                MeshMaterial2d(res.materials.add(Color::srgb(1.0, 0.0, 0.0))),
-                Transform::from_translation(enemy_pos),
+                Mesh2d(res.cached_assets.unit_circle.clone()),
+                MeshMaterial2d(res.materials.add(Color::srgb(1.0, 0.0, 0.0))), // Keep dynamic red for now or cache it
+                Transform::from_translation(enemy_pos).with_scale(Vec3::splat(3.0)),
                 Velocity {
                     linvel: dir * 100.0,
                     angvel: 0.0,
@@ -896,12 +901,17 @@ pub fn update_sword_mechanics(
 pub fn manage_lifetime(
     mut commands: Commands,
     time: Res<Time>,
-    mut query: Query<(Entity, &mut Lifetime)>,
+    mut query: Query<(Entity, &mut Lifetime, Option<&PooledEffect>)>,
+    mut effect_pool: ResMut<VisualEffectPool>,
 ) -> Result<(), String> {
-    for (entity, mut lifetime) in &mut query {
+    for (entity, mut lifetime, pooled) in &mut query {
         lifetime.timer.tick(time.delta());
         if lifetime.timer.is_finished() {
-            commands.entity(entity).despawn();
+            if let Some(pooled) = pooled {
+                effect_pool.return_to_pool(entity, pooled.kind, &mut commands);
+            } else {
+                commands.entity(entity).despawn();
+            }
         }
     }
     Ok(())
