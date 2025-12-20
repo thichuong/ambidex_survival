@@ -55,12 +55,31 @@ pub fn update_sword_mechanics(
                             let dot = enemy_direction.dot(base_direction);
 
                             if dot > 0.0 {
-                                enemy.health -= swing.damage;
+                                let mut final_damage = swing.damage;
+                                let mut is_crit = false;
+
+                                if let Ok(mut player) = player_query.single_mut() {
+                                    // Crit Check
+                                    let mut rng = rand::thread_rng();
+                                    if rng.gen_range(0.0..1.0) < player.crit_chance {
+                                        final_damage *= player.crit_damage;
+                                        is_crit = true;
+                                    }
+
+                                    // Lifesteal
+                                    if player.lifesteal > 0.0 {
+                                        let heal = final_damage * player.lifesteal;
+                                        player.health =
+                                            (player.health + heal).min(player.max_health);
+                                    }
+                                }
+
+                                enemy.health -= final_damage;
                                 damage_events.write(DamageEvent {
-                                    damage: swing.damage,
+                                    damage: final_damage,
                                     position: enemy_tf.translation.truncate(),
                                 });
-                                res.shake.add_trauma(0.2);
+                                res.shake.add_trauma(if is_crit { 0.3 } else { 0.2 });
                                 if enemy.health <= 0.0 {
                                     if let Ok(mut player) = player_query.single_mut() {
                                         player.gold += 10;
