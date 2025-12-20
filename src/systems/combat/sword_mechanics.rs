@@ -31,8 +31,13 @@ pub fn update_sword_mechanics(
         match swing.state {
             SwingState::Swinging => {
                 let progress = swing.timer.fraction();
-                let current_angle =
-                    (progress - 0.5).mul_add(std::f32::consts::PI, swing.base_angle);
+                // If direction is 1.0 (CCW), goes from -PI/2 to +PI/2
+                // If direction is -1.0 (CW), should go from +PI/2 to -PI/2?
+                // Wait, (progress - 0.5) is [-0.5, 0.5].
+                // * PI => [-PI/2, PI/2].
+                // If we want reversed, we negate this offset.
+                let offset = (progress - 0.5) * std::f32::consts::PI * swing.swing_direction;
+                let current_angle = swing.base_angle + offset;
                 transform.rotation = Quat::from_rotation_z(current_angle);
 
                 if !swing.damage_dealt {

@@ -116,6 +116,7 @@ pub struct SwordSwing {
     pub range: f32,
     pub damage_dealt: bool,
     pub hand_entity: Entity,
+    pub swing_direction: f32, // 1.0 for CCW, -1.0 for CW
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

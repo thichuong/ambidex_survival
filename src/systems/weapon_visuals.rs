@@ -326,7 +326,7 @@ pub fn spawn_sword_normal_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
 ) {
-    let blade_length = 120.0;
+    let blade_length = sword::NORMAL_RANGE;
     let blade_width = 16.0;
 
     // Blade Body (Steel)
@@ -389,7 +389,8 @@ pub fn spawn_sword_shattered_visuals(
 ) {
     let mut rng = rand::thread_rng();
 
-    let broken_blade_len = 30.0;
+    // Stub is proportional to range? User asked "broken_blade_len depends on sword::SHATTERED_RANGE"
+    let broken_blade_len = sword::SHATTERED_RANGE * 0.15;
     let blade_width = 16.0;
 
     // --- Hilt Logic (Same as normal sword, but broken blade) ---
@@ -423,19 +424,8 @@ pub fn spawn_sword_shattered_visuals(
     ));
 
     // --- Fragment Logic ---
-    let num_fragments = 25;
+    let num_fragments = 60;
     let total_range = sword::SHATTERED_RANGE;
-
-    // Energy Glow connecting fragments (Thin line)
-    parent.spawn((
-        Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_cyan_30.clone()),
-        Transform::from_xyz(total_range * 0.4, 0.0, -0.1).with_scale(Vec3::new(
-            total_range * 0.8,
-            2.0,
-            1.0,
-        )),
-    ));
 
     for _ in 0..num_fragments {
         let dist = rng.gen_range(20.0..total_range);

@@ -447,6 +447,10 @@ fn fire_weapon(
         }
         WeaponType::Sword => {
             let start_angle = direction.y.atan2(direction.x);
+            let mut rng = rand::thread_rng();
+            // 50% chance for clockwise vs counter-clockwise
+            let swing_dir: f32 = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+
             match sword_mode {
                 SwordMode::Normal => {
                     params
@@ -463,6 +467,7 @@ fn fire_weapon(
                                 range: sword::NORMAL_RANGE,
                                 damage_dealt: false,
                                 hand_entity,
+                                swing_direction: swing_dir,
                             },
                         ))
                         .with_children(|parent| {
@@ -484,6 +489,7 @@ fn fire_weapon(
                                 range: sword::SHATTERED_RANGE,
                                 damage_dealt: false,
                                 hand_entity,
+                                swing_direction: swing_dir,
                             },
                         ))
                         .with_children(|parent| {
