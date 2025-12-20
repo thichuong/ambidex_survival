@@ -19,7 +19,7 @@ pub fn spawn_player(
             ),
             Collider::ball(20.0),
             Velocity::zero(),
-            Currency { gold: 10000 },
+            Currency { gold: 500 },
             Player,
         ))
         .with_children(|parent| {

@@ -1,5 +1,9 @@
 # Ambidex Survival
 
+<p align="center">
+  <img src="assets/icon-512.png" alt="Ambidex Survival Icon" width="200" />
+</p>
+
 **Ambidex Survival** is a high-octane dual-stick survival shooter built with **Rust** and the **Bevy** engine. Take control of two independent hands, customize your loadout with a variety of weapons and spells, and survive as long as you can against ever-increasing waves of enemies.
 
 ## ⚔️ The "Ambidex" Combat System
@@ -9,6 +13,25 @@ The core of the game is the **Ambidex System**, which gives you independent cont
 - **Independent Hands**: Each hand (Left and Right) has its own weapon, cooldown, and skill state.
 - **Weapon Selection**: Access the **Weapon Menu** between rounds to swap weapons for either hand.
 
+## � Project Structure
+For a detailed breakdown of the codebase organization, see [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md).
+
+## �🚀 Getting Started
+
+### Prerequisites
+- [Rust](https://www.rust-lang.org/tools/install) (latest stable)
+- [Trunk](https://trunkrs.dev/#install) (for Web/Wasm builds)
+
+### Run Locally (Native)
+```bash
+cargo run
+```
+
+### Run in Browser (Web)
+```bash
+trunk serve
+```
+
 ## 🔫 Weapons & Skills
 
 Every weapon features a primary attack and a unique "Skill" (`Q` for Left Hand, `E` for Right Hand).
@@ -16,56 +39,59 @@ Every weapon features a primary attack and a unique "Skill" (`Q` for Left Hand, 
 ### 🗡️ Sword (Melee)
 A powerful close-quarters weapon with two distinct styles.
 - **Normal Mode**: Standard strikes with moderate range and high damage.
-    - *Damage*: 60 | *Range*: 200 | *Cooldown*: 0.5s
 - **Shattered Mode (Skill Toggle)**: The blade shatters into fragments, covering a massive area but dealing lower damage per hit.
-    - *Damage*: 20 | *Range*: 600 | *Cooldown*: 0.5s
 
 ### 🔫 Gun (Firearm)
 A versatile ranged weapon with three fire modes.
 - **Single Shot**: High precision and high damage.
-    - *Damage*: 60 | *Speed*: 1000 | *Cooldown*: 0.5s
 - **Shotgun**: Fires a wide spread of 7 pellets.
-    - *Damage*: 15 (per pellet) | *Speed*: 800 | *Cooldown*: 0.5s
 - **Rapid Fire**: Lower damage but incredibly high fire rate. Hold button to spray.
-    - *Damage*: 20 | *Speed*: 900 | *Cooldown*: 0.1s
 - **Skill Cycle**: Toggles between Single -> Shotgun -> Rapid.
 
 ### ❄️ Shuriken (Utility)
 Rapid-fire throwing stars with a unique mobility skill.
-- **Projectiles**: Throw fast-moving shurikens that persist for 2 seconds.
-    - *Damage*: 30 | *Speed*: 1000 | *Count*: Max 12 active
-- **Teleport (Skill)**: Instantly teleport to the nearest active shuriken. Great for dodging or repositioning.
+- **Projectiles**: Throw fast-moving shurikens that persist for 2 seconds (Max 12).
+- **Teleport (Skill)**: Instantly teleport to the nearest active shuriken. Great for dodging.
 
 ### 🔮 Magic (Spellcasting)
 The most customizable weapon. Each Magic Hand has two spell slots: **Primary** and **Secondary**.
-- **Spell Slots**: Each hand carries two spells that you can toggle between using the skill key.
+- **Spell Slots**: Toggle between your two spells using the skill key.
+- **Magic CDR**: Only Magic weapons benefit from the **Cooldown Reduction** upgrade.
 - **Spells Available**:
-    - **Energy Bolt**: Projectile that creates a large 80-unit explosion on impact (30 Dmg).
-    - **Laser**: Instant-hit high-velocity beam (30 Dmg).
-    - **Nova**: A radial burst centered on the player for high area damage (80 Dmg).
+    - **Energy Bolt**: Projectile that creates a large explosion on impact.
+    - **Laser**: Instant-hit high-velocity beam.
+    - **Nova**: A radial burst centered on the player for high area damage.
     - **Blink**: Short-range teleport to the cursor position.
-    - **Global**: A massive strike that hits everything on screen (15 Dmg).
+    - **Global**: A massive strike that hits everything on screen.
 
 ## 💰 Economy & Progression
 
 - **Gold**: Earn **10G** for every enemy killed.
-- **Shop (Menu)**: Spend your hard-earned gold on upgrades:
-    - **Heal**: Restore 30 HP for **50G**.
-    - **Damage Up**: Permanently increase your damage by **10%** for **100G** (stacks).
-- **Rounds**: The game proceeds in rounds. Clear all enemies to open the menu and prepare for the next wave. Wave size and intensity increase every round.
+- **Shop & Cards**: Spend your gold on upgrades that apply to **all** weapons (except CDR).
+    - **Heal**: Restore 30 HP (**50G**).
+    - **Damage Up**: Increase damage by **10%** (**100G**).
+    - **Max HP Up**: Increase Max HP by **20** (**150G**).
+    - **Crit Damage**: Increase critical strike damage by **50%** (**200G**).
+    - **Crit Chance**: Increase critical strike chance by **10%** (**250G**, Max 10).
+    - **Lifesteal**: Heal for **10%** of damage dealt (**300G**, Max 5).
+    - **Magic CDR**: Reduce Magic weapon cooldowns by **10%** (**350G**, Max 8).
+- **Rounds**: Waves scale in size and intensity. Clear all enemies to access the shop.
 
 ## 🕹️ Controls
 
 | Action | Input | Description |
 | :--- | :--- | :--- |
-
-> **Note**: Skills vary by weapon (e.g., Teleport for Shuriken, Mode Toggle for Sword/Gun/Magic).
+| **Move** | `W`, `A`, `S`, `D` | Character movement |
+| **Left Attack** | `Mouse Left` | Fire left-hand weapon |
+| **Right Attack** | `Mouse Right` | Fire right-hand weapon |
+| **Left Skill** | `Q` | Use left-hand unique skill |
+| **Right Skill** | `E` | Use right-hand unique skill |
+| **Menu** | `ESC` / `Menu Button` | Toggle weapon & shop menu |
 
 ## 🛠️ Built With
 
 *   [Bevy Engine](https://bevyengine.org/) - A data-driven game engine built in Rust.
 *   [Bevy Rapier](https://github.com/dimforge/bevy_rapier) - 2D Physics engine.
-*   [Iyadesu](https://github.com/iyadesu) - (Author)
 
 ## 📝 License
 
