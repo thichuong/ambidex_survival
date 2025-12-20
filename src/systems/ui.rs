@@ -14,6 +14,7 @@ pub struct WeaponButton {
 pub enum ShopButton {
     Heal,
     DamageUp,
+    MaxHealthUp,
 }
 
 #[derive(Component)]
@@ -509,6 +510,11 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         ShopButton::DamageUp,
                                         "Damage Up\n(+10%)\n100G",
                                     );
+                                    spawn_shop_button(
+                                        shop_row,
+                                        ShopButton::MaxHealthUp,
+                                        "Max HP Up\n(+20)\n150G",
+                                    );
                                 });
                         });
 
@@ -664,6 +670,7 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         // Reset Player
                         if let Some((mut player, mut transform)) = player_query.iter_mut().next() {
                             player.health = 100.0;
+                            player.max_health = 100.0;
                             player.gold = 0; // Reset Gold
                             transform.translation = Vec3::ZERO;
                         }
@@ -732,18 +739,16 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
             |trigger: On<Pointer<Click>>,
              btn_query: Query<&ShopButton>,
              mut player_query: Query<&mut crate::components::player::Player>,
-             mut color_query: Query<&mut BackgroundColor>,
-             children_query: Query<&Children>,
-             mut text_query: Query<&mut Text>| {
+             mut color_query: Query<&mut BackgroundColor>| {
                 if let Ok(btn_type) = btn_query.get(trigger.entity) {
                     let mut success = false;
 
                     match btn_type {
                         ShopButton::Heal => {
                             if let Ok(mut player) = player_query.single_mut() {
-                                if player.gold >= 50 && player.health < 100.0 {
+                                if player.gold >= 50 && player.health < player.max_health {
                                     player.gold -= 50;
-                                    player.health = (player.health + 30.0).min(100.0);
+                                    player.health = (player.health + 30.0).min(player.max_health);
                                     println!(
                                         "Healed! Health: {}, Gold: {}",
                                         player.health, player.gold
@@ -760,6 +765,19 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
                                     player.gold -= 100;
                                     player.damage_multiplier += 0.1;
                                     println!("Damage Upgraded! Gold: {}", player.gold);
+                                    success = true;
+                                } else {
+                                    println!("Not enough gold!");
+                                }
+                            }
+                        }
+                        ShopButton::MaxHealthUp => {
+                            if let Ok(mut player) = player_query.single_mut() {
+                                if player.gold >= 150 {
+                                    player.gold -= 150;
+                                    player.max_health += 20.0;
+                                    player.health += 20.0; // Heal by the amount increased
+                                    println!("Max Health Upgraded! New Max: {}", player.max_health);
                                     success = true;
                                 } else {
                                     println!("Not enough gold!");
@@ -1183,13 +1201,13 @@ pub fn update_health_ui(
 ) -> Result<(), String> {
     if let Ok(player) = player_query.single() {
         for mut node in &mut health_bar_query {
-            // Player health is 0..100
-            let percent = (player.health / 100.0).clamp(0.0, 1.0) * 100.0;
+            // Player health is 0..max_health
+            let percent = (player.health / player.max_health).clamp(0.0, 1.0) * 100.0;
             node.width = Val::Percent(percent);
         }
 
         for mut text in &mut health_text_query {
-            **text = format!("{:.0} / 100", player.health);
+            **text = format!("{:.0} / {:.0}", player.health, player.max_health);
         }
     }
     Ok(())
@@ -1299,7 +1317,7 @@ pub fn update_menu_health_text(
 ) {
     if let Some(player) = player_query.iter().next() {
         for mut text in &mut query {
-            text.0 = format!("HP: {:.0}/100", player.health);
+            text.0 = format!("HP: {:.0}/{:.0}", player.health, player.max_health);
         }
     }
 }
@@ -1311,7 +1329,7 @@ pub fn update_menu_damage_text(
     if let Some(player) = player_query.iter().next() {
         for mut text in &mut query {
             let bonus = (player.damage_multiplier - 1.0) * 100.0;
-            text.0 = format!("Dmg: +{:.0}%", bonus);
+            text.0 = format!("Dmg: +{bonus:.0}%");
         }
     }
 }
