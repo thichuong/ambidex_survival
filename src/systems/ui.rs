@@ -57,6 +57,12 @@ pub struct NewGameButton;
 #[derive(Component)]
 pub struct GoldText;
 
+#[derive(Component)]
+pub struct MenuGoldText;
+
+#[derive(Component)]
+pub struct RoundText;
+
 #[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Root UI Node (HUD)
@@ -88,6 +94,23 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..default()
                 },
                 GoldText,
+            ));
+
+            // Round Display (Top Right)
+            parent.spawn((
+                Text::new("Round: 1"),
+                TextFont {
+                    font_size: 30.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(20.0),
+                    right: Val::Px(20.0),
+                    ..default()
+                },
+                RoundText,
             ));
 
             // Health Bar (Top Center)
@@ -218,88 +241,189 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 align_items: AlignItems::Center,
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.99)),
             WeaponMenuUI,
         ))
         .with_children(|parent| {
-            parent.spawn((
-                Text::new("WEAPON SELECTION"),
-                TextFont {
-                    font_size: 40.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                Node {
-                    margin: UiRect::bottom(Val::Px(40.0)),
-                    ..default()
-                },
-            ));
-
+            // Title and Gold Row
             parent
                 .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::Center,
+                    width: Val::Percent(100.0),
+                    justify_content: JustifyContent::SpaceBetween,
+                    align_items: AlignItems::Center,
+                    padding: UiRect::horizontal(Val::Px(50.0)),
+                    margin: UiRect::bottom(Val::Px(20.0)),
+                    ..default()
+                })
+                .with_children(|header| {
+                    header.spawn((
+                        Text::new("WEAPON SELECTION"),
+                        TextFont {
+                            font_size: 40.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+
+                    header.spawn((
+                        Text::new("Gold: 0"),
+                        TextFont {
+                            font_size: 30.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                        MenuGoldText,
+                    ));
+                });
+
+            // Content Container (Weapons + Shop)
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Column,
                     align_items: AlignItems::Center,
                     ..default()
                 })
-                .with_children(|row| {
-                    // Left Column
-                    row.spawn(Node {
-                        flex_direction: FlexDirection::Column,
-                        margin: UiRect::right(Val::Px(50.0)),
-                        ..default()
-                    })
-                    .with_children(|col| {
-                        col.spawn((
-                            Text::new("LEFT HAND"),
-                            TextFont::default(),
-                            TextColor(Color::WHITE),
-                        ));
-                        spawn_weapon_button(
-                            col,
-                            HandType::Left,
-                            WeaponType::Shuriken,
-                            "Shuriken ❄",
-                        );
-                        spawn_weapon_button(col, HandType::Left, WeaponType::Sword, "Sword 🗡");
-                        spawn_weapon_button(col, HandType::Left, WeaponType::Gun, "Gun 🔫");
-                        spawn_weapon_button(col, HandType::Left, WeaponType::Magic, "Magic 🔮");
-                    });
+                .with_children(|content| {
+                    // WEAPONS SECTION
+                    content
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Row,
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            margin: UiRect::bottom(Val::Px(30.0)),
+                            ..default()
+                        })
+                        .with_children(|row| {
+                            // Left Column
+                            row.spawn(Node {
+                                flex_direction: FlexDirection::Column,
+                                margin: UiRect::right(Val::Px(50.0)),
+                                ..default()
+                            })
+                            .with_children(|col| {
+                                col.spawn((
+                                    Text::new("LEFT HAND"),
+                                    TextFont::default(),
+                                    TextColor(Color::WHITE),
+                                ));
+                                spawn_weapon_button(
+                                    col,
+                                    HandType::Left,
+                                    WeaponType::Shuriken,
+                                    "Shuriken ❄",
+                                );
+                                spawn_weapon_button(
+                                    col,
+                                    HandType::Left,
+                                    WeaponType::Sword,
+                                    "Sword 🗡",
+                                );
+                                spawn_weapon_button(col, HandType::Left, WeaponType::Gun, "Gun 🔫");
+                                spawn_weapon_button(
+                                    col,
+                                    HandType::Left,
+                                    WeaponType::Magic,
+                                    "Magic 🔮",
+                                );
+                            });
 
-                    // Right Column
-                    row.spawn(Node {
-                        flex_direction: FlexDirection::Column,
-                        margin: UiRect::left(Val::Px(50.0)),
-                        ..default()
-                    })
-                    .with_children(|col| {
-                        col.spawn((
-                            Text::new("RIGHT HAND"),
-                            TextFont::default(),
-                            TextColor(Color::WHITE),
-                        ));
-                        spawn_weapon_button(
-                            col,
-                            HandType::Right,
-                            WeaponType::Shuriken,
-                            "Shuriken ❄",
-                        );
-                        spawn_weapon_button(col, HandType::Right, WeaponType::Sword, "Sword 🗡");
-                        spawn_weapon_button(col, HandType::Right, WeaponType::Gun, "Gun 🔫");
-                        spawn_weapon_button(col, HandType::Right, WeaponType::Magic, "Magic 🔮");
-                    });
-                });
+                            // Right Column
+                            row.spawn(Node {
+                                flex_direction: FlexDirection::Column,
+                                margin: UiRect::left(Val::Px(50.0)),
+                                ..default()
+                            })
+                            .with_children(|col| {
+                                col.spawn((
+                                    Text::new("RIGHT HAND"),
+                                    TextFont::default(),
+                                    TextColor(Color::WHITE),
+                                ));
+                                spawn_weapon_button(
+                                    col,
+                                    HandType::Right,
+                                    WeaponType::Shuriken,
+                                    "Shuriken ❄",
+                                );
+                                spawn_weapon_button(
+                                    col,
+                                    HandType::Right,
+                                    WeaponType::Sword,
+                                    "Sword 🗡",
+                                );
+                                spawn_weapon_button(
+                                    col,
+                                    HandType::Right,
+                                    WeaponType::Gun,
+                                    "Gun 🔫",
+                                );
+                                spawn_weapon_button(
+                                    col,
+                                    HandType::Right,
+                                    WeaponType::Magic,
+                                    "Magic 🔮",
+                                );
+                            });
+                        });
 
-            // Magic Loadout in Menu
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    margin: UiRect::top(Val::Px(40.0)),
-                    ..default()
-                })
-                .with_children(|row| {
-                    spawn_magic_panel(row, HandType::Left);
-                    spawn_magic_panel(row, HandType::Right);
+                    // Magic Loadout
+                    content
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Row,
+                            margin: UiRect::bottom(Val::Px(30.0)),
+                            ..default()
+                        })
+                        .with_children(|row| {
+                            spawn_magic_panel(row, HandType::Left);
+                            spawn_magic_panel(row, HandType::Right);
+                        });
+
+                    // SHOP SECTION
+                    content
+                        .spawn((
+                            Node {
+                                flex_direction: FlexDirection::Column,
+                                align_items: AlignItems::Center,
+                                padding: UiRect::all(Val::Px(20.0)),
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BorderColor::all(Color::srgba(0.5, 0.5, 0.5, 0.5)),
+                            BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.5)),
+                        ))
+                        .with_children(|shop_container| {
+                            shop_container.spawn((
+                                Text::new("SHOP"),
+                                TextFont {
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::WHITE),
+                                Node {
+                                    margin: UiRect::bottom(Val::Px(10.0)),
+                                    ..default()
+                                },
+                            ));
+
+                            shop_container
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                })
+                                .with_children(|shop_row| {
+                                    spawn_shop_button(
+                                        shop_row,
+                                        ShopButton::Heal,
+                                        "Heal (+30 HP) - 50G",
+                                    );
+                                    spawn_shop_button(
+                                        shop_row,
+                                        ShopButton::DamageUp,
+                                        "Damage Up (+10%) - 100G",
+                                    );
+                                });
+                        });
                 });
 
             // Close Button
@@ -346,19 +470,6 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         },
                         TextColor(Color::WHITE),
                     ));
-                });
-
-            // --- SHOP SECTION IN MENU ---
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    margin: UiRect::top(Val::Px(40.0)),
-                    align_items: AlignItems::Center,
-                    ..default()
-                })
-                .with_children(|shop_row| {
-                    spawn_shop_button(shop_row, ShopButton::Heal, "Heal (+30 HP) - 50G");
-                    spawn_shop_button(shop_row, ShopButton::DamageUp, "Damage Up (+10%) - 100G");
                 });
         });
 
@@ -966,6 +1077,27 @@ pub fn update_gold_ui(
     if let Some(player) = player_query.iter().next() {
         for mut text in &mut gold_text_query {
             **text = format!("Gold: {}", player.gold);
+        }
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
+pub fn update_round_text(
+    mut query: Query<&mut Text, With<RoundText>>,
+    round_manager: Res<crate::resources::round::RoundManager>,
+) {
+    for mut text in &mut query {
+        text.0 = format!("Round: {}", round_manager.current_round);
+    }
+}
+
+pub fn update_menu_gold_text(
+    mut query: Query<&mut Text, With<MenuGoldText>>,
+    player_query: Query<&crate::components::player::Player>,
+) {
+    if let Some(player) = player_query.iter().next() {
+        for mut text in &mut query {
+            text.0 = format!("Gold: {}", player.gold);
         }
     }
 }

@@ -91,6 +91,8 @@ fn main() {
                 systems::ui::update_magic_ui.pipe(log_error),
                 systems::ui::update_health_ui.pipe(log_error),
                 systems::ui::update_gold_ui,
+                systems::ui::update_round_text,
+                systems::ui::update_menu_gold_text,
             ),
         )
         .add_systems(Startup, systems::ui::setup_ui)
