@@ -208,7 +208,8 @@ fn cast_spell(
             params
                 .commands
                 .spawn((
-                    Transform::from_translation(spawn_pos.extend(0.0)),
+                    Transform::from_translation(spawn_pos.extend(0.0))
+                        .with_rotation(Quat::from_rotation_z(angle)),
                     Visibility::Visible,
                     Collider::ball(4.0),
                     Velocity {

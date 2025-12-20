@@ -13,14 +13,18 @@ pub fn spawn_energy_bolt_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
 ) {
-    // "Lightning" Core - 3 segments zigzagging
+    // Main "Arrow" shape indicating direction (pointing +X)
     let segments = [
-        (Vec3::new(-5.0, 0.0, 0.0), Vec3::new(14.0, 3.0, 1.0), 0.2),
-        (Vec3::new(3.0, 4.0, 0.0), Vec3::new(10.0, 2.5, 1.0), -0.5),
-        (Vec3::new(8.0, -3.0, 0.0), Vec3::new(12.0, 2.0, 1.0), 0.4),
+        // Rear segment
+        (Vec3::new(-8.0, 0.0, 0.0), Vec3::new(10.0, 3.0, 1.0), 0.0),
+        // Middle zigzag
+        (Vec3::new(0.0, 3.0, 0.0), Vec3::new(12.0, 2.5, 1.0), -0.4),
+        (Vec3::new(6.0, -3.0, 0.0), Vec3::new(12.0, 2.5, 1.0), 0.4),
+        // Front/Tip segment
+        (Vec3::new(12.0, 0.0, 0.0), Vec3::new(8.0, 2.0, 1.0), 0.0),
     ];
 
-    for (pos, scale, rot) in segments.iter() {
+    for (pos, scale, rot) in &segments {
         // Core (White)
         parent.spawn((
             Mesh2d(cached.unit_square.clone()),
@@ -29,22 +33,43 @@ pub fn spawn_energy_bolt_visuals(
                 .with_rotation(Quat::from_rotation_z(*rot))
                 .with_scale(*scale),
         ));
-        // Glow (Purple)
+        // Glow (Purple) - larger and behind
         parent.spawn((
             Mesh2d(cached.unit_square.clone()),
             MeshMaterial2d(cached.mat_bolt_glow.clone()),
             Transform::from_translation(*pos + Vec3::new(0.0, 0.0, -0.1))
                 .with_rotation(Quat::from_rotation_z(*rot))
-                .with_scale(*scale * 2.5),
+                .with_scale(*scale * 2.0),
         ));
     }
 
-    // Front/Impact Glow
+    // Impact / Head Glow
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
         MeshMaterial2d(cached.mat_bolt_glow.clone()),
-        Transform::from_xyz(10.0, 0.0, -0.2).with_scale(Vec3::splat(12.0)),
+        Transform::from_xyz(14.0, 0.0, -0.2).with_scale(Vec3::splat(16.0)),
     ));
+
+    // Core Head Brightness
+    parent.spawn((
+        Mesh2d(cached.unit_circle.clone()),
+        MeshMaterial2d(cached.mat_white.clone()),
+        Transform::from_xyz(14.0, 0.0, 0.1).with_scale(Vec3::splat(6.0)),
+    ));
+
+    // Trailing particles (simulating a tail)
+    let mut rng = rand::thread_rng();
+    for _ in 0..6 {
+        let x_off = rng.gen_range(-15.0..-5.0);
+        let y_off = rng.gen_range(-5.0..5.0);
+        let size = rng.gen_range(2.0..4.0);
+
+        parent.spawn((
+            Mesh2d(cached.unit_circle.clone()),
+            MeshMaterial2d(cached.mat_purple_40.clone()),
+            Transform::from_xyz(x_off, y_off, 0.1).with_scale(Vec3::splat(size)),
+        ));
+    }
 }
 
 /// Spawn visual effects for Energy Bolt explosion
@@ -165,7 +190,7 @@ pub fn spawn_nova_visuals(
     ];
 
     for (i, mat) in ring_colors.iter().enumerate() {
-        let scale_factor = 1.0 - (i as f32 * 0.25);
+        let scale_factor = (i as f32).mul_add(-0.25, 1.0);
         parent.spawn((
             Mesh2d(cached.unit_circle.clone()),
             MeshMaterial2d(mat.clone()),
@@ -201,7 +226,7 @@ pub fn spawn_global_visuals(
 ) {
     // Concentric clean rings
     for i in 0..4 {
-        let r = global::RADIUS * (0.4 + i as f32 * 0.2);
+        let r = global::RADIUS * (i as f32).mul_add(0.2, 0.4);
         // Varying opacity/color
         let mat = if i % 2 == 0 {
             cached.mat_cyan_30.clone()
@@ -212,7 +237,7 @@ pub fn spawn_global_visuals(
         parent.spawn((
             Mesh2d(cached.unit_circle.clone()),
             MeshMaterial2d(mat),
-            Transform::from_xyz(0.0, 0.0, -0.5 + i as f32 * 0.1).with_scale(Vec3::splat(r)),
+            Transform::from_xyz(0.0, 0.0, (i as f32).mul_add(0.1, -0.5)).with_scale(Vec3::splat(r)),
         ));
     }
 
