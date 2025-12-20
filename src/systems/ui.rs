@@ -51,6 +51,11 @@ pub struct CooldownOverlay {
 }
 
 #[derive(Component)]
+pub struct ShurikenCountText {
+    pub side: HandType,
+}
+
+#[derive(Component)]
 pub struct HealthBar;
 
 #[derive(Component)]
@@ -172,6 +177,25 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         HUDIcon { side: HandType::Left },
                     ));
 
+                    // Shuriken Count Text
+                    btn.spawn((
+                        Text::new(""),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(5.0),
+                            right: Val::Px(10.0),
+                            ..default()
+                        },
+                        ShurikenCountText {
+                            side: HandType::Left,
+                        },
+                    ));
+
                     // Cooldown Overlay
                     btn.spawn((
                         Node {
@@ -244,6 +268,25 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                             ..default()
                         },
                         HUDIcon { side: HandType::Right },
+                    ));
+
+                    // Shuriken Count Text
+                    btn.spawn((
+                        Text::new(""),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(5.0),
+                            right: Val::Px(10.0),
+                            ..default()
+                        },
+                        ShurikenCountText {
+                            side: HandType::Right,
+                        },
                     ));
 
                     // Cooldown Overlay
@@ -1170,6 +1213,32 @@ pub fn update_cooldown_indicators(
             } else {
                 node.height = Val::Percent(0.0);
                 node.display = Display::None;
+            }
+        }
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
+pub fn update_shuriken_count_ui(
+    mut text_query: Query<(&mut Text, &ShurikenCountText)>,
+    hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
+    projectile_query: Query<&crate::components::weapon::Projectile>,
+) {
+    for (mut text, count_text) in &mut text_query {
+        if let Some((hand, _)) = hand_query.iter().find(|(h, _)| h.side == count_text.side) {
+            if hand.equipped_weapon == Some(WeaponType::Shuriken) {
+                let count = projectile_query
+                    .iter()
+                    .filter(|p| p.kind == WeaponType::Shuriken)
+                    .count();
+
+                if count > 0 {
+                    text.0 = format!("{}", count);
+                } else {
+                    text.0 = "".to_string();
+                }
+            } else {
+                text.0 = "".to_string();
             }
         }
     }

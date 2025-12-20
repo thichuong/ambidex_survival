@@ -92,6 +92,7 @@ fn main() {
                 systems::ui::update_round_text,
                 systems::ui::update_menu_gold_text,
                 systems::ui::update_cooldown_indicators,
+                systems::ui::update_shuriken_count_ui,
             ),
         )
         .add_systems(Startup, systems::ui::setup_ui)
