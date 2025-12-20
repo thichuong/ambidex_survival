@@ -277,27 +277,28 @@ pub fn spawn_sword_shattered_visuals(
 ) {
     let mut rng = rand::thread_rng();
 
-    // Number of fragments along the line
-    let num_fragments = 12;
+    // Fragment settings
+    let num_fragments = 40; // More fragments
     let total_length = sword::SHATTERED_RANGE;
+    let frag_size = 6.0; // Base fragment size
+    let blade_width = frag_size * 4.0; // Width fits 4 fragments
 
-    // Blade fragments along a line (like sword breaking apart)
-    for i in 0..num_fragments {
-        // Position along the line from center outward
-        let base_x = (i as f32 / num_fragments as f32) * total_length + 20.0;
-        // Small random jitter in Y for natural look
-        let jitter_y = rng.gen_range(-4.0..4.0);
+    // Blade fragments randomly placed in a line band
+    for _ in 0..num_fragments {
+        // Random position along the length
+        let base_x = rng.gen_range(15.0..total_length);
+        // Random Y position within the blade width (4 fragments wide)
+        let base_y = rng.gen_range(-blade_width / 2.0..blade_width / 2.0);
 
-        // Fragment size decreases towards the tip
-        let size_factor = 1.0 - (i as f32 / num_fragments as f32) * 0.5;
-        let frag_len = rng.gen_range(12.0..22.0) * size_factor;
-        let frag_width = rng.gen_range(4.0..7.0) * size_factor;
+        // Random fragment size with variation
+        let frag_len = rng.gen_range(8.0..16.0);
+        let frag_width = rng.gen_range(4.0..8.0);
 
-        // Small random rotation for natural look
-        let rotation = rng.gen_range(-0.15..0.15);
+        // Random rotation for natural look
+        let rotation = rng.gen_range(-0.3..0.3);
 
-        // Steel color with slight variation
-        let steel_variation = rng.gen_range(0.65..0.85);
+        // Steel color with variation
+        let steel_variation = rng.gen_range(0.6..0.85);
 
         parent.spawn((
             Mesh2d(meshes.add(Rectangle::new(frag_len, frag_width))),
@@ -307,16 +308,16 @@ pub fn spawn_sword_shattered_visuals(
                 steel_variation + 0.05,
                 1.0,
             ))),
-            Transform::from_xyz(base_x, jitter_y, 0.0)
+            Transform::from_xyz(base_x, base_y, rng.gen_range(-0.1..0.1))
                 .with_rotation(Quat::from_rotation_z(rotation)),
         ));
     }
 
-    // Small debris particles along the line
-    for _ in 0..10 {
-        let dist = rng.gen_range(30.0..total_length);
-        let jitter_y = rng.gen_range(-8.0..8.0);
-        let size = rng.gen_range(1.5..3.0);
+    // Small debris particles
+    for _ in 0..15 {
+        let dist = rng.gen_range(20.0..total_length);
+        let jitter_y = rng.gen_range(-blade_width / 2.0..blade_width / 2.0);
+        let size = rng.gen_range(1.5..3.5);
 
         parent.spawn((
             Mesh2d(meshes.add(Circle::new(size))),
