@@ -1136,6 +1136,7 @@ pub fn update_menu_gold_text(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_cooldown_indicators(
     mut overlay_query: Query<(&mut Node, &CooldownOverlay)>,
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
