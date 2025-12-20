@@ -1,3 +1,4 @@
+#![allow(clippy::cast_precision_loss)]
 //! Visual effects spawning for weapons and spells
 //! Contains functions to spawn child entities with visual meshes for attack animations
 
@@ -92,12 +93,12 @@ pub fn spawn_bolt_explosion_visuals(
         let size = rng.gen_range(3.0..6.0);
 
         // Color varies from orange to yellow
-        let color_blend = rng.gen_range(0.0..1.0);
+        let color_blend: f32 = rng.gen_range(0.0..1.0);
         parent.spawn((
             Mesh2d(meshes.add(Circle::new(size))),
             MeshMaterial2d(materials.add(Color::srgba(
                 1.0,
-                0.5 + color_blend * 0.4,
+                color_blend.mul_add(0.4, 0.5),
                 color_blend * 0.3,
                 0.7,
             ))),
@@ -208,12 +209,17 @@ pub fn spawn_global_visuals(
 ) {
     // Multiple concentric fading rings
     for i in 0..5 {
-        let ring_radius = global::RADIUS * (0.2 + (i as f32) * 0.2);
-        let alpha = 0.08 - (i as f32) * 0.012;
+        let ring_radius = global::RADIUS * (i as f32).mul_add(0.2, 0.2);
+        let alpha = (i as f32).mul_add(-0.012, 0.08);
         parent.spawn((
             Mesh2d(meshes.add(Circle::new(ring_radius))),
-            MeshMaterial2d(materials.add(Color::srgba(0.8 - (i as f32) * 0.1, 0.9, 1.0, alpha))),
-            Transform::from_xyz(0.0, 0.0, -0.3 + (i as f32) * 0.05),
+            MeshMaterial2d(materials.add(Color::srgba(
+                (i as f32).mul_add(-0.1, 0.8),
+                0.9,
+                1.0,
+                alpha,
+            ))),
+            Transform::from_xyz(0.0, 0.0, (i as f32).mul_add(0.05, -0.3)),
         ));
     }
     // Scattered particles throughout

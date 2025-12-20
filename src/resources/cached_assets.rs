@@ -5,6 +5,7 @@ use bevy::prelude::*;
 
 /// Resource containing pre-cached mesh and material handles
 #[derive(Resource)]
+#[allow(dead_code)]
 pub struct CachedAssets {
     // Common circle meshes (by radius * 10 as integer key for common sizes)
     pub circle_2: Handle<Mesh>,
