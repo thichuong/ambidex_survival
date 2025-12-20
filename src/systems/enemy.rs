@@ -39,6 +39,7 @@ pub fn spawn_waves(mut params: SpawnWavesParams) -> Result<(), String> {
                         &mut params.meshes,
                         &mut params.materials,
                         player_pos,
+                        params.round_manager.current_round,
                     );
                     params.round_manager.enemies_to_spawn -= 1;
                 } else {
@@ -70,6 +71,7 @@ fn spawn_random_enemy(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
     player_pos: Vec2,
+    current_round: u32,
 ) {
     let mut rng = rand::thread_rng();
 
@@ -81,6 +83,21 @@ fn spawn_random_enemy(
     let y = angle.sin() * radius;
     let spawn_pos = player_pos + Vec2::new(x, y);
 
+    // Scaling Formulas
+    // Base HP: 30, +20 per round. Round 1: 50, Round 5: 130
+    let health = crate::configs::enemy::BASE_HEALTH
+        + (current_round as f32 * crate::configs::enemy::HEALTH_SCALING_PER_ROUND);
+    // Base Speed: 150 (Constant)
+    let speed = crate::configs::enemy::BASE_SPEED;
+    // Base Damage: 10, +5 per round. Round 5: 35
+    let damage = crate::configs::enemy::BASE_DAMAGE
+        + (current_round as f32 * crate::configs::enemy::DAMAGE_SCALING_PER_ROUND);
+
+    println!(
+        "Spawning Enemy (R{}): HP={}, Spd={}, Dmg={}",
+        current_round, health, speed, damage
+    );
+
     commands.spawn((
         (
             Mesh2d(meshes.add(Circle::new(15.0))),
@@ -90,10 +107,10 @@ fn spawn_random_enemy(
         Collider::ball(15.0),
         Velocity::default(),
         Enemy {
-            health: 30.0,
-            speed: 150.0,
+            health,
+            speed,
             #[allow(dead_code)]
-            damage: 10.0,
+            damage,
         },
     ));
 }

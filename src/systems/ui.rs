@@ -322,11 +322,14 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     // Nếu đang ở Shop state thì bắt đầu round mới
                     if round_manager.round_state == crate::resources::round::RoundState::Shop {
                         round_manager.current_round += 1;
-                        round_manager.enemies_to_spawn = 10 + (round_manager.current_round * 5);
+                        round_manager.enemies_to_spawn = crate::configs::enemy::BASE_ENEMY_COUNT
+                            + (round_manager.current_round
+                                * crate::configs::enemy::ENEMY_COUNT_SCALING_PER_ROUND);
                         #[allow(clippy::cast_precision_loss)]
                         let exponent = round_manager.current_round as f32;
                         round_manager.spawn_timer = bevy::time::Timer::from_seconds(
-                            1.0 * (0.95_f32).powf(exponent),
+                            crate::configs::enemy::BASE_SPAWN_INTERVAL
+                                * (crate::configs::enemy::SPAWN_INTERVAL_DECAY).powf(exponent),
                             bevy::time::TimerMode::Repeating,
                         );
                         round_manager.round_state = crate::resources::round::RoundState::Spawning;
