@@ -61,7 +61,6 @@ pub fn update_sword_mechanics(
                                         player.gold += 10;
                                     }
                                     commands.entity(enemy_entity).despawn();
-                                    res.shake.add_trauma(0.4);
 
                                     let mut rng = rand::thread_rng();
                                     for _ in 0..5 {
