@@ -8,9 +8,9 @@ use crate::components::weapon::{
 use crate::configs::spells::{energy_bolt, global, laser, nova};
 use crate::configs::weapons::{gun, shuriken, sword};
 use crate::systems::weapon_visuals::{
-    spawn_energy_bolt_visuals, spawn_global_visuals, spawn_gun_bullet_visuals, spawn_laser_visuals,
-    spawn_nova_visuals, spawn_shuriken_visuals, spawn_sword_normal_visuals,
-    spawn_sword_shattered_visuals,
+    spawn_bolt_explosion_visuals, spawn_energy_bolt_visuals, spawn_global_visuals,
+    spawn_gun_bullet_visuals, spawn_laser_visuals, spawn_nova_visuals, spawn_shuriken_visuals,
+    spawn_sword_normal_visuals, spawn_sword_shattered_visuals,
 };
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
@@ -656,24 +656,32 @@ fn handle_projectile_hit(
 
     if !is_aoe {
         if let Ok(exploding) = res.exploding_query.get(proj_entity) {
-            commands.spawn((
-                Mesh2d(res.meshes.add(Circle::new(exploding.radius))),
-                MeshMaterial2d(res.materials.add(Color::srgba(1.0, 0.5, 0.0, 0.6))),
-                Transform::from_translation(projectile_transform.translation),
-                Collider::ball(exploding.radius),
-                Velocity::default(),
-                Projectile {
-                    kind: projectile.kind,
-                    damage: exploding.damage,
-                    speed: 0.0,
-                    direction: Vec2::ZERO,
-                    owner_entity: projectile.owner_entity,
-                },
-                Lifetime {
-                    timer: Timer::from_seconds(0.1, TimerMode::Once),
-                },
-                AoEProjectile::default(),
-            ));
+            commands
+                .spawn((
+                    Transform::from_translation(projectile_transform.translation),
+                    Visibility::Visible,
+                    Collider::ball(exploding.radius),
+                    Velocity::default(),
+                    Projectile {
+                        kind: projectile.kind,
+                        damage: exploding.damage,
+                        speed: 0.0,
+                        direction: Vec2::ZERO,
+                        owner_entity: projectile.owner_entity,
+                    },
+                    Lifetime {
+                        timer: Timer::from_seconds(0.1, TimerMode::Once),
+                    },
+                    AoEProjectile::default(),
+                ))
+                .with_children(|parent| {
+                    spawn_bolt_explosion_visuals(
+                        parent,
+                        &mut res.meshes,
+                        &mut res.materials,
+                        exploding.radius,
+                    );
+                });
         }
         should_despawn = true;
     }

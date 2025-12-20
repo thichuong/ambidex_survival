@@ -50,6 +50,62 @@ pub fn spawn_energy_bolt_visuals(
     }
 }
 
+/// Spawn visual effects for Energy Bolt explosion
+pub fn spawn_bolt_explosion_visuals(
+    parent: &mut ChildSpawnerCommands,
+    meshes: &mut Assets<Mesh>,
+    materials: &mut Assets<ColorMaterial>,
+    radius: f32,
+) {
+    let mut rng = rand::thread_rng();
+
+    // Outer shockwave - large, fading purple
+    parent.spawn((
+        Mesh2d(meshes.add(Circle::new(radius))),
+        MeshMaterial2d(materials.add(Color::srgba(0.7, 0.2, 1.0, 0.2))),
+        Transform::from_xyz(0.0, 0.0, -0.3),
+    ));
+    // Mid ring - orange/yellow
+    parent.spawn((
+        Mesh2d(meshes.add(Circle::new(radius * 0.75))),
+        MeshMaterial2d(materials.add(Color::srgba(1.0, 0.6, 0.1, 0.4))),
+        Transform::from_xyz(0.0, 0.0, -0.2),
+    ));
+    // Inner blast - bright white/yellow
+    parent.spawn((
+        Mesh2d(meshes.add(Circle::new(radius * 0.5))),
+        MeshMaterial2d(materials.add(Color::srgba(1.0, 0.9, 0.5, 0.6))),
+        Transform::from_xyz(0.0, 0.0, -0.1),
+    ));
+    // Core flash - brightest white
+    parent.spawn((
+        Mesh2d(meshes.add(Circle::new(radius * 0.2))),
+        MeshMaterial2d(materials.add(Color::srgba(1.0, 1.0, 1.0, 0.9))),
+        Transform::from_xyz(0.0, 0.0, 0.0),
+    ));
+    // Explosion particles radiating outward
+    for i in 0..12 {
+        let angle = (i as f32) * std::f32::consts::PI / 6.0;
+        let dist = radius * rng.gen_range(0.4..0.9);
+        let x = angle.cos() * dist;
+        let y = angle.sin() * dist;
+        let size = rng.gen_range(3.0..6.0);
+
+        // Color varies from orange to yellow
+        let color_blend = rng.gen_range(0.0..1.0);
+        parent.spawn((
+            Mesh2d(meshes.add(Circle::new(size))),
+            MeshMaterial2d(materials.add(Color::srgba(
+                1.0,
+                0.5 + color_blend * 0.4,
+                color_blend * 0.3,
+                0.7,
+            ))),
+            Transform::from_xyz(x, y, 0.1),
+        ));
+    }
+}
+
 /// Spawn visual effects for Laser spell
 pub fn spawn_laser_visuals(
     parent: &mut ChildSpawnerCommands,
