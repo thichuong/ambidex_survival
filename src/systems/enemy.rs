@@ -66,6 +66,7 @@ pub fn spawn_waves(mut params: SpawnWavesParams) -> Result<(), String> {
     Ok(())
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn spawn_random_enemy(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -85,18 +86,19 @@ fn spawn_random_enemy(
 
     // Scaling Formulas
     // Base HP: 30, +20 per round. Round 1: 50, Round 5: 130
-    let health = crate::configs::enemy::BASE_HEALTH
-        + (current_round as f32 * crate::configs::enemy::HEALTH_SCALING_PER_ROUND);
+    let health = (current_round as f32).mul_add(
+        crate::configs::enemy::HEALTH_SCALING_PER_ROUND,
+        crate::configs::enemy::BASE_HEALTH,
+    );
     // Base Speed: 150 (Constant)
     let speed = crate::configs::enemy::BASE_SPEED;
     // Base Damage: 10, +5 per round. Round 5: 35
-    let damage = crate::configs::enemy::BASE_DAMAGE
-        + (current_round as f32 * crate::configs::enemy::DAMAGE_SCALING_PER_ROUND);
-
-    println!(
-        "Spawning Enemy (R{}): HP={}, Spd={}, Dmg={}",
-        current_round, health, speed, damage
+    let damage = (current_round as f32).mul_add(
+        crate::configs::enemy::DAMAGE_SCALING_PER_ROUND,
+        crate::configs::enemy::BASE_DAMAGE,
     );
+
+    println!("Spawning Enemy (R{current_round}): HP={health}, Spd={speed}, Dmg={damage}");
 
     commands.spawn((
         (
