@@ -4,7 +4,6 @@ use bevy::render::{
     RenderPlugin,
     settings::{Backends, RenderCreation, WgpuSettings},
 };
-use bevy::window::WindowResolution;
 
 mod components;
 mod configs;
@@ -30,8 +29,7 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "Ambidex Survival".into(),
-                        resolution: WindowResolution::new(1920, 1080),
-                        fit_canvas_to_parent: true,
+                        // options removed for flexibility
                         ..default()
                     }),
                     ..default()
@@ -113,20 +111,13 @@ fn init_cached_assets(
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn maximize_window(
-    winit_windows: Option<NonSend<bevy::winit::WinitWindows>>,
-    windows: Query<Entity, With<PrimaryWindow>>,
-    mut done: Local<bool>,
-) {
-    if *done {
+fn maximize_window(mut windows: Query<&mut Window, With<PrimaryWindow>>, mut frames: Local<usize>) {
+    if *frames > 100 {
         return;
     }
-    if let Some(winit_windows) = winit_windows {
-        for entity in &windows {
-            if let Some(winit_window) = winit_windows.get_window(entity) {
-                winit_window.set_maximized(true);
-                *done = true;
-            }
-        }
+    *frames += 1;
+
+    for mut window in &mut windows {
+        window.set_maximized(true); // Trying to see if this method works
     }
 }
