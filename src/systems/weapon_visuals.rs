@@ -13,41 +13,38 @@ pub fn spawn_energy_bolt_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
 ) {
-    // Outer aura - large, transparent purple
-    parent.spawn((
-        Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_purple_20.clone()),
-        Transform::from_xyz(0.0, 0.0, -0.3).with_scale(Vec3::splat(16.0)),
-    ));
-    // Mid glow - medium magenta
-    parent.spawn((
-        Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_purple_40.clone()),
-        Transform::from_xyz(0.0, 0.0, -0.2).with_scale(Vec3::splat(11.0)),
-    ));
-    // Core - bright purple
-    parent.spawn((
-        Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_purple_80.clone()),
-        Transform::from_xyz(0.0, 0.0, -0.1).with_scale(Vec3::splat(8.0)),
-    ));
-    // Inner core - white center
-    parent.spawn((
-        Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_white.clone()),
-        Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::splat(4.0)),
-    ));
-    // Orbiting particles
-    for i in 0..4 {
-        let angle = (i as f32) * std::f32::consts::FRAC_PI_2;
-        let x = angle.cos() * 10.0;
-        let y = angle.sin() * 10.0;
+    // "Lightning" Core - 3 segments zigzagging
+    let segments = [
+        (Vec3::new(-5.0, 0.0, 0.0), Vec3::new(14.0, 3.0, 1.0), 0.2),
+        (Vec3::new(3.0, 4.0, 0.0), Vec3::new(10.0, 2.5, 1.0), -0.5),
+        (Vec3::new(8.0, -3.0, 0.0), Vec3::new(12.0, 2.0, 1.0), 0.4),
+    ];
+
+    for (pos, scale, rot) in segments.iter() {
+        // Core (White)
         parent.spawn((
-            Mesh2d(cached.unit_circle.clone()),
-            MeshMaterial2d(cached.mat_magenta_70.clone()),
-            Transform::from_xyz(x, y, 0.1).with_scale(Vec3::splat(2.0)),
+            Mesh2d(cached.unit_square.clone()),
+            MeshMaterial2d(cached.mat_bolt_core.clone()),
+            Transform::from_translation(*pos)
+                .with_rotation(Quat::from_rotation_z(*rot))
+                .with_scale(*scale),
+        ));
+        // Glow (Purple)
+        parent.spawn((
+            Mesh2d(cached.unit_square.clone()),
+            MeshMaterial2d(cached.mat_bolt_glow.clone()),
+            Transform::from_translation(*pos + Vec3::new(0.0, 0.0, -0.1))
+                .with_rotation(Quat::from_rotation_z(*rot))
+                .with_scale(*scale * 2.5),
         ));
     }
+
+    // Front/Impact Glow
+    parent.spawn((
+        Mesh2d(cached.unit_circle.clone()),
+        MeshMaterial2d(cached.mat_bolt_glow.clone()),
+        Transform::from_xyz(10.0, 0.0, -0.2).with_scale(Vec3::splat(12.0)),
+    ));
 }
 
 /// Spawn visual effects for Energy Bolt explosion
@@ -113,61 +110,46 @@ pub fn spawn_laser_visuals(
     // Outer glow - wide, transparent cyan
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_cyan_30.clone()),
+        MeshMaterial2d(cached.mat_teal_dark.clone()), // Darker teal outer
         Transform::from_xyz(laser::LENGTH / 2.0, 0.0, -0.3).with_scale(Vec3::new(
             laser::LENGTH,
-            laser::WIDTH * 2.5,
+            laser::WIDTH * 3.0,
             1.0,
         )),
     ));
-    // Mid beam - brighter
+    // Mid beam - brighter cyan
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_cyan_50.clone()),
+        MeshMaterial2d(cached.mat_teal_light.clone()),
         Transform::from_xyz(laser::LENGTH / 2.0, 0.0, -0.2).with_scale(Vec3::new(
             laser::LENGTH,
             laser::WIDTH * 1.5,
             1.0,
         )),
     ));
-    // Core beam - main laser
+    // Core beam - intense white
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_cyan_70.clone()),
+        MeshMaterial2d(cached.mat_white.clone()),
         Transform::from_xyz(laser::LENGTH / 2.0, 0.0, -0.1).with_scale(Vec3::new(
             laser::LENGTH,
-            laser::WIDTH,
+            laser::WIDTH * 0.5,
             1.0,
         )),
     ));
-    // Inner core - brightest white
-    parent.spawn((
-        Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_white_90.clone()),
-        Transform::from_xyz(laser::LENGTH / 2.0, 0.0, 0.0).with_scale(Vec3::new(
-            laser::LENGTH,
-            laser::WIDTH * 0.4,
-            1.0,
-        )),
-    ));
-    // Electric sparks along the beam
+
+    // Electric sparks/particles along the beam
     let mut rng = rand::thread_rng();
-    for _ in 0..10 {
+    for _ in 0..15 {
         let dist = rng.gen_range(20.0..laser::LENGTH - 20.0);
-        let jitter_y = rng.gen_range(-laser::WIDTH * 0.6..laser::WIDTH * 0.6);
-        let size = rng.gen_range(2.0..4.0);
+        let jitter_y = rng.gen_range(-laser::WIDTH * 0.8..laser::WIDTH * 0.8);
+        let size = rng.gen_range(2.0..5.0);
         parent.spawn((
             Mesh2d(cached.unit_circle.clone()),
             MeshMaterial2d(cached.mat_white_90.clone()),
             Transform::from_xyz(dist, jitter_y, 0.1).with_scale(Vec3::splat(size)),
         ));
     }
-    // Impact glow at end
-    parent.spawn((
-        Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_cyan_50.clone()),
-        Transform::from_xyz(laser::LENGTH, 0.0, -0.15).with_scale(Vec3::splat(laser::WIDTH)),
-    ));
 }
 
 /// Spawn visual effects for Nova spell
@@ -175,44 +157,41 @@ pub fn spawn_nova_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
 ) {
-    // Outer pulse - large, fading
-    parent.spawn((
-        Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_purple_20.clone()),
-        Transform::from_xyz(0.0, 0.0, -0.3).with_scale(Vec3::splat(nova::RADIUS)),
-    ));
-    // Mid ring - medium magenta
-    parent.spawn((
-        Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_magenta_40.clone()),
-        Transform::from_xyz(0.0, 0.0, -0.2).with_scale(Vec3::splat(nova::RADIUS * 0.75)),
-    ));
-    // Inner ring - brighter
-    parent.spawn((
-        Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_magenta_40.clone()),
-        Transform::from_xyz(0.0, 0.0, -0.1).with_scale(Vec3::splat(nova::RADIUS * 0.5)),
-    ));
-    // Center glow - brightest white/pink
-    parent.spawn((
-        Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_magenta_70.clone()),
-        Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::splat(nova::RADIUS * 0.2)),
-    ));
-    // Particle bursts around the edge
-    let mut rng = rand::thread_rng();
-    for i in 0..12 {
-        let angle = (i as f32) * std::f32::consts::PI / 6.0;
-        let radius = nova::RADIUS * rng.gen_range(0.6..0.95);
-        let x = angle.cos() * radius;
-        let y = angle.sin() * radius;
-        let size = rng.gen_range(3.0..6.0);
+    // Rings expanding
+    let ring_colors = [
+        cached.mat_purple_20.clone(),
+        cached.mat_magenta_40.clone(),
+        cached.mat_purple_80.clone(),
+    ];
+
+    for (i, mat) in ring_colors.iter().enumerate() {
+        let scale_factor = 1.0 - (i as f32 * 0.25);
         parent.spawn((
             Mesh2d(cached.unit_circle.clone()),
-            MeshMaterial2d(cached.mat_magenta_40.clone()),
-            Transform::from_xyz(x, y, 0.1).with_scale(Vec3::splat(size)),
+            MeshMaterial2d(mat.clone()),
+            Transform::from_xyz(0.0, 0.0, -0.1 * (i as f32))
+                .with_scale(Vec3::splat(nova::RADIUS * scale_factor)),
         ));
     }
+
+    // "Rays" - simulated by thin long rectangles rotated around
+    for i in 0..8 {
+        let angle = (i as f32) * std::f32::consts::PI / 4.0;
+        parent.spawn((
+            Mesh2d(cached.unit_square.clone()),
+            MeshMaterial2d(cached.mat_magenta_40.clone()),
+            Transform::from_xyz(0.0, 0.0, -0.05)
+                .with_rotation(Quat::from_rotation_z(angle))
+                .with_scale(Vec3::new(nova::RADIUS * 2.0, 4.0, 1.0)),
+        ));
+    }
+
+    // Core Flash
+    parent.spawn((
+        Mesh2d(cached.unit_circle.clone()),
+        MeshMaterial2d(cached.mat_white_90.clone()),
+        Transform::from_xyz(0.0, 0.0, 0.1).with_scale(Vec3::splat(nova::RADIUS * 0.2)),
+    ));
 }
 
 /// Spawn visual effects for Global spell
@@ -220,41 +199,42 @@ pub fn spawn_global_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
 ) {
-    // Multiple concentric fading rings - using approx cached materials
-    // Note: To fully batch this, we use discrete opacity steps or accept slight visual change
-    for i in 0..5 {
-        let ring_radius = global::RADIUS * (i as f32).mul_add(0.2, 0.2);
-        let material = match i {
-            0..=1 => cached.mat_purple_80.clone(),
-            2..=3 => cached.mat_purple_40.clone(),
-            _ => cached.mat_purple_20.clone(),
+    // Concentric clean rings
+    for i in 0..4 {
+        let r = global::RADIUS * (0.4 + i as f32 * 0.2);
+        // Varying opacity/color
+        let mat = if i % 2 == 0 {
+            cached.mat_cyan_30.clone()
+        } else {
+            cached.mat_purple_40.clone()
         };
 
         parent.spawn((
             Mesh2d(cached.unit_circle.clone()),
-            MeshMaterial2d(material),
-            Transform::from_xyz(0.0, 0.0, (i as f32).mul_add(0.05, -0.3))
-                .with_scale(Vec3::splat(ring_radius)),
+            MeshMaterial2d(mat),
+            Transform::from_xyz(0.0, 0.0, -0.5 + i as f32 * 0.1).with_scale(Vec3::splat(r)),
         ));
     }
-    // Scattered particles throughout
+
+    // Grid-like overlay (Lat/Long lines simulated) - simplified
+    parent.spawn((
+        Mesh2d(cached.unit_circle.clone()),
+        MeshMaterial2d(cached.mat_cyan_30.clone()), // Use a transparent one?
+        Transform::from_xyz(0.0, 0.0, -0.1).with_scale(Vec3::splat(global::RADIUS * 0.95)),
+    ));
+
+    // Orbiting "Satellites"
     let mut rng = rand::thread_rng();
-    for _ in 0..24 {
-        let angle: f32 = rng.gen_range(0.0..std::f32::consts::TAU);
-        let radius = global::RADIUS * rng.gen_range(0.1..0.9);
-        let x = angle.cos() * radius;
-        let y = angle.sin() * radius;
-        let color_variant = rng.gen_range(0..3);
-        let material = match color_variant {
-            0 => cached.mat_cyan_30.clone(),
-            1 => cached.mat_magenta_40.clone(),
-            _ => cached.mat_white_90.clone(),
-        };
-        let size = rng.gen_range(2.0..5.0);
+    for _ in 0..16 {
+        let angle = rng.gen_range(0.0..std::f32::consts::TAU);
+        let r = global::RADIUS * rng.gen_range(0.5..1.1);
+        let x = angle.cos() * r;
+        let y = angle.sin() * r;
+
         parent.spawn((
             Mesh2d(cached.unit_circle.clone()),
-            MeshMaterial2d(material),
-            Transform::from_xyz(x, y, 0.1).with_scale(Vec3::splat(size)),
+            MeshMaterial2d(cached.mat_white_90.clone()),
+            Transform::from_xyz(x, y, 0.2).with_scale(Vec3::splat(3.0)),
         ));
     }
 }
@@ -264,46 +244,56 @@ pub fn spawn_shuriken_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
 ) {
-    // Outer glow - soft circle
+    // Shadow (offset and dark)
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_cyan_30.clone()),
-        Transform::from_xyz(0.0, 0.0, -0.2).with_scale(Vec3::splat(14.0)),
+        MeshMaterial2d(cached.mat_gun_black.clone()), // Dark shadow
+        Transform::from_xyz(2.0, -2.0, -0.3).with_scale(Vec3::splat(14.0)),
     ));
-    // Spin glow - pulsing ring
+
+    // Shuriken blades - 4 pointed star shape with "3D" lighting
+    for i in 0..4 {
+        let angle_base = (i as f32) * std::f32::consts::FRAC_PI_2;
+        let blade_len = 12.0;
+
+        // We simulate the diamond blade shape using two rotated rectangles or just careful placement
+        // Light side of the blade
+        parent.spawn((
+            Mesh2d(cached.unit_square.clone()),
+            MeshMaterial2d(cached.mat_teal_light.clone()),
+            Transform::from_xyz(0.0, 0.0, -0.1)
+                .with_rotation(Quat::from_rotation_z(angle_base))
+                .with_scale(Vec3::new(blade_len, 4.0, 1.0))
+                .with_translation(
+                    Quat::from_rotation_z(angle_base) * Vec3::new(blade_len * 0.4, 1.5, 0.0),
+                ),
+        ));
+        // Dark side of the blade
+        parent.spawn((
+            Mesh2d(cached.unit_square.clone()),
+            MeshMaterial2d(cached.mat_teal_dark.clone()),
+            Transform::from_xyz(0.0, 0.0, -0.1)
+                .with_rotation(Quat::from_rotation_z(angle_base))
+                .with_scale(Vec3::new(blade_len, 4.0, 1.0))
+                .with_translation(
+                    Quat::from_rotation_z(angle_base) * Vec3::new(blade_len * 0.4, -1.5, 0.0),
+                ),
+        ));
+    }
+
+    // Center Bearing/Ring
+    // Outer metallic ring
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_cyan_50.clone()),
-        Transform::from_xyz(0.0, 0.0, -0.1).with_scale(Vec3::splat(10.0)),
+        MeshMaterial2d(cached.mat_teal_dark.clone()),
+        Transform::from_xyz(0.0, 0.0, 0.1).with_scale(Vec3::splat(5.0)),
     ));
-    // Core - bright center
+    // Inner light
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
         MeshMaterial2d(cached.mat_white.clone()),
-        Transform::from_xyz(0.0, 0.0, 0.1).with_scale(Vec3::splat(4.0)),
+        Transform::from_xyz(0.0, 0.0, 0.2).with_scale(Vec3::splat(2.5)),
     ));
-    // Shuriken blades - 4 pointed star shape
-    for i in 0..4 {
-        let angle = (i as f32) * std::f32::consts::FRAC_PI_2;
-        let x = angle.cos() * 6.0;
-        let y = angle.sin() * 6.0;
-        // Blade outer
-        parent.spawn((
-            Mesh2d(cached.unit_square.clone()),
-            MeshMaterial2d(cached.mat_cyan_70.clone()),
-            Transform::from_xyz(x, y, 0.0)
-                .with_rotation(Quat::from_rotation_z(angle))
-                .with_scale(Vec3::new(12.0, 5.0, 1.0)),
-        ));
-        // Blade inner
-        parent.spawn((
-            Mesh2d(cached.unit_square.clone()),
-            MeshMaterial2d(cached.mat_white_90.clone()),
-            Transform::from_xyz(x, y, 0.05)
-                .with_rotation(Quat::from_rotation_z(angle))
-                .with_scale(Vec3::new(10.0, 3.0, 1.0)),
-        ));
-    }
 }
 
 /// Spawn visual effects for Sword Normal attack - realistic sword shape
@@ -311,41 +301,59 @@ pub fn spawn_sword_normal_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
 ) {
-    // Blade - main sword body (silver/steel color)
-    parent.spawn((
-        Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_steel.clone()), // Steel
-        Transform::from_xyz(65.0, 0.0, 0.0).with_scale(Vec3::new(120.0, 8.0, 1.0)),
-    ));
-    // Blade edge highlight (lighter)
-    parent.spawn((
-        Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_steel_bright.clone()), // Bright edge
-        Transform::from_xyz(62.5, 0.0, 0.1).with_scale(Vec3::new(115.0, 3.0, 1.0)),
-    ));
-    // Sword tip - pointed end (triangle approximation with smaller rect)
+    let blade_length = 120.0;
+    let blade_width = 16.0;
+
+    // Blade Body (Steel)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_steel.clone()),
-        Transform::from_xyz(130.0, 0.0, 0.0).with_scale(Vec3::new(15.0, 6.0, 1.0)),
+        Transform::from_xyz(blade_length * 0.4, 0.0, 0.0).with_scale(Vec3::new(
+            blade_length,
+            blade_width,
+            1.0,
+        )),
     ));
-    // Guard/crossguard (dark metal)
+
+    // Blade Ridge (Brighter center line)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_bronze.clone()), // Dark bronze
-        Transform::from_xyz(5.0, 0.0, 0.2).with_scale(Vec3::new(6.0, 20.0, 1.0)),
+        MeshMaterial2d(cached.mat_steel_bright.clone()),
+        Transform::from_xyz(blade_length * 0.4, 0.0, 0.1).with_scale(Vec3::new(
+            blade_length * 0.95,
+            blade_width * 0.4,
+            1.0,
+        )),
     ));
-    // Handle/grip (brown leather)
+
+    // Guard (Gold)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_brown.clone()), // Brown
-        Transform::from_xyz(-10.0, 0.0, 0.1).with_scale(Vec3::new(25.0, 6.0, 1.0)),
+        MeshMaterial2d(cached.mat_gold_polished.clone()),
+        Transform::from_xyz(-blade_length * 0.1, 0.0, 0.2).with_scale(Vec3::new(
+            8.0,
+            blade_width * 2.8,
+            1.0,
+        )),
     ));
-    // Pommel (end cap)
+
+    // Handle (Dark Wood)
+    parent.spawn((
+        Mesh2d(cached.unit_square.clone()),
+        MeshMaterial2d(cached.mat_wood_dark.clone()),
+        Transform::from_xyz(-blade_length * 0.2, 0.0, 0.1).with_scale(Vec3::new(
+            blade_length * 0.2,
+            blade_width * 0.6,
+            1.0,
+        )),
+    ));
+
+    // Pommel (Gold)
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_bronze.clone()), // Dark bronze
-        Transform::from_xyz(-22.0, 0.0, 0.2).with_scale(Vec3::splat(5.0)),
+        MeshMaterial2d(cached.mat_gold_polished.clone()),
+        Transform::from_xyz(-blade_length * 0.3, 0.0, 0.25)
+            .with_scale(Vec3::splat(blade_width * 0.7)),
     ));
 }
 
@@ -356,53 +364,69 @@ pub fn spawn_sword_shattered_visuals(
 ) {
     let mut rng = rand::thread_rng();
 
-    // Fragment settings
-    let num_fragments = 40; // More fragments
-    let total_length = sword::SHATTERED_RANGE;
-    let frag_size = 6.0; // Base fragment size
-    let blade_width = frag_size * 4.0; // Width fits 4 fragments
+    let broken_blade_len = 30.0;
+    let blade_width = 16.0;
 
-    // Blade fragments randomly placed in a line band
+    // --- Hilt Logic (Same as normal sword, but broken blade) ---
+    // Guard (Gold)
+    parent.spawn((
+        Mesh2d(cached.unit_square.clone()),
+        MeshMaterial2d(cached.mat_gold_polished.clone()),
+        Transform::from_xyz(-10.0, 0.0, 0.2).with_scale(Vec3::new(8.0, blade_width * 2.8, 1.0)),
+    ));
+    // Handle (Dark Wood)
+    parent.spawn((
+        Mesh2d(cached.unit_square.clone()),
+        MeshMaterial2d(cached.mat_wood_dark.clone()),
+        Transform::from_xyz(-20.0, 0.0, 0.1).with_scale(Vec3::new(24.0, blade_width * 0.6, 1.0)),
+    ));
+    // Pommel (Gold)
+    parent.spawn((
+        Mesh2d(cached.unit_circle.clone()),
+        MeshMaterial2d(cached.mat_gold_polished.clone()),
+        Transform::from_xyz(-32.0, 0.0, 0.25).with_scale(Vec3::splat(blade_width * 0.7)),
+    ));
+    // Broken Blade Stub
+    parent.spawn((
+        Mesh2d(cached.unit_square.clone()),
+        MeshMaterial2d(cached.mat_steel.clone()), // Darker break
+        Transform::from_xyz(5.0, 0.0, 0.0).with_scale(Vec3::new(
+            broken_blade_len,
+            blade_width,
+            1.0,
+        )),
+    ));
+
+    // --- Fragment Logic ---
+    let num_fragments = 25;
+    let total_range = sword::SHATTERED_RANGE;
+
+    // Energy Glow connecting fragments (Thin line)
+    parent.spawn((
+        Mesh2d(cached.unit_square.clone()),
+        MeshMaterial2d(cached.mat_cyan_30.clone()),
+        Transform::from_xyz(total_range * 0.4, 0.0, -0.1).with_scale(Vec3::new(
+            total_range * 0.8,
+            2.0,
+            1.0,
+        )),
+    ));
+
     for _ in 0..num_fragments {
-        // Random position along the length
-        let base_x = rng.gen_range(15.0..total_length);
-        // Random Y position within the blade width (4 fragments wide)
-        let base_y = rng.gen_range(-blade_width / 2.0..blade_width / 2.0);
+        let dist = rng.gen_range(20.0..total_range);
+        // Scatter Y slightly
+        let y_off = rng.gen_range(-10.0..10.0);
 
-        // Random fragment size with variation
-        let frag_len = rng.gen_range(8.0..16.0);
-        let frag_width = rng.gen_range(4.0..8.0);
-
-        // Random rotation for natural look
-        let rotation = rng.gen_range(-0.3..0.3);
-
-        // Steel color with variation
-        let variant = rng.gen_range(0..3);
-        let material = match variant {
-            0 => cached.mat_steel.clone(),
-            1 => cached.mat_steel_bright.clone(),
-            _ => cached.mat_steel_dark.clone(),
-        };
+        let size_x = rng.gen_range(4.0..12.0);
+        let size_y = rng.gen_range(2.0..8.0);
+        let rot = rng.gen_range(-0.5..0.5);
 
         parent.spawn((
             Mesh2d(cached.unit_square.clone()),
-            MeshMaterial2d(material),
-            Transform::from_xyz(base_x, base_y, rng.gen_range(-0.1..0.1))
-                .with_rotation(Quat::from_rotation_z(rotation))
-                .with_scale(Vec3::new(frag_len, frag_width, 1.0)),
-        ));
-    }
-
-    // Small debris particles
-    for _ in 0..15 {
-        let dist = rng.gen_range(20.0..total_length);
-        let jitter_y = rng.gen_range(-blade_width / 2.0..blade_width / 2.0);
-        let size = rng.gen_range(1.5..3.5);
-
-        parent.spawn((
-            Mesh2d(cached.unit_circle.clone()),
             MeshMaterial2d(cached.mat_steel_bright.clone()),
-            Transform::from_xyz(dist, jitter_y, 0.1).with_scale(Vec3::splat(size)),
+            Transform::from_xyz(dist, y_off, 0.1)
+                .with_rotation(Quat::from_rotation_z(rot))
+                .with_scale(Vec3::new(size_x, size_y, 1.0)),
         ));
     }
 }
@@ -412,34 +436,25 @@ pub fn spawn_gun_bullet_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
 ) {
-    // Outer trail glow - orange fade
+    // Bullet Core (Gold/Brass)
+    // Sharper, longer shape
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_orange_25.clone()),
-        Transform::from_xyz(-4.0, 0.0, -0.2).with_scale(Vec3::new(28.0, 10.0, 1.0)),
+        MeshMaterial2d(cached.mat_gold_polished.clone()),
+        Transform::from_xyz(0.0, 0.0, 0.1).with_scale(Vec3::new(18.0, 4.0, 1.0)),
     ));
-    // Mid glow - yellow
+
+    // Trail / Shockwave (Orange)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_orange_60.clone()),
-        Transform::from_xyz(-2.0, 0.0, -0.1).with_scale(Vec3::new(24.0, 7.0, 1.0)),
+        Transform::from_xyz(-8.0, 0.0, -0.1).with_scale(Vec3::new(30.0, 8.0, 1.0)),
     ));
-    // Core bullet - bright white/yellow
-    parent.spawn((
-        Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_yellow_100.clone()),
-        Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::new(20.0, 4.0, 1.0)),
-    ));
-    // Inner core - brightest
-    parent.spawn((
-        Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_white.clone()),
-        Transform::from_xyz(0.0, 0.0, 0.1).with_scale(Vec3::new(16.0, 2.0, 1.0)),
-    ));
-    // Tip glow - small circle at front
+
+    // Muzzle/Impact tip glow
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
-        MeshMaterial2d(cached.mat_orange_60.clone()),
-        Transform::from_xyz(10.0, 0.0, -0.15).with_scale(Vec3::splat(5.0)),
+        MeshMaterial2d(cached.mat_yellow_100.clone()),
+        Transform::from_xyz(8.0, 0.0, 0.2).with_scale(Vec3::splat(6.0)),
     ));
 }
