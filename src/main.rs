@@ -91,6 +91,8 @@ fn main() {
                 systems::ui::update_gold_ui,
                 systems::ui::update_round_text,
                 systems::ui::update_menu_gold_text,
+                systems::ui::update_menu_health_text,
+                systems::ui::update_menu_damage_text,
                 systems::ui::update_cooldown_indicators,
                 systems::ui::update_shuriken_count_ui,
             ),

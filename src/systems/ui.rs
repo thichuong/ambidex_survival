@@ -76,6 +76,12 @@ pub struct MenuGoldText;
 #[derive(Component)]
 pub struct RoundText;
 
+#[derive(Component)]
+pub struct MenuHealthText;
+
+#[derive(Component)]
+pub struct MenuDamageText;
+
 #[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Root UI Node (HUD)
@@ -340,40 +346,69 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 align_items: AlignItems::Center,
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.99)),
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 1.0)),
             WeaponMenuUI,
         ))
         .with_children(|parent| {
-            // Title and Gold Row
+            // Status Panel (Top)
             parent
-                .spawn(Node {
-                    width: Val::Percent(100.0),
-                    justify_content: JustifyContent::SpaceBetween,
-                    align_items: AlignItems::Center,
-                    padding: UiRect::horizontal(Val::Px(50.0)),
-                    margin: UiRect::bottom(Val::Px(20.0)),
-                    ..default()
-                })
-                .with_children(|header| {
-                    header.spawn((
-                        Text::new("WEAPON SELECTION"),
+                .spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        height: Val::Px(60.0),
+                        justify_content: JustifyContent::SpaceEvenly,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)), // Status bar background
+                ))
+                .with_children(|status_bar| {
+                    // Health
+                    status_bar.spawn((
+                        Text::new("HP: 100/100"),
                         TextFont {
-                            font_size: 40.0,
+                            font_size: 24.0,
                             ..default()
                         },
-                        TextColor(Color::WHITE),
+                        TextColor(Color::srgb(0.0, 1.0, 0.0)),
+                        MenuHealthText,
                     ));
-
-                    header.spawn((
+                    // Gold
+                    status_bar.spawn((
                         Text::new("Gold: 0"),
                         TextFont {
-                            font_size: 30.0,
+                            font_size: 24.0,
                             ..default()
                         },
                         TextColor(Color::srgb(1.0, 0.843, 0.0)),
                         MenuGoldText,
                     ));
+                    // Damage Bonus
+                    status_bar.spawn((
+                        Text::new("Dmg: +0%"),
+                        TextFont {
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.5, 0.0)), // Orange for damage
+                        MenuDamageText,
+                    ));
                 });
+
+            // Title
+            parent.spawn((
+                Text::new("WEAPON SELECTION"),
+                TextFont {
+                    font_size: 40.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    margin: UiRect::bottom(Val::Px(10.0)),
+                    ..default()
+                },
+            ));
 
             // Content Container (Weapons + Shop)
             parent
@@ -726,18 +761,6 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
                                     player.damage_multiplier += 0.1;
                                     println!("Damage Upgraded! Gold: {}", player.gold);
                                     success = true;
-
-                                    // Update button text to show current multiplier
-                                    if let Ok(children) = children_query.get(trigger.entity) {
-                                        for &child in children {
-                                            if let Ok(mut text) = text_query.get_mut(child) {
-                                                text.0 = format!(
-                                                    "Damage Up\n(+10%)\n100G\n(Current: {:.0}%)",
-                                                    player.damage_multiplier * 100.0
-                                                );
-                                            }
-                                        }
-                                    }
                                 } else {
                                     println!("Not enough gold!");
                                 }
@@ -1266,6 +1289,29 @@ pub fn update_shuriken_count_ui(
             } else {
                 text.0 = String::new();
             }
+        }
+    }
+}
+
+pub fn update_menu_health_text(
+    mut query: Query<&mut Text, With<MenuHealthText>>,
+    player_query: Query<&crate::components::player::Player>,
+) {
+    if let Some(player) = player_query.iter().next() {
+        for mut text in &mut query {
+            text.0 = format!("HP: {:.0}/100", player.health);
+        }
+    }
+}
+
+pub fn update_menu_damage_text(
+    mut query: Query<&mut Text, With<MenuDamageText>>,
+    player_query: Query<&crate::components::player::Player>,
+) {
+    if let Some(player) = player_query.iter().next() {
+        for mut text in &mut query {
+            let bonus = (player.damage_multiplier - 1.0) * 100.0;
+            text.0 = format!("Dmg: +{:.0}%", bonus);
         }
     }
 }
