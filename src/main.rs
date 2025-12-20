@@ -14,6 +14,7 @@ mod utils;
 
 use bevy::window::PrimaryWindow;
 use components::player::GameCamera;
+use resources::cached_assets::CachedAssets;
 use resources::game_state::GameState;
 use systems::player::{aim_player, move_player, spawn_player};
 use utils::log_error;
@@ -48,7 +49,7 @@ fn main() {
         .init_resource::<resources::round::RoundManager>()
         .init_resource::<resources::polish::ScreenShake>()
         .init_resource::<components::physics::UniformGrid>()
-        .add_systems(Startup, (setup_camera, spawn_player))
+        .add_systems(Startup, (setup_camera, spawn_player, init_cached_assets))
         .add_systems(Update, maximize_window)
         .add_systems(
             Update,
@@ -93,6 +94,15 @@ fn main() {
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn((Camera2d, GameCamera));
+}
+
+fn init_cached_assets(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    let cached = CachedAssets::new(&mut meshes, &mut materials);
+    commands.insert_resource(cached);
 }
 
 #[allow(clippy::needless_pass_by_value)]
