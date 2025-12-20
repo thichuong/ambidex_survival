@@ -1,81 +1,63 @@
 # Ambidex Survival
 
-**Ambidex Survival** is a dual-stick survival shooter prototype built with **Rust** and the **Bevy** game engine. It features a unique "Ambidex" system where the player controls two independent hands, each capable of wielding different weapons with distinct mechanics and skills.
+**Ambidex Survival** is a high-octane dual-stick survival shooter built with **Rust** and the **Bevy** engine. Take control of two independent hands, customize your loadout with a variety of weapons and spells, and survive as long as you can against ever-increasing waves of enemies.
 
-## � Key Features
+## ⚔️ The "Ambidex" Combat System
 
-### ⚔️ The "Ambidex" Combat System
-Unlike traditional shooters, **Ambidex Survival** gives you independent control over your character's two hands.
-*   **Left Hand (Left Click + Q)**: Equip a weapon for your left hand.
-*   **Right Hand (Right Click + E)**: Equip a different weapon for your right hand.
-*   **Synergy**: Combine weapons for unique playstyles (e.g., Gun for long-range + Sword for close encounters, or Double Magic for maximum chaos).
+The core of the game is the **Ambidex System**, which gives you independent control over your character's two hands. Each hand can be equipped with any weapon type, allowing for thousands of potential combinations.
 
-### 🔫 Weapon Mastery & Skills
-Each weapon has a primary attack and a generic "Skill" key (`Q` or `E`) that changes its functionality:
+- **Independent Hands**: Each hand (Left and Right) has its own weapon, cooldown, and skill state.
+- **Weapon Selection**: Access the **Weapon Menu** between rounds to swap weapons for either hand.
 
-*   **🗡️ Sword**: A reliable melee weapon.
-    *   **Normal Mode**: A balanced 2-phase slash with standard range.
-    *   **Shattered Mode (Skill)**: Toggles the sword into an unstable form. Deal **Reduced Damage** but covers a massive area with **Extended Range** and random strikes. Perfect for crowd control.
+## 🔫 Weapons & Skills
 
-*   **🔫 Gun**: A versatile firearm with three tactical modes:
-    *   **Single Shot**: High damage, high velocity precision rounds.
-    *   **Shotgun (Skill Cycle)**: Fires a spread of projectiles for massive area coverage.
-    *   **Rapid Fire (Skill Cycle)**: Hold Left-Click to unleash a machine-gun stream of low-damage bullets.
+Every weapon features a primary attack and a unique "Skill" (`Q` for Left Hand, `E` for Right Hand).
 
-*   **💠 Magic**: The ultimate customizable weapon.
-    *   **Loadout System**: Choose two spells from your grimoire to equip to a single hand (Primary & Secondary slots).
-    *   **Spells**:
-        *   *Energy Bolt*: Standard projectile that explodes on impact.
-        *   *Laser*: Instant-hit beam weapon.
-        *   *Nova*: Point-blank radial burst.
-        *   *Blink*: Short-range teleport.
-        *   *Global*: Damages all enemies on screen.
-    *   **Tactical Swap (Skill)**: Instantly toggle which spell slot is active (Primary ↔️ Secondary) for dynamic combos.
+### 🗡️ Sword (Melee)
+A powerful close-quarters weapon with two distinct styles.
+- **Normal Mode**: Standard strikes with moderate range and high damage.
+    - *Damage*: 60 | *Range*: 200 | *Cooldown*: 0.5s
+- **Shattered Mode (Skill Toggle)**: The blade shatters into fragments, covering a massive area but dealing lower damage per hit.
+    - *Damage*: 20 | *Range*: 600 | *Cooldown*: 0.5s
 
-*   **⭐ Shuriken**: A utility throwing weapon.
-    *   **Teleport (Skill)**: Instantly teleport to the location of your nearest active shuriken projectile. Use this for dodging or aggressive positioning.
+### 🔫 Gun (Firearm)
+A versatile ranged weapon with three fire modes.
+- **Single Shot**: High precision and high damage.
+    - *Damage*: 60 | *Speed*: 1000 | *Cooldown*: 0.5s
+- **Shotgun**: Fires a wide spread of 7 pellets.
+    - *Damage*: 15 (per pellet) | *Speed*: 800 | *Cooldown*: 0.5s
+- **Rapid Fire**: Lower damage but incredibly high fire rate. Hold button to spray.
+    - *Damage*: 20 | *Speed*: 900 | *Cooldown*: 0.1s
+- **Skill Cycle**: Toggles between Single -> Shotgun -> Rapid.
 
-### 💀 Survival Mechanics
-*   **Infinite Waves**: Enemies spawn continuously and increase in intensity.
-*   **Physics-Based Interaction**: Projectiles and enemies interact using the `rapier2d` physics engine.
-*   **Visual Polish**: Dynamic particle effects, weapon trails, and screen shake feedback.
+### ❄️ Shuriken (Utility)
+Rapid-fire throwing stars with a unique mobility skill.
+- **Projectiles**: Throw fast-moving shurikens that persist for 2 seconds.
+    - *Damage*: 30 | *Speed*: 1000 | *Count*: Max 12 active
+- **Teleport (Skill)**: Instantly teleport to the nearest active shuriken. Great for dodging or repositioning.
 
-## 🚀 Getting Started
+### 🔮 Magic (Spellcasting)
+The most customizable weapon. Each Magic Hand has two spell slots: **Primary** and **Secondary**.
+- **Spell Slots**: Each hand carries two spells that you can toggle between using the skill key.
+- **Spells Available**:
+    - **Energy Bolt**: Projectile that creates a large 80-unit explosion on impact (30 Dmg).
+    - **Laser**: Instant-hit high-velocity beam (30 Dmg).
+    - **Nova**: A radial burst centered on the player for high area damage (80 Dmg).
+    - **Blink**: Short-range teleport to the cursor position.
+    - **Global**: A massive strike that hits everything on screen (15 Dmg).
 
-### Prerequisites
+## 💰 Economy & Progression
 
-*   [Rust](https://www.rust-lang.org/tools/install) (latest stable)
-*   [Trunk](https://trunkrs.dev/) (for Web builds): `cargo install trunk`
-*   Standard build tools (gcc, alsa-lib, udev dependencies for Bevy on Linux)
-
-### Running Natively
-
-```bash
-cargo run --release
-```
-
-### Running on Web (WASM)
-
-```bash
-trunk serve
-```
-
-```bash
-trunk serve --release
-```
-
-Then open `http://localhost:8080` in your browser.
+- **Gold**: Earn **10G** for every enemy killed.
+- **Shop (Menu)**: Spend your hard-earned gold on upgrades:
+    - **Heal**: Restore 30 HP for **50G**.
+    - **Damage Up**: Permanently increase your damage by **10%** for **100G** (stacks).
+- **Rounds**: The game proceeds in rounds. Clear all enemies to open the menu and prepare for the next wave. Wave size and intensity increase every round.
 
 ## 🕹️ Controls
 
 | Action | Input | Description |
 | :--- | :--- | :--- |
-| **Move** | `W`, `A`, `S`, `D` | Move the player character. |
-| **Aim** | `Mouse Cursor` | Rotate hands towards cursor. |
-| **Left Hand Action** | `Left Click` | Use the weapon equipped in the **Left Hand**. |
-| **Right Hand Action** | `Right Click` | Use the weapon equipped in the **Right Hand**. |
-| **Left SKill** | `Q` | Activate special skill or toggle mode for **Left Hand**. |
-| **Right Skill** | `E` | Activate special skill or toggle mode for **Right Hand**. |
 
 > **Note**: Skills vary by weapon (e.g., Teleport for Shuriken, Mode Toggle for Sword/Gun/Magic).
 
