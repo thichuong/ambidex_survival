@@ -15,6 +15,10 @@ pub enum ShopButton {
     Heal,
     DamageUp,
     MaxHealthUp,
+    CritDamageUp,        // White
+    CritChanceUp,        // Blue
+    LifestealUp,         // Blue
+    CooldownReductionUp, // Blue
 }
 
 #[derive(Component)]
@@ -82,6 +86,15 @@ pub struct MenuHealthText;
 
 #[derive(Component)]
 pub struct MenuDamageText;
+
+#[derive(Component)]
+pub struct MenuCritText;
+
+#[derive(Component)]
+pub struct MenuLifestealText;
+
+#[derive(Component)]
+pub struct MenuCDRText;
 
 #[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -389,11 +402,41 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     status_bar.spawn((
                         Text::new("Dmg: +0%"),
                         TextFont {
-                            font_size: 24.0,
+                            font_size: 20.0,
                             ..default()
                         },
-                        TextColor(Color::srgb(1.0, 0.5, 0.0)), // Orange for damage
+                        TextColor(Color::srgb(1.0, 0.5, 0.0)),
                         MenuDamageText,
+                    ));
+                    // Crit
+                    status_bar.spawn((
+                        Text::new("Crit: 0% (x2.0)"),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.2, 0.2)),
+                        MenuCritText,
+                    ));
+                    // Lifesteal
+                    status_bar.spawn((
+                        Text::new("Life: 0%"),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.0, 1.0)),
+                        MenuLifestealText,
+                    ));
+                    // CDR
+                    status_bar.spawn((
+                        Text::new("CDR: 0%"),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.0, 1.0, 1.0)),
+                        MenuCDRText,
                     ));
                 });
 
@@ -514,6 +557,26 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         shop_row,
                                         ShopButton::MaxHealthUp,
                                         "Max HP Up\n(+20)\n150G",
+                                    );
+                                    spawn_shop_button(
+                                        shop_row,
+                                        ShopButton::CritDamageUp,
+                                        "Crit Damage\n(+50%)\n200G",
+                                    );
+                                    spawn_shop_button(
+                                        shop_row,
+                                        ShopButton::CritChanceUp,
+                                        "Crit Chance\n(+10%)\n250G",
+                                    );
+                                    spawn_shop_button(
+                                        shop_row,
+                                        ShopButton::LifestealUp,
+                                        "Lifesteal\n(+10%)\n300G",
+                                    );
+                                    spawn_shop_button(
+                                        shop_row,
+                                        ShopButton::CooldownReductionUp,
+                                        "Magic CDR\n(+10%)\n350G",
                                     );
                                 });
                         });
@@ -719,7 +782,13 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
+#[allow(clippy::too_many_lines)]
 fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, label: &str) {
+    let is_blue = matches!(
+        btn_type,
+        ShopButton::CritChanceUp | ShopButton::LifestealUp | ShopButton::CooldownReductionUp
+    );
+
     parent
         .spawn((
             Button,
@@ -730,57 +799,119 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 flex_direction: FlexDirection::Column, // Stack text if needed
+                border: UiRect::all(Val::Px(4.0)),
                 ..default()
+            },
+            if is_blue {
+                BorderColor::all(Color::srgb(0.0, 0.5, 1.0))
+            } else {
+                BorderColor::all(Color::WHITE)
             },
             BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
             btn_type,
         ))
         .observe(
             |trigger: On<Pointer<Click>>,
-             btn_query: Query<&ShopButton>,
+             btn_query: Query<(&ShopButton, &Children)>,
              mut player_query: Query<&mut crate::components::player::Player>,
-             mut color_query: Query<&mut BackgroundColor>| {
-                if let Ok(btn_type) = btn_query.get(trigger.entity) {
+             mut color_query: Query<&mut BackgroundColor>,
+             mut text_query: Query<&mut Text>| {
+                if let Ok((btn_type, children)) = btn_query.get(trigger.entity) {
                     let mut success = false;
+                    let mut message = String::new();
 
+                    let mut player = player_query.single_mut().unwrap();
                     match btn_type {
                         ShopButton::Heal => {
-                            if let Ok(mut player) = player_query.single_mut() {
-                                if player.gold >= 50 && player.health < player.max_health {
-                                    player.gold -= 50;
-                                    player.health = (player.health + 30.0).min(player.max_health);
-                                    println!(
-                                        "Healed! Health: {}, Gold: {}",
-                                        player.health, player.gold
-                                    );
-                                    success = true;
-                                } else {
-                                    println!("Not enough gold or full health!");
-                                }
+                            if player.gold >= 50 && player.health < player.max_health {
+                                player.gold -= 50;
+                                player.health = (player.health + 30.0).min(player.max_health);
+                                success = true;
                             }
                         }
                         ShopButton::DamageUp => {
-                            if let Ok(mut player) = player_query.single_mut() {
-                                if player.gold >= 100 {
-                                    player.gold -= 100;
-                                    player.damage_multiplier += 0.1;
-                                    println!("Damage Upgraded! Gold: {}", player.gold);
-                                    success = true;
-                                } else {
-                                    println!("Not enough gold!");
-                                }
+                            if player.gold >= 100 {
+                                player.gold -= 100;
+                                player.damage_multiplier += 0.1;
+                                success = true;
                             }
                         }
                         ShopButton::MaxHealthUp => {
-                            if let Ok(mut player) = player_query.single_mut() {
-                                if player.gold >= 150 {
-                                    player.gold -= 150;
-                                    player.max_health += 20.0;
-                                    player.health += 20.0; // Heal by the amount increased
-                                    println!("Max Health Upgraded! New Max: {}", player.max_health);
-                                    success = true;
-                                } else {
-                                    println!("Not enough gold!");
+                            if player.gold >= 150 {
+                                player.gold -= 150;
+                                player.max_health += 20.0;
+                                player.health += 20.0;
+                                success = true;
+                            }
+                        }
+                        ShopButton::CritDamageUp => {
+                            if player.gold >= 200 {
+                                player.gold -= 200;
+                                player.crit_damage += 0.5;
+                                success = true;
+                            }
+                        }
+                        ShopButton::CritChanceUp => {
+                            if player.gold >= 250 && player.crit_chance_upgrades < 10 {
+                                player.gold -= 250;
+                                player.crit_chance = (player.crit_chance + 0.1).min(1.0);
+                                player.crit_chance_upgrades += 1;
+                                success = true;
+                            } else if player.crit_chance_upgrades >= 10 {
+                                message = "MAXED".to_string();
+                            }
+                        }
+                        ShopButton::LifestealUp => {
+                            if player.gold >= 300 && player.lifesteal_upgrades < 5 {
+                                player.gold -= 300;
+                                player.lifesteal = (player.lifesteal + 0.1).min(0.5);
+                                player.lifesteal_upgrades += 1;
+                                success = true;
+                            } else if player.lifesteal_upgrades >= 5 {
+                                message = "MAXED".to_string();
+                            }
+                        }
+                        ShopButton::CooldownReductionUp => {
+                            if player.gold >= 350 && player.cdr_upgrades < 8 {
+                                player.gold -= 350;
+                                player.cooldown_reduction =
+                                    (player.cooldown_reduction + 0.1).min(0.8);
+                                player.cdr_upgrades += 1;
+                                success = true;
+                            } else if player.cdr_upgrades >= 8 {
+                                message = "MAXED".to_string();
+                            }
+                        }
+                    }
+
+                    // Update text for blue cards to show count/max or MAXED
+                    if !message.is_empty() || success {
+                        for &child in children {
+                            if let Ok(mut text) = text_query.get_mut(child) {
+                                match btn_type {
+                                    ShopButton::CritChanceUp => {
+                                        let count = player.crit_chance_upgrades;
+                                        text.0 =
+                                            format!("Crit Chance\n(+10%)\n250G\n[{count}/10]");
+                                        if count >= 10 {
+                                            text.0 = "Crit Chance\nMAXED".to_string();
+                                        }
+                                    }
+                                    ShopButton::LifestealUp => {
+                                        let count = player.lifesteal_upgrades;
+                                        text.0 = format!("Lifesteal\n(+10%)\n300G\n[{count}/5]");
+                                        if count >= 5 {
+                                            text.0 = "Lifesteal\nMAXED".to_string();
+                                        }
+                                    }
+                                    ShopButton::CooldownReductionUp => {
+                                        let count = player.cdr_upgrades;
+                                        text.0 = format!("Magic CDR\n(+10%)\n350G\n[{count}/8]");
+                                        if count >= 8 {
+                                            text.0 = "Magic CDR\nMAXED".to_string();
+                                        }
+                                    }
+                                    _ => {}
                                 }
                             }
                         }
@@ -814,7 +945,7 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
             btn.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 16.0,
+                    font_size: 14.0,
                     ..default()
                 },
                 TextColor(Color::WHITE),
@@ -1330,6 +1461,43 @@ pub fn update_menu_damage_text(
         for mut text in &mut query {
             let bonus = (player.damage_multiplier - 1.0) * 100.0;
             text.0 = format!("Dmg: +{bonus:.0}%");
+        }
+    }
+}
+
+pub fn update_menu_crit_text(
+    mut query: Query<&mut Text, With<MenuCritText>>,
+    player_query: Query<&crate::components::player::Player>,
+) {
+    if let Some(player) = player_query.iter().next() {
+        for mut text in &mut query {
+            let chance = player.crit_chance * 100.0;
+            let damage = player.crit_damage;
+            text.0 = format!("Crit: {chance:.0}% (x{damage:.1})");
+        }
+    }
+}
+
+pub fn update_menu_lifesteal_text(
+    mut query: Query<&mut Text, With<MenuLifestealText>>,
+    player_query: Query<&crate::components::player::Player>,
+) {
+    if let Some(player) = player_query.iter().next() {
+        for mut text in &mut query {
+            let life = player.lifesteal * 100.0;
+            text.0 = format!("Life: {life:.0}%");
+        }
+    }
+}
+
+pub fn update_menu_cdr_text(
+    mut query: Query<&mut Text, With<MenuCDRText>>,
+    player_query: Query<&crate::components::player::Player>,
+) {
+    if let Some(player) = player_query.iter().next() {
+        for mut text in &mut query {
+            let cdr = player.cooldown_reduction * 100.0;
+            text.0 = format!("CDR: {cdr:.0}%");
         }
     }
 }

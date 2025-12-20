@@ -11,6 +11,14 @@ pub struct Player {
     pub gold: u32,
     pub invulnerability_timer: Timer,
     pub damage_multiplier: f32,
+    pub lifesteal: f32,          // % of damage dealt
+    pub crit_chance: f32,        // 0.0 to 1.0
+    pub crit_damage: f32,        // multiplier, default 2.0
+    pub cooldown_reduction: f32, // 0.0 to 1.0
+    // Upgrade counters for blue cards
+    pub crit_chance_upgrades: u32,
+    pub lifesteal_upgrades: u32,
+    pub cdr_upgrades: u32,
 }
 
 impl Default for Player {
@@ -22,6 +30,13 @@ impl Default for Player {
             gold: 0,
             invulnerability_timer: Timer::from_seconds(1.0, TimerMode::Once),
             damage_multiplier: 1.0,
+            lifesteal: 0.0,
+            crit_chance: 0.0,
+            crit_damage: 2.0,
+            cooldown_reduction: 0.0,
+            crit_chance_upgrades: 0,
+            lifesteal_upgrades: 0,
+            cdr_upgrades: 0,
         }
     }
 }

@@ -88,7 +88,9 @@ pub fn handle_combat_input(
                     }
 
                     let now = params.time.elapsed_secs();
-                    if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
+                    let effective_cooldown =
+                        weapon_data.cooldown * (1.0 - player.cooldown_reduction);
+                    if is_just_pressed && now - weapon_data.last_shot >= effective_cooldown {
                         let spell_to_cast = match magic_loadout.active_slot {
                             ActiveSpellSlot::Primary => magic_loadout.primary,
                             ActiveSpellSlot::Secondary => magic_loadout.secondary,

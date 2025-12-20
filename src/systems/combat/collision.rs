@@ -66,12 +66,35 @@ pub fn handle_projectile_hit(
     player_query: &mut Query<&mut Player>,
 ) -> bool {
     let mut should_despawn = false;
-    enemy.health -= projectile.damage;
+
+    let mut final_damage = projectile.damage;
+    let mut is_crit = false;
+
+    if let Ok(mut player) = player_query.single_mut() {
+        // Critical Hit Check
+        let mut rng = rand::thread_rng();
+        if rng.gen_range(0.0..1.0) < player.crit_chance {
+            final_damage *= player.crit_damage;
+            is_crit = true;
+        }
+
+        // Apply Lifesteal
+        if player.lifesteal > 0.0 {
+            let heal_amount = final_damage * player.lifesteal;
+            player.health = (player.health + heal_amount).min(player.max_health);
+        }
+    }
+
+    enemy.health -= final_damage;
     damage_events.write(DamageEvent {
-        damage: projectile.damage,
+        damage: final_damage,
         position: enemy_pos.truncate(),
     });
-    res.shake.add_trauma(0.1);
+
+    // TODO: Add visual indicator for crit if needed, but the damage event is already there.
+    // For now, we'll just use the calculated final_damage.
+
+    res.shake.add_trauma(if is_crit { 0.2 } else { 0.1 });
 
     if !is_aoe {
         if let Ok(exploding) = res.exploding_query.get(proj_entity) {
