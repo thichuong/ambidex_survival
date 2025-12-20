@@ -89,6 +89,7 @@ pub fn handle_projectile_hit(
     damage_events.write(DamageEvent {
         damage: final_damage,
         position: enemy_pos.truncate(),
+        is_crit,
     });
 
     // TODO: Add visual indicator for crit if needed, but the damage event is already there.

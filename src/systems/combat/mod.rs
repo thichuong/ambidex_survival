@@ -21,6 +21,7 @@ pub use weapon_logic::*;
 pub struct DamageEvent {
     pub damage: f32,
     pub position: Vec2,
+    pub is_crit: bool,
 }
 
 #[derive(SystemParam)]

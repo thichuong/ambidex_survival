@@ -78,6 +78,7 @@ pub fn update_sword_mechanics(
                                 damage_events.write(DamageEvent {
                                     damage: final_damage,
                                     position: enemy_tf.translation.truncate(),
+                                    is_crit,
                                 });
                                 res.shake.add_trauma(if is_crit { 0.3 } else { 0.2 });
                                 if enemy.health <= 0.0 {

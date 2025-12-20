@@ -14,17 +14,53 @@ pub fn spawn_damage_text(
     mut damage_events: MessageReader<DamageEvent>,
 ) -> Result<(), String> {
     for event in damage_events.read() {
+        let size = if event.is_crit { 30.0 } else { 20.0 };
+        let color = if event.is_crit {
+            Color::srgb(1.0, 0.0, 0.0) // Red
+        } else {
+            Color::srgb(1.0, 1.0, 1.0) // White
+        };
+
+        if event.is_crit {
+            // Spawn white border/shadow layers
+            let offsets = [
+                Vec2::new(-1.0, -1.0),
+                Vec2::new(1.0, -1.0),
+                Vec2::new(-1.0, 1.0),
+                Vec2::new(1.0, 1.0),
+            ];
+
+            for offset in offsets {
+                commands.spawn((
+                    Text2d::new(format!("{:.0}", event.damage)),
+                    TextFont {
+                        font_size: size,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(1.0, 1.0, 1.0)), // White border
+                    Transform::from_translation(
+                        (event.position + offset).extend(9.0), // Slightly behind
+                    ),
+                    DamageText {
+                        lifetime: Timer::from_seconds(0.8, TimerMode::Once),
+                        velocity: Vec2::new(0.0, 50.0),
+                    },
+                ));
+            }
+        }
+
+        // Main text
         commands.spawn((
             Text2d::new(format!("{:.0}", event.damage)),
             TextFont {
-                font_size: 20.0,
+                font_size: size,
                 ..default()
             },
-            TextColor(Color::srgb(1.0, 1.0, 1.0)),
-            Transform::from_translation(event.position.extend(10.0)), // z-index 10
+            TextColor(color),
+            Transform::from_translation(event.position.extend(10.0)),
             DamageText {
                 lifetime: Timer::from_seconds(0.8, TimerMode::Once),
-                velocity: Vec2::new(0.0, 50.0), // Move up
+                velocity: Vec2::new(0.0, 50.0),
             },
         ));
     }
