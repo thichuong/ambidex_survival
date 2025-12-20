@@ -2,7 +2,7 @@ use super::{CombatResources, DamageEvent};
 use crate::components::enemy::Enemy;
 use crate::components::physics::{Collider, IgnoreGrid, UniformGrid, Velocity, check_collision};
 use crate::components::player::Player;
-use crate::components::weapon::{AoEProjectile, ExplodingProjectile, Lifetime, Projectile};
+use crate::components::weapon::{AoEProjectile, Lifetime, Projectile};
 use crate::systems::object_pooling::EffectType;
 use crate::systems::weapon_visuals::spawn_bolt_explosion_visuals;
 use bevy::prelude::*;
@@ -15,6 +15,7 @@ pub type ProjectileQueryItem<'a> = (
     &'a Collider,
     Option<Mut<'a, AoEProjectile>>,
     Option<&'a IgnoreGrid>,
+    &'a Visibility,
 );
 
 pub fn get_collision_candidates(
@@ -74,7 +75,10 @@ pub fn handle_projectile_hit(
 
     if !is_aoe {
         if let Ok(exploding) = res.exploding_query.get(proj_entity) {
-            let transform = Transform::from_translation(projectile_transform.translation);
+            let mut rng = rand::thread_rng();
+            let random_rotation = Quat::from_rotation_z(rng.gen_range(0.0..std::f32::consts::TAU));
+            let transform = Transform::from_translation(projectile_transform.translation)
+                .with_rotation(random_rotation);
             let lifetime = Lifetime {
                 timer: Timer::from_seconds(0.1, TimerMode::Once),
             };
@@ -86,29 +90,25 @@ pub fn handle_projectile_hit(
                 lifetime,
             );
 
+            // Always update/reset components for both new and pooled entities
+            commands.entity(req.entity).insert((
+                Velocity::default(),
+                Projectile {
+                    kind: projectile.kind,
+                    damage: exploding.damage,
+                    speed: 0.0,
+                    direction: Vec2::ZERO,
+                    owner_entity: projectile.owner_entity,
+                },
+                AoEProjectile::default(), // Reset hit list for pooled entities
+                Collider::ball(exploding.radius), // Set correct explosion size
+                IgnoreGrid,               // Reliable AOE coverage
+            ));
+
             if req.is_new {
-                commands
-                    .entity(req.entity)
-                    .insert((
-                        Velocity::default(),
-                        Projectile {
-                            kind: projectile.kind,
-                            damage: exploding.damage,
-                            speed: 0.0,
-                            direction: Vec2::ZERO,
-                            owner_entity: projectile.owner_entity,
-                        },
-                        AoEProjectile::default(),
-                    ))
-                    .with_children(|parent| {
-                        spawn_bolt_explosion_visuals(parent, &res.cached_assets, exploding.radius);
-                    });
-            } else {
-                let mut rng = rand::thread_rng();
-                let rotation = Quat::from_rotation_z(rng.gen_range(0.0..std::f32::consts::TAU));
-                commands
-                    .entity(req.entity)
-                    .insert(transform.with_rotation(rotation));
+                commands.entity(req.entity).with_children(|parent| {
+                    spawn_bolt_explosion_visuals(parent, &res.cached_assets, exploding.radius);
+                });
             }
         }
         should_despawn = true;
@@ -152,9 +152,19 @@ pub fn resolve_damage(
     mut res: CombatResources,
     mut damage_events: MessageWriter<DamageEvent>,
 ) -> Result<(), String> {
-    for (proj_entity, projectile, projectile_transform, proj_collider, mut aoe_opt, ignore_grid) in
-        &mut projectile_query
+    for (
+        proj_entity,
+        projectile,
+        projectile_transform,
+        proj_collider,
+        mut aoe_opt,
+        ignore_grid,
+        visibility,
+    ) in &mut projectile_query
     {
+        if *visibility == Visibility::Hidden {
+            continue;
+        }
         let proj_pos = projectile_transform.translation.truncate();
         let is_aoe = aoe_opt.is_some();
         let mut hits: Vec<(Entity, f32, Vec3)> = Vec::new();

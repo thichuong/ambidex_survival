@@ -8,9 +8,9 @@ use crate::components::weapon::{
 use crate::configs::spells::{energy_bolt, global, laser, nova};
 use crate::configs::weapons::{gun, shuriken, sword};
 use crate::systems::weapon_visuals::{
-    spawn_bolt_explosion_visuals, spawn_energy_bolt_visuals, spawn_global_visuals,
-    spawn_gun_bullet_visuals, spawn_laser_visuals, spawn_nova_visuals, spawn_shuriken_visuals,
-    spawn_sword_normal_visuals, spawn_sword_shattered_visuals,
+    spawn_energy_bolt_visuals, spawn_global_visuals, spawn_gun_bullet_visuals, spawn_laser_visuals,
+    spawn_nova_visuals, spawn_shuriken_visuals, spawn_sword_normal_visuals,
+    spawn_sword_shattered_visuals,
 };
 use bevy::prelude::*;
 use rand::Rng;

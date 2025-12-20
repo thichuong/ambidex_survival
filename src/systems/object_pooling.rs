@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 
-use crate::components::weapon::Lifetime;
+use crate::components::physics::{Collider, IgnoreGrid, Velocity};
+use crate::components::weapon::{AoEProjectile, Lifetime, Projectile};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EffectType {
@@ -69,7 +70,14 @@ impl VisualEffectPool {
         commands
             .entity(entity)
             .insert(Visibility::Hidden)
-            .remove::<Lifetime>();
+            .remove::<(
+                Lifetime,
+                Projectile,
+                AoEProjectile,
+                Collider,
+                Velocity,
+                IgnoreGrid,
+            )>();
         self.available.entry(kind).or_default().push(entity);
     }
 }

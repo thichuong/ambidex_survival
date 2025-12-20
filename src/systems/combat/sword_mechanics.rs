@@ -1,6 +1,6 @@
 use super::{CombatResources, DamageEvent};
 use crate::components::enemy::Enemy;
-use crate::components::physics::{Collider, Velocity};
+use crate::components::physics::Velocity;
 use crate::components::player::{Hand, Player};
 use crate::components::weapon::{Lifetime, SwingState, SwordSwing};
 use bevy::prelude::*;
