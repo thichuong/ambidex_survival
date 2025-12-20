@@ -1,7 +1,7 @@
 use super::components::{
     CooldownOverlay, GoldText, HUDIcon, HealthBar, HealthText, RoundText, ShurikenCountText,
 };
-use crate::components::player::{Currency, Hand, Health, Player};
+use crate::components::player::{CombatStats, Currency, Hand, Health, Player};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
 use bevy::prelude::*;
 
@@ -99,24 +99,38 @@ pub fn update_round_text(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn update_cooldown_indicators(
     mut overlay_query: Query<(&mut Node, &CooldownOverlay)>,
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
+    player_query: Query<&CombatStats, With<Player>>,
     time: Res<Time>,
 ) {
     let now = time.elapsed_secs();
+    let combat_stats = player_query.single();
+
     for (mut node, overlay) in &mut overlay_query {
-        if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == overlay.side) {
+        if let Some((hand, weapon)) = hand_query.iter().find(|(h, _)| h.side == overlay.side) {
+            // Apply CDR only to Magic weapons
+            let effective_cooldown = if hand.equipped_weapon == Some(WeaponType::Magic) {
+                combat_stats.as_ref().map_or(weapon.cooldown, |stats| {
+                    weapon.cooldown * (1.0 - stats.cooldown_reduction)
+                })
+            } else {
+                weapon.cooldown
+            };
+
             // Calculate primary cooldown progress
             let primary_elapsed = now - weapon.last_shot;
-            let primary_progress = if weapon.cooldown > 0.0 {
-                (1.0 - (primary_elapsed / weapon.cooldown)).clamp(0.0, 1.0)
+            let primary_progress = if effective_cooldown > 0.0 {
+                (1.0 - (primary_elapsed / effective_cooldown)).clamp(0.0, 1.0)
             } else {
                 0.0
             };
 
             // Calculate skill cooldown progress
+            // Note: Currently skill_cooldown doesn't use CDR in weapon_logic.rs,
+            // but we follow the same pattern for consistency if it ever does.
             let skill_elapsed = now - weapon.last_skill_use;
             let skill_progress = if weapon.skill_cooldown > 0.0 {
                 (1.0 - (skill_elapsed / weapon.skill_cooldown)).clamp(0.0, 1.0)
