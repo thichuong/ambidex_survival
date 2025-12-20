@@ -1,10 +1,13 @@
-use super::components::*;
+use super::components::{
+    MagicCycleButton, MagicPanel, MenuCDRText, MenuCritText, MenuDamageText, MenuGoldText,
+    MenuHealthText, MenuLifestealText,
+};
 use crate::components::player::{CombatStats, Currency, Hand, Health, Player, PlayerStats};
 use crate::components::weapon::MagicLoadout;
 use crate::components::weapon::SpellType;
 use bevy::prelude::*;
 
-#[allow(clippy::unnecessary_wraps)]
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn update_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
     hand_query: Query<&Hand>,
@@ -48,6 +51,7 @@ pub fn update_magic_ui(
     Ok(())
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_gold_text(
     mut query: Query<&mut Text, With<MenuGoldText>>,
     player_query: Query<&Currency, With<Player>>,
@@ -59,6 +63,7 @@ pub fn update_menu_gold_text(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_health_text(
     mut query: Query<&mut Text, With<MenuHealthText>>,
     player_query: Query<&Health, With<Player>>,
@@ -70,6 +75,7 @@ pub fn update_menu_health_text(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_damage_text(
     mut query: Query<&mut Text, With<MenuDamageText>>,
     player_query: Query<&PlayerStats, With<Player>>,
@@ -82,6 +88,7 @@ pub fn update_menu_damage_text(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_crit_text(
     mut query: Query<&mut Text, With<MenuCritText>>,
     player_query: Query<&CombatStats, With<Player>>,
@@ -95,6 +102,7 @@ pub fn update_menu_crit_text(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_lifesteal_text(
     mut query: Query<&mut Text, With<MenuLifestealText>>,
     player_query: Query<&CombatStats, With<Player>>,
@@ -102,11 +110,12 @@ pub fn update_menu_lifesteal_text(
     if let Ok(stats) = player_query.single() {
         for mut text in &mut query {
             let life = stats.lifesteal * 100.0;
-            text.0 = format!("Life: {life:.0}%");
+            text.0 = format!("Life Steal: {life:.0}%");
         }
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_cdr_text(
     mut query: Query<&mut Text, With<MenuCDRText>>,
     player_query: Query<&CombatStats, With<Player>>,

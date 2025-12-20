@@ -1,9 +1,11 @@
-use super::components::*;
+use super::components::{
+    CooldownOverlay, GoldText, HUDIcon, HealthBar, HealthText, RoundText, ShurikenCountText,
+};
 use crate::components::player::{Currency, Hand, Health, Player};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
 use bevy::prelude::*;
 
-#[allow(clippy::unnecessary_wraps)]
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn update_hud_indicators(
     mut icon_query: Query<(&HUDIcon, &mut ImageNode)>,
     hand_query: Query<(
