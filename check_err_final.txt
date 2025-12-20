@@ -1,0 +1,22 @@
+warning: unused import: `ExplodingProjectile`
+ --> src/systems/combat/collision.rs:5:48
+  |
+5 | use crate::components::weapon::{AoEProjectile, ExplodingProjectile, Lifetime, Projectile};
+  |                                                ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `Collider`
+ --> src/systems/combat/sword_mechanics.rs:3:34
+  |
+3 | use crate::components::physics::{Collider, Velocity};
+  |                                  ^^^^^^^^
+
+warning: unused import: `spawn_bolt_explosion_visuals`
+  --> src/systems/combat/weapon_logic.rs:11:5
+   |
+11 |     spawn_bolt_explosion_visuals, spawn_energy_bolt_visuals, spawn_global_visuals,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `ambidex_survival` (bin "ambidex_survival") generated 3 warnings (run `cargo fix --bin "ambidex_survival"` to apply 3 suggestions)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 0.18s
