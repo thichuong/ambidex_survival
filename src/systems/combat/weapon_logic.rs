@@ -68,7 +68,7 @@ pub fn handle_combat_input(
     {
         let hand_pos = hand_transform.translation().truncate();
 
-        let (is_pressed, is_just_pressed, skill_pressed) = match hand.side {
+        let (_, is_just_pressed, skill_pressed) = match hand.side {
             HandType::Left => (left_pressed, left_just_pressed, q_just_pressed),
             HandType::Right => (right_pressed, right_just_pressed, e_just_pressed),
         };
@@ -113,7 +113,7 @@ pub fn handle_combat_input(
                     };
 
                     let should_fire = if gun_state.mode == GunMode::Rapid {
-                        is_pressed && params.time.elapsed_secs() - weapon_data.last_shot >= cooldown
+                        params.time.elapsed_secs() - weapon_data.last_shot >= cooldown
                     } else {
                         is_just_pressed
                     };
