@@ -279,111 +279,61 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             // Content Container (Weapons + Shop)
             parent
                 .spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
+                    width: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::SpaceEvenly,
+                    align_items: AlignItems::FlexStart,
+                    padding: UiRect::horizontal(Val::Px(20.0)),
                     ..default()
                 })
                 .with_children(|content| {
-                    // WEAPONS SECTION
+                    // --- LEFT HAND SECTION ---
                     content
                         .spawn(Node {
-                            flex_direction: FlexDirection::Row,
-                            justify_content: JustifyContent::Center,
+                            flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
-                            margin: UiRect::bottom(Val::Px(30.0)),
+                            width: Val::Percent(25.0),
                             ..default()
                         })
-                        .with_children(|row| {
-                            // Left Column
-                            row.spawn(Node {
-                                flex_direction: FlexDirection::Column,
-                                margin: UiRect::right(Val::Px(50.0)),
+                        .with_children(|col| {
+                            col.spawn((
+                                Text::new("LEFT HAND"),
+                                TextFont {
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::WHITE),
+                            ));
+
+                            // Separator
+                            col.spawn(Node {
+                                height: Val::Px(10.0),
                                 ..default()
-                            })
-                            .with_children(|col| {
-                                col.spawn((
-                                    Text::new("LEFT HAND"),
-                                    TextFont::default(),
-                                    TextColor(Color::WHITE),
-                                ));
-                                spawn_weapon_button(
-                                    col,
-                                    HandType::Left,
-                                    WeaponType::Shuriken,
-                                    "Shuriken ❄",
-                                );
-                                spawn_weapon_button(
-                                    col,
-                                    HandType::Left,
-                                    WeaponType::Sword,
-                                    "Sword 🗡",
-                                );
-                                spawn_weapon_button(col, HandType::Left, WeaponType::Gun, "Gun 🔫");
-                                spawn_weapon_button(
-                                    col,
-                                    HandType::Left,
-                                    WeaponType::Magic,
-                                    "Magic 🔮",
-                                );
                             });
 
-                            // Right Column
-                            row.spawn(Node {
-                                flex_direction: FlexDirection::Column,
-                                margin: UiRect::left(Val::Px(50.0)),
-                                ..default()
-                            })
-                            .with_children(|col| {
-                                col.spawn((
-                                    Text::new("RIGHT HAND"),
-                                    TextFont::default(),
-                                    TextColor(Color::WHITE),
-                                ));
-                                spawn_weapon_button(
-                                    col,
-                                    HandType::Right,
-                                    WeaponType::Shuriken,
-                                    "Shuriken ❄",
-                                );
-                                spawn_weapon_button(
-                                    col,
-                                    HandType::Right,
-                                    WeaponType::Sword,
-                                    "Sword 🗡",
-                                );
-                                spawn_weapon_button(
-                                    col,
-                                    HandType::Right,
-                                    WeaponType::Gun,
-                                    "Gun 🔫",
-                                );
-                                spawn_weapon_button(
-                                    col,
-                                    HandType::Right,
-                                    WeaponType::Magic,
-                                    "Magic 🔮",
-                                );
-                            });
+                            spawn_weapon_button(
+                                col,
+                                HandType::Left,
+                                WeaponType::Shuriken,
+                                "Shuriken ❄",
+                            );
+                            spawn_weapon_button(col, HandType::Left, WeaponType::Sword, "Sword 🗡");
+                            spawn_weapon_button(col, HandType::Left, WeaponType::Gun, "Gun 🔫");
+                            spawn_weapon_button(col, HandType::Left, WeaponType::Magic, "Magic 🔮");
+
+                            // Magic Panel (Initially Hidden, managed by logic)
+                            // We place it here so it appears under the left column when active
+                            spawn_magic_panel(col, HandType::Left);
                         });
 
-                    // Magic Loadout
-                    content
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Row,
-                            margin: UiRect::bottom(Val::Px(30.0)),
-                            ..default()
-                        })
-                        .with_children(|row| {
-                            spawn_magic_panel(row, HandType::Left);
-                            spawn_magic_panel(row, HandType::Right);
-                        });
-
-                    // SHOP SECTION
+                    // --- CENTER SHOP SECTION ---
                     content
                         .spawn((
                             Node {
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
+                                width: Val::Percent(40.0),
+                                height: Val::Percent(100.0), // Fill height
                                 padding: UiRect::all(Val::Px(20.0)),
                                 border: UiRect::all(Val::Px(2.0)),
                                 ..default()
@@ -395,12 +345,12 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                             shop_container.spawn((
                                 Text::new("SHOP"),
                                 TextFont {
-                                    font_size: 24.0,
+                                    font_size: 32.0,
                                     ..default()
                                 },
                                 TextColor(Color::WHITE),
                                 Node {
-                                    margin: UiRect::bottom(Val::Px(10.0)),
+                                    margin: UiRect::bottom(Val::Px(20.0)),
                                     ..default()
                                 },
                             ));
@@ -408,21 +358,67 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                             shop_container
                                 .spawn(Node {
                                     flex_direction: FlexDirection::Row,
-                                    align_items: AlignItems::Center,
+                                    flex_wrap: FlexWrap::Wrap,
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::FlexStart,
+                                    width: Val::Percent(100.0),
                                     ..default()
                                 })
                                 .with_children(|shop_row| {
                                     spawn_shop_button(
                                         shop_row,
                                         ShopButton::Heal,
-                                        "Heal (+30 HP) - 50G",
+                                        "Heal\n(+30 HP)\n50G",
                                     );
                                     spawn_shop_button(
                                         shop_row,
                                         ShopButton::DamageUp,
-                                        "Damage Up (+10%) - 100G",
+                                        "Damage Up\n(+10%)\n100G",
                                     );
                                 });
+                        });
+
+                    // --- RIGHT HAND SECTION ---
+                    content
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Center,
+                            width: Val::Percent(25.0),
+                            ..default()
+                        })
+                        .with_children(|col| {
+                            col.spawn((
+                                Text::new("RIGHT HAND"),
+                                TextFont {
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::WHITE),
+                            ));
+
+                            // Separator
+                            col.spawn(Node {
+                                height: Val::Px(10.0),
+                                ..default()
+                            });
+
+                            spawn_weapon_button(
+                                col,
+                                HandType::Right,
+                                WeaponType::Shuriken,
+                                "Shuriken ❄",
+                            );
+                            spawn_weapon_button(col, HandType::Right, WeaponType::Sword, "Sword 🗡");
+                            spawn_weapon_button(col, HandType::Right, WeaponType::Gun, "Gun 🔫");
+                            spawn_weapon_button(
+                                col,
+                                HandType::Right,
+                                WeaponType::Magic,
+                                "Magic 🔮",
+                            );
+
+                            // Magic Panel
+                            spawn_magic_panel(col, HandType::Right);
                         });
                 });
 
@@ -587,11 +583,12 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
         .spawn((
             Button,
             Node {
-                width: Val::Px(250.0),
-                height: Val::Px(50.0),
+                width: Val::Px(140.0), // Square-ish card
+                height: Val::Px(140.0),
                 margin: UiRect::all(Val::Px(10.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column, // Stack text if needed
                 ..default()
             },
             BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
@@ -636,7 +633,7 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
                                         for &child in children {
                                             if let Ok(mut text) = text_query.get_mut(child) {
                                                 text.0 = format!(
-                                                    "Damage Up (+10%) - 100G\n(Current: {:.0}%)",
+                                                    "Damage Up\n(+10%)\n100G\n(Current: {:.0}%)",
                                                     player.damage_multiplier * 100.0
                                                 );
                                             }
@@ -677,7 +674,7 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
             btn.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 20.0,
+                    font_size: 16.0,
                     ..default()
                 },
                 TextColor(Color::WHITE),
@@ -774,11 +771,13 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
     parent
         .spawn((
             Node {
-                width: Val::Px(600.0),
-                height: Val::Px(60.0),
+                width: Val::Percent(100.0), // Responsive to column width
+                height: Val::Auto,          // Adjust to content
+                flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                margin: UiRect::bottom(Val::Px(10.0)),
+                margin: UiRect::vertical(Val::Px(20.0)),
+                padding: UiRect::all(Val::Px(10.0)),
                 display: Display::None, // Hidden by default
                 ..default()
             },
@@ -804,11 +803,11 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
                 .spawn((
                     Button,
                     Node {
-                        width: Val::Px(180.0),
-                        height: Val::Px(40.0),
+                        width: Val::Percent(90.0),
+                        height: Val::Px(35.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        margin: UiRect::all(Val::Px(10.0)),
+                        margin: UiRect::vertical(Val::Px(5.0)),
                         ..default()
                     },
                     BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
@@ -848,11 +847,11 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
                 .spawn((
                     Button,
                     Node {
-                        width: Val::Px(180.0),
-                        height: Val::Px(40.0),
+                        width: Val::Percent(90.0),
+                        height: Val::Px(35.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        margin: UiRect::all(Val::Px(10.0)),
+                        margin: UiRect::vertical(Val::Px(5.0)),
                         ..default()
                     },
                     BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
