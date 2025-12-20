@@ -1,7 +1,7 @@
 use super::{CombatResources, DamageEvent};
 use crate::components::enemy::Enemy;
 use crate::components::physics::{Collider, IgnoreGrid, UniformGrid, Velocity, check_collision};
-use crate::components::player::Player;
+use crate::components::player::{CombatStats, Currency, Health, Player};
 use crate::components::weapon::{AoEProjectile, Lifetime, Projectile};
 use crate::systems::object_pooling::EffectType;
 use crate::systems::weapon_visuals::spawn_bolt_explosion_visuals;
@@ -63,26 +63,28 @@ pub fn handle_projectile_hit(
     is_aoe: bool,
     res: &mut CombatResources,
     damage_events: &mut MessageWriter<DamageEvent>,
-    player_query: &mut Query<&mut Player>,
+    player_query: &mut Query<(&mut Health, &CombatStats, &mut Currency), With<Player>>,
 ) -> bool {
     let mut should_despawn = false;
 
     let mut final_damage = projectile.damage;
     let mut is_crit = false;
 
-    if let Ok(mut player) = player_query.single_mut() {
+    if let Ok((mut health, stats, _currency)) = player_query.single_mut() {
         // Critical Hit Check
         let mut rng = rand::thread_rng();
-        if rng.gen_range(0.0..1.0) < player.crit_chance {
-            final_damage *= player.crit_damage;
+        if rng.gen_range(0.0..1.0) < stats.crit_chance {
+            final_damage *= stats.crit_damage;
             is_crit = true;
         }
 
         // Apply Lifesteal
-        if player.lifesteal > 0.0 {
-            let heal_amount = final_damage * player.lifesteal;
-            player.health = (player.health + heal_amount).min(player.max_health);
+        if stats.lifesteal > 0.0 {
+            let heal_amount = final_damage * stats.lifesteal;
+            health.current = (health.current + heal_amount).min(health.max);
         }
+
+        // We'll use this currency later for gold on kill
     }
 
     enemy.health -= final_damage;
@@ -139,8 +141,8 @@ pub fn handle_projectile_hit(
     }
 
     if enemy.health <= 0.0 {
-        if let Ok(mut player) = player_query.single_mut() {
-            player.gold += 10;
+        if let Ok((_, _, mut currency)) = player_query.single_mut() {
+            currency.gold += 10;
         }
         commands.entity(enemy_entity).despawn();
 
@@ -168,7 +170,7 @@ pub fn handle_projectile_hit(
 #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn resolve_damage(
     mut commands: Commands,
-    mut player_query: Query<&mut Player>,
+    mut player_query: Query<(&mut Health, &CombatStats, &mut Currency), With<Player>>,
     mut projectile_query: Query<ProjectileQueryItem>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy, &Collider), Without<Player>>,
     grid: Res<UniformGrid>,

@@ -1,7 +1,7 @@
 use super::CombatResources;
 use crate::components::enemy::Enemy;
 use crate::components::physics::{Collider, UniformGrid, check_collision};
-use crate::components::player::Player;
+use crate::components::player::{Health, Player};
 use crate::resources::game_state::GameState;
 use bevy::prelude::*;
 
@@ -9,15 +9,15 @@ const COLLISION_PUSH_STRENGTH: f32 = 200.0;
 
 #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn handle_player_collision(
-    mut player_query: Query<(&mut Player, &mut Transform, &Collider), Without<Enemy>>,
+    mut player_query: Query<(&mut Health, &mut Transform, &Collider), With<Player>>,
     mut enemy_query: Query<(Entity, &mut Transform, &Enemy, &Collider), Without<Player>>,
     grid: Res<UniformGrid>,
     time: Res<Time>,
     mut res: CombatResources,
     mut next_state: ResMut<NextState<GameState>>,
 ) -> Result<(), String> {
-    if let Ok((mut player, mut player_transform, player_collider)) = player_query.single_mut() {
-        player.invulnerability_timer.tick(time.delta());
+    if let Ok((mut health, mut player_transform, player_collider)) = player_query.single_mut() {
+        health.invulnerability_timer.tick(time.delta());
 
         let player_pos = player_transform.translation.truncate();
 
@@ -47,13 +47,13 @@ pub fn handle_player_collision(
                     }
 
                     // Apply damage only if not invulnerable
-                    if player.invulnerability_timer.is_finished() {
-                        player.health -= enemy.damage;
-                        player.invulnerability_timer.reset();
+                    if health.invulnerability_timer.is_finished() {
+                        health.current -= enemy.damage;
+                        health.invulnerability_timer.reset();
                         res.shake.add_trauma(0.5);
 
-                        if player.health <= 0.0 {
-                            player.health = 0.0;
+                        if health.current <= 0.0 {
+                            health.current = 0.0;
                             next_state.set(GameState::GameOver);
                         }
                     }

@@ -47,6 +47,7 @@ fn main() {
                 }),
         )
         .add_message::<systems::combat::DamageEvent>()
+        .add_message::<systems::ui::PurchaseEvent>()
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
         .init_resource::<resources::polish::ScreenShake>()
@@ -92,12 +93,18 @@ fn main() {
                 systems::ui::update_round_text,
                 systems::ui::update_menu_gold_text,
                 systems::ui::update_menu_health_text,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
                 systems::ui::update_menu_damage_text,
                 systems::ui::update_menu_crit_text,
                 systems::ui::update_menu_lifesteal_text,
                 systems::ui::update_menu_cdr_text,
                 systems::ui::update_cooldown_indicators,
                 systems::ui::update_shuriken_count_ui,
+                systems::ui::handle_purchases,
             ),
         )
         .add_systems(Startup, systems::ui::setup_ui)

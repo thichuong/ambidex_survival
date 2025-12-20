@@ -2,7 +2,7 @@ use bevy::color::palettes::css::AQUA;
 use bevy::prelude::*;
 
 use crate::components::physics::{Collider, Velocity};
-use crate::components::player::{GameCamera, Hand, HandType, Player};
+use crate::components::player::{Currency, GameCamera, Hand, HandType, Player, PlayerStats};
 use crate::components::weapon::{GunState, MagicLoadout, SwordState, Weapon, WeaponType};
 
 pub fn spawn_player(
@@ -19,7 +19,8 @@ pub fn spawn_player(
             ),
             Collider::ball(20.0),
             Velocity::zero(),
-            Player::default(),
+            Currency { gold: 10000 },
+            Player,
         ))
         .with_children(|parent| {
             // Left Hand
@@ -71,7 +72,7 @@ pub fn spawn_player(
 pub fn move_player(
     _time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Velocity, &Player)>,
+    mut query: Query<(&mut Velocity, &PlayerStats), With<Player>>,
 ) -> Result<(), String> {
     for (mut velocity, player) in &mut query {
         let mut direction = Vec2::ZERO;

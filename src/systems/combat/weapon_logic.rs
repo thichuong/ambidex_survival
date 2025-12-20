@@ -1,6 +1,6 @@
 use super::CombatInputParams;
 use crate::components::physics::{Collider, IgnoreGrid, Velocity};
-use crate::components::player::{Hand, HandType, Player};
+use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats};
 use crate::components::weapon::{
     ActiveSpellSlot, AoEProjectile, ExplodingProjectile, GunMode, GunState, Lifetime, MagicLoadout,
     Projectile, SpellType, SwordMode, SwordState, Weapon, WeaponType,
@@ -18,7 +18,7 @@ use rand::Rng;
 #[allow(clippy::too_many_lines)]
 pub fn handle_combat_input(
     mut params: CombatInputParams,
-    mut player_query: Query<(Entity, &mut Transform, &Player), With<Player>>,
+    mut player_query: Query<(Entity, &mut Transform, &PlayerStats, &CombatStats), With<Player>>,
     mut hand_query: Query<(
         Entity,
         &GlobalTransform,
@@ -44,7 +44,7 @@ pub fn handle_combat_input(
         .map(|ray| ray.origin.truncate())
         .ok_or_else(|| "Cursor position not available".to_string())?;
 
-    let (player_entity, mut player_transform, player) = player_query
+    let (player_entity, mut player_transform, stats, combat_stats) = player_query
         .single_mut()
         .map_err(|e| format!("Player not found: {e:?}"))?;
 
@@ -89,7 +89,7 @@ pub fn handle_combat_input(
 
                     let now = params.time.elapsed_secs();
                     let effective_cooldown =
-                        weapon_data.cooldown * (1.0 - player.cooldown_reduction);
+                        weapon_data.cooldown * (1.0 - combat_stats.cooldown_reduction);
                     if is_just_pressed && now - weapon_data.last_shot >= effective_cooldown {
                         let spell_to_cast = match magic_loadout.active_slot {
                             ActiveSpellSlot::Primary => magic_loadout.primary,
@@ -103,7 +103,7 @@ pub fn handle_combat_input(
                             &mut player_transform,
                             cursor_pos,
                             hand_pos,
-                            player.damage_multiplier,
+                            stats.damage_multiplier,
                         );
                         weapon_data.last_shot = now;
                     }
@@ -130,7 +130,7 @@ pub fn handle_combat_input(
                             sword_state.mode,
                             gun_state.mode,
                             hand_entity,
-                            player.damage_multiplier,
+                            stats.damage_multiplier,
                         );
                         weapon_data.last_shot = params.time.elapsed_secs();
                     }
@@ -165,7 +165,7 @@ pub fn handle_combat_input(
                             sword_state.mode,
                             gun_state.mode,
                             hand_entity,
-                            player.damage_multiplier,
+                            stats.damage_multiplier,
                         );
                         weapon_data.last_shot = now;
                     }

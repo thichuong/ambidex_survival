@@ -1,7 +1,7 @@
 use super::{CombatResources, DamageEvent};
 use crate::components::enemy::Enemy;
 use crate::components::physics::Velocity;
-use crate::components::player::{Hand, Player};
+use crate::components::player::{CombatStats, Currency, Hand, Health, Player};
 use crate::components::weapon::{Lifetime, SwingState, SwordSwing};
 use bevy::prelude::*;
 use rand::Rng;
@@ -19,7 +19,7 @@ pub fn update_sword_mechanics(
     hand_query: Query<&GlobalTransform, With<Hand>>,
     mut res: CombatResources,
     mut damage_events: MessageWriter<DamageEvent>,
-    mut player_query: Query<&mut Player>,
+    mut player_query: Query<(&mut Health, &CombatStats, &mut Currency), With<Player>>,
 ) -> Result<(), String> {
     for (entity, mut swing, mut transform) in &mut sword_query {
         if let Ok(hand_transform) = hand_query.get(swing.hand_entity) {
@@ -58,19 +58,18 @@ pub fn update_sword_mechanics(
                                 let mut final_damage = swing.damage;
                                 let mut is_crit = false;
 
-                                if let Ok(mut player) = player_query.single_mut() {
+                                if let Ok((mut health, stats, _)) = player_query.single_mut() {
                                     // Crit Check
                                     let mut rng = rand::thread_rng();
-                                    if rng.gen_range(0.0..1.0) < player.crit_chance {
-                                        final_damage *= player.crit_damage;
+                                    if rng.gen_range(0.0..1.0) < stats.crit_chance {
+                                        final_damage *= stats.crit_damage;
                                         is_crit = true;
                                     }
 
                                     // Lifesteal
-                                    if player.lifesteal > 0.0 {
-                                        let heal = final_damage * player.lifesteal;
-                                        player.health =
-                                            (player.health + heal).min(player.max_health);
+                                    if stats.lifesteal > 0.0 {
+                                        let heal = final_damage * stats.lifesteal;
+                                        health.current = (health.current + heal).min(health.max);
                                     }
                                 }
 
@@ -82,8 +81,8 @@ pub fn update_sword_mechanics(
                                 });
                                 res.shake.add_trauma(if is_crit { 0.3 } else { 0.2 });
                                 if enemy.health <= 0.0 {
-                                    if let Ok(mut player) = player_query.single_mut() {
-                                        player.gold += 10;
+                                    if let Ok((_, _, mut currency)) = player_query.single_mut() {
+                                        currency.gold += 10;
                                     }
                                     commands.entity(enemy_entity).despawn();
 
