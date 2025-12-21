@@ -36,7 +36,10 @@ ambidex_survival/
 
 ### `src/configs/`
 - `shop.rs`: Central configuration for shop items (prices, limits, descriptions).
-- `weapons/`: Base stats for Sword, Gun, and Shuriken.
+- `player.rs`: Player stat constants (speed, starting gold) and visuals.
+- `visuals.rs`: Global visual constants (damage text, etc.).
+- `enemy.rs`: Enemy spawning parameters (radius, scaling) and visuals.
+- `weapons/`: Base stats and physics config for Sword, Gun, and Shuriken.
 - `spells/`: Base stats for Energy Bolt, Laser, Nova, etc.
 
 ### `src/systems/`

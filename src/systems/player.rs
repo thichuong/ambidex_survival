@@ -14,7 +14,7 @@ pub fn spawn_player(
         .spawn((
             (
                 Mesh2d(meshes.add(Circle::new(crate::configs::player::RADIUS))),
-                MeshMaterial2d(materials.add(Color::from(crate::configs::player::COLOR))),
+                MeshMaterial2d(materials.add(crate::configs::player::COLOR)),
                 Transform::from_xyz(0.0, 0.0, 0.0),
             ),
             Collider::ball(crate::configs::player::RADIUS),
