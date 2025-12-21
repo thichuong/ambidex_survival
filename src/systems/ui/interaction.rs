@@ -1,4 +1,4 @@
-use super::components::{WeaponMenuUI, GameOverUI, PurchaseEvent, ShopButton};
+use super::components::{GameOverUI, PurchaseEvent, ShopButton, WeaponMenuUI};
 use crate::components::player::{CombatStats, Currency, Health, Player, PlayerStats, Progression};
 use crate::configs::shop::get_card_config;
 use bevy::prelude::*;

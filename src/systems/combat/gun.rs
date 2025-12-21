@@ -9,7 +9,7 @@ use rand::Rng;
 
 pub fn gun_weapon_system(
     mut params: CombatInputParams,
-    mut player_query: Query<(Entity, &PlayerStats), With<Player>>,
+    player_query: Query<(Entity, &PlayerStats), With<Player>>,
     mut hand_query: Query<(Entity, &GlobalTransform, &Hand, &mut GunState, &mut Weapon)>,
 ) {
     let (camera, camera_transform) = *params.camera;

@@ -18,8 +18,7 @@ pub fn shuriken_weapon_system(
     let cursor_pos = window
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
-        .map(|ray| ray.origin.truncate())
-        .map(|pos| pos);
+        .map(|ray| ray.origin.truncate());
 
     let Some(cursor_pos) = cursor_pos else {
         return;

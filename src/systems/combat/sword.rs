@@ -10,7 +10,7 @@ use rand::Rng;
 
 pub fn sword_weapon_system(
     mut params: CombatInputParams,
-    mut player_query: Query<(Entity, &PlayerStats), With<Player>>,
+    player_query: Query<(Entity, &PlayerStats), With<Player>>,
     mut hand_query: Query<(
         Entity,
         &GlobalTransform,
