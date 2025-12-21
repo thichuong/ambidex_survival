@@ -1,9 +1,269 @@
 use super::components::{
-    CooldownOverlay, GoldText, HUDIcon, HealthBar, HealthText, RoundText, ShurikenCountText,
+    CooldownOverlay, GoldText, HUDHandIndicator, HUDIcon, HealthBar, HealthText, MenuButton,
+    RoundText, ShurikenCountText,
 };
-use crate::components::player::{CombatStats, Currency, Hand, Health, Player};
+use crate::components::player::{CombatStats, Currency, Hand, HandType, Health, Player};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
 use bevy::prelude::*;
+
+#[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
+pub fn spawn_hud(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+    // Root UI Node (HUD)
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::FlexEnd,
+                padding: UiRect::all(Val::Px(20.0)),
+                ..default()
+            },
+            Pickable::IGNORE,
+        ))
+        .with_children(|parent| {
+            // Gold Display (Top Left)
+            parent.spawn((
+                Text::new("Gold: 0"),
+                TextFont {
+                    font_size: 24.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 0.843, 0.0)), // Gold Color
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(20.0),
+                    left: Val::Px(20.0),
+                    ..default()
+                },
+                GoldText,
+            ));
+
+            // Round Display (Top Right)
+            parent.spawn((
+                Text::new("Round: 1"),
+                TextFont {
+                    font_size: 30.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(20.0),
+                    right: Val::Px(20.0),
+                    ..default()
+                },
+                RoundText,
+            ));
+
+            // Health Bar (Top Center)
+            parent
+                .spawn(Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(20.0),
+                    left: Val::Percent(50.0),
+                    margin: UiRect::left(Val::Px(-100.0)), // Center alignment (half of width)
+                    width: Val::Px(200.0),
+                    height: Val::Px(20.0),
+                    border: UiRect::all(Val::Px(2.0)),
+                    ..default()
+                })
+                .insert(BorderColor::all(Color::WHITE))
+                .insert(BackgroundColor(Color::BLACK))
+                .with_children(|bar| {
+                    bar.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(100.0),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.0, 1.0, 0.0)),
+                        HealthBar,
+                    ));
+                });
+
+            // Health Text
+            parent.spawn((
+                Text::new("100 / 100"),
+                TextFont {
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(22.0), // Slightly below top align to center with bar visually or just beside
+                    left: Val::Percent(50.0),
+                    margin: UiRect::left(Val::Px(110.0)), // Offset to the right of the bar (100px half width + padding)
+                    ..default()
+                },
+                HealthText,
+            ));
+            // Left Hand Indicator
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(120.0),
+                        height: Val::Px(120.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border: UiRect::all(Val::Px(4.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+                    BorderColor::all(Color::WHITE),
+                    HUDHandIndicator {
+                        side: HandType::Left,
+                    },
+                ))
+                .with_children(|btn| {
+                    btn.spawn((
+                        ImageNode::new(asset_server.load("ui/icons/shuriken.png")),
+                        Node {
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
+                            ..default()
+                        },
+                        HUDIcon {
+                            side: HandType::Left,
+                        },
+                    ));
+
+                    // Shuriken Count Text
+                    btn.spawn((
+                        Text::new(""),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(5.0),
+                            right: Val::Px(10.0),
+                            ..default()
+                        },
+                        ShurikenCountText {
+                            side: HandType::Left,
+                        },
+                    ));
+
+                    // Cooldown Overlay
+                    btn.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(0.0), // Start empty
+                            position_type: PositionType::Absolute,
+                            bottom: Val::Px(0.0),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+                        CooldownOverlay {
+                            side: HandType::Left,
+                        },
+                    ));
+                });
+
+            // Center Menu Button
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(120.0),
+                        height: Val::Px(50.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::bottom(Val::Px(10.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.9)),
+                    MenuButton,
+                ))
+                .observe(
+                    |_: On<Pointer<Click>>,
+                     mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
+                        next_state.set(crate::resources::game_state::GameState::WeaponMenu);
+                    },
+                )
+                .with_children(|btn| {
+                    btn.spawn((
+                        Text::new("MENU"),
+                        TextFont {
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+
+            // Right Hand Indicator
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(120.0),
+                        height: Val::Px(120.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border: UiRect::all(Val::Px(4.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+                    BorderColor::all(Color::WHITE),
+                    HUDHandIndicator {
+                        side: HandType::Right,
+                    },
+                ))
+                .with_children(|btn| {
+                    btn.spawn((
+                        ImageNode::new(asset_server.load("ui/icons/shuriken.png")),
+                        Node {
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
+                            ..default()
+                        },
+                        HUDIcon {
+                            side: HandType::Right,
+                        },
+                    ));
+
+                    // Shuriken Count Text
+                    btn.spawn((
+                        Text::new(""),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(5.0),
+                            right: Val::Px(10.0),
+                            ..default()
+                        },
+                        ShurikenCountText {
+                            side: HandType::Right,
+                        },
+                    ));
+
+                    // Cooldown Overlay
+                    btn.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(0.0), // Start empty
+                            position_type: PositionType::Absolute,
+                            bottom: Val::Px(0.0),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+                        CooldownOverlay {
+                            side: HandType::Right,
+                        },
+                    ));
+                });
+        });
+}
 
 #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn update_hud_indicators(

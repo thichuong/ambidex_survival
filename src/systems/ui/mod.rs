@@ -1,4 +1,5 @@
 pub mod components;
+pub mod game_over;
 pub mod hud;
 pub mod interaction;
 pub mod menu;
