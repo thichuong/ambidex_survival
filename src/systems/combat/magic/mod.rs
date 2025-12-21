@@ -13,25 +13,24 @@ pub fn magic_weapon_system(
     mut params: CombatInputParams,
     mut player_query: Query<(Entity, &mut Transform, &PlayerStats, &CombatStats), With<Player>>,
     mut hand_query: Query<(&GlobalTransform, &Hand, &mut MagicLoadout, &mut Weapon)>,
-) -> Result<(), String> {
-    let (camera, camera_transform) = params
-        .camera_query
-        .single()
-        .map_err(|e| format!("Camera not found: {e:?}"))?;
-    let window = params
-        .window_query
-        .single()
-        .map_err(|e| format!("Window not found: {e:?}"))?;
+) {
+    let (camera, camera_transform) = *params.camera;
+    let window = *params.window;
 
     let cursor_pos = window
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
-        .map(|ray| ray.origin.truncate())
-        .ok_or_else(|| "Cursor position not available".to_string())?;
+        .map(|ray| ray.get_point(0.0).truncate());
 
-    let (player_entity, mut player_transform, stats, combat_stats) = player_query
-        .single_mut()
-        .map_err(|e| format!("Player not found: {e:?}"))?;
+    let Some(cursor_pos) = cursor_pos else {
+        return;
+    };
+
+    let Some((player_entity, mut player_transform, stats, combat_stats)) =
+        player_query.iter_mut().next()
+    else {
+        return;
+    };
 
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
     let right_pressed = params.mouse_input.pressed(MouseButton::Right);
@@ -87,8 +86,6 @@ pub fn magic_weapon_system(
             weapon_data.last_shot = now;
         }
     }
-
-    Ok(())
 }
 
 fn cast_spell(

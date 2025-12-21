@@ -43,8 +43,8 @@ pub struct CombatInputParams<'w, 's> {
     pub time: Res<'w, Time>,
     pub mouse_input: Res<'w, ButtonInput<MouseButton>>,
     pub key_input: Res<'w, ButtonInput<KeyCode>>,
-    pub window_query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
-    pub camera_query: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<GameCamera>>,
+    pub window: Single<'w, 's, &'static Window, With<PrimaryWindow>>,
+    pub camera: Single<'w, 's, (&'static Camera, &'static GlobalTransform), With<GameCamera>>,
     pub cached_assets: Res<'w, crate::resources::cached_assets::CachedAssets>,
     pub projectile_query: Query<
         'w,
@@ -70,12 +70,11 @@ pub struct CombatResources<'w> {
 pub fn update_enemy_grid(
     mut grid: ResMut<UniformGrid>,
     enemy_query: Query<(Entity, &Transform), With<Enemy>>,
-) -> Result<(), String> {
+) {
     grid.clear();
     for (entity, transform) in &enemy_query {
         grid.insert(entity, transform.translation.truncate());
     }
-    Ok(())
 }
 
 #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
@@ -84,7 +83,7 @@ pub fn manage_lifetime(
     time: Res<Time>,
     mut query: Query<(Entity, &mut Lifetime, Option<&PooledEffect>)>,
     mut effect_pool: ResMut<VisualEffectPool>,
-) -> Result<(), String> {
+) {
     for (entity, mut lifetime, pooled) in &mut query {
         lifetime.timer.tick(time.delta());
         if lifetime.timer.is_finished() {
@@ -95,5 +94,4 @@ pub fn manage_lifetime(
             }
         }
     }
-    Ok(())
 }

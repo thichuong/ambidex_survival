@@ -17,7 +17,7 @@ pub fn damage_processing_system(
     projectile_query: Query<&Projectile>,
     mut enemy_query: Query<&mut Enemy>,
     mut player_query: Query<(&mut Health, &CombatStats), With<Player>>,
-) -> Result<(), String> {
+) {
     for event in collision_events.read() {
         // Retrieve projectile data
         let Ok(projectile) = projectile_query.get(event.projectile) else {
@@ -64,5 +64,4 @@ pub fn damage_processing_system(
             });
         }
     }
-    Ok(())
 }

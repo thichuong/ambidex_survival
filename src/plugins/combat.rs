@@ -5,7 +5,7 @@ use crate::systems::combat::{
     sword_weapon_system, update_enemy_grid, update_sword_mechanics,
 };
 use crate::systems::enemy::{enemy_chase_player, spawn_waves};
-use crate::utils::log_error;
+
 use bevy::prelude::*;
 
 pub struct CombatPlugin;
@@ -18,19 +18,19 @@ impl Plugin for CombatPlugin {
             .add_systems(
                 Update,
                 (
-                    update_enemy_grid.pipe(log_error),
-                    shuriken_weapon_system.pipe(log_error),
-                    sword_weapon_system.pipe(log_error),
-                    gun_weapon_system.pipe(log_error),
-                    magic_weapon_system.pipe(log_error),
-                    manage_lifetime.pipe(log_error),
-                    collision_detection_system.pipe(log_error),
-                    damage_processing_system.pipe(log_error),
+                    update_enemy_grid,
+                    shuriken_weapon_system,
+                    sword_weapon_system,
+                    gun_weapon_system,
+                    magic_weapon_system,
+                    manage_lifetime,
+                    collision_detection_system,
+                    damage_processing_system,
                     projectile_effect_system,
-                    update_sword_mechanics.pipe(log_error),
-                    handle_player_collision.pipe(log_error),
-                    enemy_chase_player.pipe(log_error),
-                    spawn_waves.pipe(log_error),
+                    update_sword_mechanics,
+                    handle_player_collision,
+                    enemy_chase_player,
+                    spawn_waves,
                     cleanup_pending_despawn,
                 )
                     .run_if(in_state(crate::resources::game_state::GameState::Playing)),

@@ -22,11 +22,10 @@ pub struct SpawnWavesParams<'w, 's> {
 
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::cast_possible_wrap)]
-pub fn spawn_waves(mut params: SpawnWavesParams) -> Result<(), String> {
-    let tf = params
-        .player_query
-        .single()
-        .map_err(|e| format!("Player not found: {e:?}"))?;
+pub fn spawn_waves(mut params: SpawnWavesParams) {
+    let Some(tf) = params.player_query.iter().next() else {
+        return;
+    };
     let player_pos = tf.translation.truncate();
 
     match params.round_manager.round_state {
@@ -63,7 +62,6 @@ pub fn spawn_waves(mut params: SpawnWavesParams) -> Result<(), String> {
             // Logic chuyển round đã được xử lý ở nút "BACK TO GAME"
         }
     }
-    Ok(())
 }
 
 #[allow(clippy::cast_precision_loss)]
@@ -123,10 +121,10 @@ fn spawn_random_enemy(
 pub fn enemy_chase_player(
     mut enemy_query: Query<(&mut Velocity, &Transform, &Enemy)>,
     player_query: Query<&Transform, With<Player>>,
-) -> Result<(), String> {
-    let player_transform = player_query
-        .single()
-        .map_err(|e| format!("Player not found: {e:?}"))?;
+) {
+    let Some(player_transform) = player_query.iter().next() else {
+        return;
+    };
     let player_pos = player_transform.translation.truncate();
 
     for (mut velocity, transform, enemy) in &mut enemy_query {
@@ -134,5 +132,4 @@ pub fn enemy_chase_player(
         let dir = (player_pos - pos).normalize_or_zero();
         velocity.linvel = dir * enemy.speed;
     }
-    Ok(())
 }

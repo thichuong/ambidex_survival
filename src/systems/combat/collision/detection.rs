@@ -53,7 +53,7 @@ pub fn collision_detection_system(
     enemy_query: Query<(Entity, &Transform, &Collider), (With<Enemy>, Without<Player>)>,
     grid: Res<UniformGrid>,
     mut collision_events: MessageWriter<CollisionEvent>,
-) -> Result<(), String> {
+) {
     for (
         proj_entity,
         projectile,
@@ -108,5 +108,4 @@ pub fn collision_detection_system(
             }
         }
     }
-    Ok(())
 }

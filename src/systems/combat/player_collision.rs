@@ -13,7 +13,7 @@ pub fn handle_player_collision(
     grid: Res<UniformGrid>,
     time: Res<Time>,
     mut next_state: ResMut<NextState<GameState>>,
-) -> Result<(), String> {
+) {
     if let Ok((mut health, mut player_transform, player_collider)) = player_query.single_mut() {
         health.invulnerability_timer.tick(time.delta());
 
@@ -59,5 +59,4 @@ pub fn handle_player_collision(
             }
         }
     }
-    Ok(())
 }

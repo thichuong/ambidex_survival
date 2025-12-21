@@ -17,7 +17,7 @@ pub fn update_sword_mechanics(
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<SwordSwing>>,
     hand_query: Query<&GlobalTransform, With<Hand>>,
     mut player_query: Query<(&mut Health, &CombatStats), With<Player>>,
-) -> Result<(), String> {
+) {
     for (entity, mut swing, mut transform) in &mut sword_query {
         if let Ok(hand_transform) = hand_query.get(swing.hand_entity) {
             transform.translation = hand_transform.translation().truncate().extend(0.0);
@@ -105,5 +105,4 @@ pub fn update_sword_mechanics(
             }
         }
     }
-    Ok(())
 }
