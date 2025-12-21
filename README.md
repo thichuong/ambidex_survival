@@ -15,11 +15,14 @@ The core of the game is the **Ambidex System**, which gives you independent cont
 
 ## 🏗️ Technical Architecture
 
-The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17. Recent refactoring has moved away from monolithic input handlers to specialized, per-weapon systems.
+The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17, organized into a **Plugin-based Architecture** for modularity and maintainability.
 
-- **Modular Weapon Systems**: Each weapon (Sword, Gun, Shuriken, Magic) is an independent system, allowing for specialized logic (e.g., automatic fire, complex teleportation) without code bloat.
-- **Ergonomic Design**: Systems utilize `SystemParam` for clean dependency injection and `pipe(log_error)` for robust error reporting.
-- **Reactive UI**: The UI and combat systems communicate via Events and reactive observers to ensure state consistency.
+### Core Principles
+- **Plugin Organization**: The app is structured into independent plugins (`CombatPlugin`, `UIPlugin`, `PhysicsPlugin`, `VisualsPlugin`, `PlayerPlugin`) for clean separation of concerns.
+- **Modular Weapon Systems**: Each weapon (Sword, Gun, Shuriken, Magic) is an independent system with specialized logic (e.g., automatic fire, teleportation, spell slots).
+- **Collision Pipeline**: A dedicated `collision/` sub-module handles detection, damage processing, visual effects, and enemy death in separate, focused systems.
+- **Reactive Event-Driven Design**: Systems communicate via Events (`PurchaseEvent`, `DamageEvent`) and reactive observers for state consistency.
+- **GameState Management**: The game uses `States` (Playing, Paused, GameOver) for proper system scheduling and UI transitions.
 
 ## 📁 Project Structure
 For a detailed breakdown of the codebase organization, see [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md).
