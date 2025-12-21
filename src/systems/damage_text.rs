@@ -7,6 +7,7 @@ pub struct DamageText {
     pub velocity: Vec2,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn spawn_damage_text(trigger: On<DamageEvent>, mut commands: Commands) {
     let event = trigger.event();
     let size = if event.is_crit {
@@ -75,6 +76,7 @@ pub fn spawn_damage_text(trigger: On<DamageEvent>, mut commands: Commands) {
     ));
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_damage_text(
     mut commands: Commands,
     time: Res<Time>,

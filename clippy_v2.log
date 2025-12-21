@@ -1,0 +1,28 @@
+    Blocking waiting for file lock on package cache
+    Checking ambidex_survival v0.1.0 (/home/tchuong/Màn hình nền/ambidex_survival)
+warning: use of deprecated type alias `bevy::prelude::Trigger`: Renamed to `On`.
+  --> src/systems/damage_text.rs:10:35
+   |
+10 | pub fn spawn_damage_text(trigger: Trigger<DamageEvent>, mut commands: Commands) {
+   |                                   ^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+error[E0599]: no method named `observe` found for mutable reference `&mut bevy::prelude::App` in the current scope
+  --> src/plugins/visuals.rs:10:13
+   |
+10 |         app.observe(spawn_damage_text)
+   |             ^^^^^^^
+   |
+help: there is a method `add_observer` with a similar name
+   |
+10 -         app.observe(spawn_damage_text)
+10 +         app.add_observer(spawn_damage_text)
+   |
+
+For more information about this error, try `rustc --explain E0599`.
+warning: `ambidex_survival` (bin "ambidex_survival") generated 1 warning (1 duplicate)
+error: could not compile `ambidex_survival` (bin "ambidex_survival") due to 1 previous error; 1 warning emitted
+warning: build failed, waiting for other jobs to finish...
+warning: `ambidex_survival` (bin "ambidex_survival" test) generated 1 warning
+error: could not compile `ambidex_survival` (bin "ambidex_survival" test) due to 1 previous error; 1 warning emitted

@@ -1,0 +1,47 @@
+    Checking ambidex_survival v0.1.0 (/home/tchuong/Màn hình nền/ambidex_survival)
+warning: very complex type used. Consider factoring parts into `type` definitions
+  --> src/systems/combat/collision/effects.rs:14:23
+   |
+14 |       projectile_query: Query<(
+   |  _______________________^
+15 | |         &Projectile,
+16 | |         Option<&ExplodingProjectile>,
+17 | |         Option<&AoEProjectile>,
+18 | |         &Transform,
+19 | |         Option<&PendingDespawn>,
+20 | |     )>,
+   | |______^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#type_complexity
+   = note: `-W clippy::type-complexity` implied by `-W clippy::all`
+   = help: to override `-W clippy::all` add `#[allow(clippy::type_complexity)]`
+
+warning: this argument is passed by value, but not consumed in the function body
+  --> src/systems/damage_text.rs:10:35
+   |
+10 | pub fn spawn_damage_text(trigger: On<DamageEvent>, mut commands: Commands) {
+   |                                   ^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+   = note: `-W clippy::needless-pass-by-value` implied by `-W clippy::pedantic`
+   = help: to override `-W clippy::pedantic` add `#[allow(clippy::needless_pass_by_value)]`
+help: consider taking a reference instead
+   |
+10 | pub fn spawn_damage_text(trigger: &On<DamageEvent>, mut commands: Commands) {
+   |                                   +
+
+warning: this argument is passed by value, but not consumed in the function body
+  --> src/systems/damage_text.rs:80:11
+   |
+80 |     time: Res<Time>,
+   |           ^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+help: consider taking a reference instead
+   |
+80 |     time: &Res<Time>,
+   |           +
+
+warning: `ambidex_survival` (bin "ambidex_survival") generated 3 warnings (3 duplicates)
+warning: `ambidex_survival` (bin "ambidex_survival" test) generated 3 warnings
+    Finished `dev` profile [optimized + debuginfo] target(s) in 1.47s

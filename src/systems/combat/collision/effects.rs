@@ -8,16 +8,22 @@ use crate::systems::weapon_visuals::spawn_bolt_explosion_visuals;
 use bevy::prelude::*;
 use rand::Rng;
 
+type ProjectileEffectQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static Projectile,
+        Option<&'static ExplodingProjectile>,
+        Option<&'static AoEProjectile>,
+        &'static Transform,
+        Option<&'static PendingDespawn>,
+    ),
+>;
+
 pub fn projectile_effect_system(
     mut commands: Commands,
     mut collision_events: MessageReader<CollisionEvent>,
-    projectile_query: Query<(
-        &Projectile,
-        Option<&ExplodingProjectile>,
-        Option<&AoEProjectile>,
-        &Transform,
-        Option<&PendingDespawn>,
-    )>,
+    projectile_query: ProjectileEffectQuery,
     mut res: CombatResources,
 ) {
     let mut processed_projectiles = Vec::new(); // Still needs mut because we push to it!
