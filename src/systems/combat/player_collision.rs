@@ -1,4 +1,3 @@
-use super::CombatResources;
 use crate::components::enemy::Enemy;
 use crate::components::physics::{Collider, UniformGrid, check_collision};
 use crate::components::player::{Health, Player};
@@ -13,7 +12,6 @@ pub fn handle_player_collision(
     mut enemy_query: Query<(Entity, &mut Transform, &Enemy, &Collider), Without<Player>>,
     grid: Res<UniformGrid>,
     time: Res<Time>,
-    mut res: CombatResources,
     mut next_state: ResMut<NextState<GameState>>,
 ) -> Result<(), String> {
     if let Ok((mut health, mut player_transform, player_collider)) = player_query.single_mut() {

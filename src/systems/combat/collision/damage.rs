@@ -17,7 +17,6 @@ pub fn damage_processing_system(
     mut enemy_query: Query<&mut Enemy>,
     mut player_query: Query<(&mut Health, &CombatStats), With<Player>>,
     mut damage_events: MessageWriter<DamageEvent>,
-    mut res: ResMut<crate::resources::polish::ScreenShake>,
 ) -> Result<(), String> {
     for event in collision_events.read() {
         // Retrieve projectile data

@@ -6,11 +6,7 @@ pub struct ScreenShake {
     pub trauma: f32, // 0.0 to 1.0
 }
 
-impl ScreenShake {
-    pub fn add_trauma(&mut self, amount: f32) {
-        self.trauma = (self.trauma + amount).min(1.0);
-    }
-}
+impl ScreenShake {}
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_camera_shake(
