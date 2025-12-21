@@ -58,7 +58,7 @@ pub fn damage_processing_system(
             is_crit,
         });
 
-        res.add_trauma(if is_crit { 0.2 } else { 0.1 });
+        // Screen shake disabled
     }
     Ok(())
 }

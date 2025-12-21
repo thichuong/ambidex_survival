@@ -79,7 +79,7 @@ pub fn update_sword_mechanics(
                                     position: enemy_tf.translation.truncate(),
                                     is_crit,
                                 });
-                                res.shake.add_trauma(if is_crit { 0.3 } else { 0.2 });
+                                // Screen shake disabled
                                 if enemy.health <= 0.0 {
                                     if let Ok((_, _, mut currency)) = player_query.single_mut() {
                                         currency.gold += 10;

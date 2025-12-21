@@ -50,7 +50,7 @@ pub fn handle_player_collision(
                     if health.invulnerability_timer.is_finished() {
                         health.current -= enemy.damage;
                         health.invulnerability_timer.reset();
-                        res.shake.add_trauma(0.5);
+                        // Screen shake disabled
 
                         if health.current <= 0.0 {
                             health.current = 0.0;
