@@ -8,14 +8,20 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 pub mod collision;
+pub mod gun;
+pub mod magic;
 pub mod player_collision;
+pub mod shuriken;
+pub mod sword;
 pub mod sword_mechanics;
-pub mod weapon_logic;
 
 pub use collision::*;
+pub use gun::*;
+pub use magic::*;
 pub use player_collision::*;
+pub use shuriken::*;
+pub use sword::*;
 pub use sword_mechanics::*;
-pub use weapon_logic::*;
 
 #[derive(Event, Message, Debug)]
 pub struct DamageEvent {
