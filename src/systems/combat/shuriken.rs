@@ -66,8 +66,8 @@ pub fn shuriken_weapon_system(
         }
 
         // Skill logic (Teleport)
-        if skill_pressed && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown {
-            if perform_shuriken_skill(
+        if skill_pressed && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown
+            && perform_shuriken_skill(
                 &mut params,
                 cursor_pos,
                 player_entity,
@@ -75,7 +75,6 @@ pub fn shuriken_weapon_system(
             ) {
                 weapon_data.last_skill_use = now;
             }
-        }
     }
 
     Ok(())

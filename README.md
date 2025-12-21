@@ -13,10 +13,18 @@ The core of the game is the **Ambidex System**, which gives you independent cont
 - **Independent Hands**: Each hand (Left and Right) has its own weapon, cooldown, and skill state.
 - **Weapon Selection**: Access the **Weapon Menu** between rounds to swap weapons for either hand.
 
-## � Project Structure
+## 🏗️ Technical Architecture
+
+The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17. Recent refactoring has moved away from monolithic input handlers to specialized, per-weapon systems.
+
+- **Modular Weapon Systems**: Each weapon (Sword, Gun, Shuriken, Magic) is an independent system, allowing for specialized logic (e.g., automatic fire, complex teleportation) without code bloat.
+- **Ergonomic Design**: Systems utilize `SystemParam` for clean dependency injection and `pipe(log_error)` for robust error reporting.
+- **Reactive UI**: The UI and combat systems communicate via Events and reactive observers to ensure state consistency.
+
+## 📁 Project Structure
 For a detailed breakdown of the codebase organization, see [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md).
 
-## �🚀 Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 - [Rust](https://www.rust-lang.org/tools/install) (latest stable)
