@@ -32,6 +32,11 @@ pub struct DamageEvent {
     pub is_crit: bool,
 }
 
+/// Marker component for projectiles that have hit a target and should be despawned.
+/// Used to prevent double-damage by marking projectiles immediately on first hit.
+#[derive(Component)]
+pub struct PendingDespawn;
+
 #[derive(SystemParam)]
 pub struct CombatInputParams<'w, 's> {
     pub commands: Commands<'w, 's>,

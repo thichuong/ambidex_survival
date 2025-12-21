@@ -1,4 +1,4 @@
-use super::{CollisionEvent, CombatResources, DamageEvent};
+use super::{CollisionEvent, CombatResources, DamageEvent, PendingDespawn};
 use crate::components::enemy::Enemy;
 use crate::components::physics::{Collider, IgnoreGrid, UniformGrid, Velocity, check_collision};
 use crate::components::player::{CombatStats, Currency, Health, Player};
@@ -16,6 +16,7 @@ pub type ProjectileQueryItem<'a> = (
     Option<Mut<'a, AoEProjectile>>,
     Option<&'a IgnoreGrid>,
     &'a Visibility,
+    Option<&'a PendingDespawn>,
 );
 
 pub fn get_collision_candidates(
@@ -53,10 +54,12 @@ pub fn get_collision_candidates(
 
 /// Detects collisions between projectiles and enemies.
 /// Emits `CollisionEvent` when a collision occurs.
+/// Marks non-AoE projectiles with `PendingDespawn` immediately to prevent double-damage.
 #[allow(clippy::type_complexity)]
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::unnecessary_wraps)]
 pub fn collision_detection_system(
+    mut commands: Commands,
     mut projectile_query: Query<ProjectileQueryItem>,
     enemy_query: Query<(Entity, &Transform, &Collider), (With<Enemy>, Without<Player>)>,
     grid: Res<UniformGrid>,
@@ -70,11 +73,18 @@ pub fn collision_detection_system(
         mut aoe_opt,
         ignore_grid,
         visibility,
+        pending_despawn,
     ) in &mut projectile_query
     {
+        // Skip hidden projectiles
         if *visibility == Visibility::Hidden {
             continue;
         }
+        // Skip projectiles already marked for despawn (prevents double-damage)
+        if pending_despawn.is_some() {
+            continue;
+        }
+
         let proj_pos = projectile_transform.translation.truncate();
         let candidates = get_collision_candidates(proj_pos, proj_collider, ignore_grid, &grid);
 
@@ -84,7 +94,7 @@ pub fn collision_detection_system(
                 if check_collision(proj_pos, proj_collider, enemy_pos, enemy_collider)
                     && projectile.owner_entity != entity
                 {
-                    // For AOE projectiles, avoid hitting the same enemy multiple times if already in the list
+                    // For AOE projectiles, track damaged entities to avoid multi-hit per enemy
                     if let Some(ref mut aoe) = aoe_opt {
                         if aoe.damaged_entities.contains(&entity) {
                             continue;
@@ -95,9 +105,16 @@ pub fn collision_detection_system(
                     collision_events.write(CollisionEvent {
                         projectile: proj_entity,
                         target: entity,
-                        position: enemy_pos, // Use enemy position for hit location approximation
+                        position: enemy_pos,
                         direction: projectile.direction,
                     });
+
+                    // Mark non-AoE projectiles for despawn immediately after first hit
+                    // This prevents double-damage within the same frame
+                    if aoe_opt.is_none() {
+                        commands.entity(proj_entity).insert(PendingDespawn);
+                        break; // No need to check more enemies for this projectile
+                    }
                 }
             }
         }
@@ -205,6 +222,7 @@ pub fn enemy_death_system(
 }
 
 /// Handles visual effects and projectile logic (piercing, explosions, despawning) upon collision.
+/// Despawns projectiles marked with `PendingDespawn`.
 #[allow(clippy::type_complexity)]
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::unnecessary_wraps)]
@@ -216,17 +234,20 @@ pub fn projectile_effect_system(
         Option<&ExplodingProjectile>,
         Option<&AoEProjectile>,
         &Transform,
+        Option<&PendingDespawn>,
     )>,
     mut res: CombatResources,
 ) -> Result<(), String> {
-    let mut despawn_list = Vec::new();
+    let mut processed_projectiles = Vec::new();
 
     for event in collision_events.read() {
-        if despawn_list.contains(&event.projectile) {
+        // Skip already processed projectiles this frame
+        if processed_projectiles.contains(&event.projectile) {
             continue;
         }
 
-        if let Ok((projectile, exploding, aoe, transform)) = projectile_query.get(event.projectile)
+        if let Ok((projectile, exploding, aoe, transform, pending)) =
+            projectile_query.get(event.projectile)
         {
             // Handle Explosions
             if let Some(exploding) = exploding {
@@ -268,16 +289,13 @@ pub fn projectile_effect_system(
                 }
             }
 
-            // Despawn non-AoE projectiles upon hit
-            if aoe.is_none() {
-                despawn_list.push(event.projectile);
+            // Despawn projectiles marked with PendingDespawn (non-AoE projectiles that hit)
+            if pending.is_some() && aoe.is_none() {
+                commands.entity(event.projectile).despawn();
             }
-        }
-    }
 
-    // Process Despawns
-    for entity in despawn_list {
-        commands.entity(entity).despawn();
+            processed_projectiles.push(event.projectile);
+        }
     }
     Ok(())
 }
