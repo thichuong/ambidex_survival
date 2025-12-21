@@ -35,6 +35,7 @@ ambidex_survival/
 │   ├── systems/        # Core game logic partitioned by domain
 │   │   ├── combat/     # Weapon firing and skill logic (Modularized)
 │   │   │   ├── collision/  # Collision detection and damage pipeline
+│   │   │   │   ├── mod.rs
 │   │   │   │   ├── damage.rs
 │   │   │   │   ├── detection.rs
 │   │   │   │   ├── effects.rs
@@ -45,6 +46,7 @@ ambidex_survival/
 │   │   │   │   ├── global_spell.rs
 │   │   │   │   ├── laser.rs
 │   │   │   │   └── nova.rs
+│   │   │   ├── mod.rs          # CombatInputParams, shared types, events
 │   │   │   ├── events.rs
 │   │   │   ├── gun.rs
 │   │   │   ├── player_collision.rs
@@ -117,12 +119,13 @@ Modularized UI systems:
 - `game_over.rs`: Game Over screen and restart logic.
 
 #### `combat/`
-Modularized combat systems following ECS best practices:
+Modularized combat systems following Bevy 0.17 ECS best practices:
+- `mod.rs`: `CombatInputParams` SystemParam bundle using `Single<T>` for Camera/Window access.
 - `sword.rs`: Sword swings and mode switching (Normal/Shattered).
 - `sword_mechanics.rs`: Advanced sword logic and hit detection.
 - `gun.rs`: Gun firing modes (Single, Shotgun, Rapid) and automatic fire.
 - `shuriken.rs`: Shuriken projectiles and teleport skill.
-- `events.rs`: Combat-related events.
+- `events.rs`: Combat-related events (`CollisionEvent`, `EnemyDeathEvent`).
 - `player_collision.rs`: Player hitbox and damage reception.
 
 #### `combat/magic/`
