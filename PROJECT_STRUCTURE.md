@@ -57,6 +57,12 @@ Modularized combat systems following ECS best practices. Input handling and item
 - `magic/`: Sub-module for magic casting and individual spell implementations.
   - `mod.rs`: Orchestration of magic slots and input dispatching.
   - `energy_bolt.rs`, `laser.rs`, `nova.rs`, `blink.rs`, `global_spell.rs`: Individual spell behaviors.
+- `collision/`: Sub-module for collision detection and damage processing.
+  - `mod.rs`: Shared types (`ProjectileQueryItem`) and re-exports.
+  - `detection.rs`: Collision detection with spatial grid.
+  - `damage.rs`: Damage processing, crit calculation, lifesteal.
+  - `effects.rs`: Explosion effects and projectile despawning.
+  - `enemy_death.rs`: Enemy death particles and gold drops.
 - `weapon_visuals.rs`: Spawning and updating visual effects for projectiles, sword swings, and spells.
 - `enemy.rs`: Enemy AI, movement, and spawning logic.
 
