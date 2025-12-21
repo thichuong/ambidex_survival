@@ -5,5 +5,6 @@ pub struct CollisionEvent {
     pub projectile: Entity,
     pub target: Entity,
     pub position: Vec2,
+    #[allow(dead_code)]
     pub direction: Vec2,
 }

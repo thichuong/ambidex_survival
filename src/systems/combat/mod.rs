@@ -55,12 +55,11 @@ pub struct CombatInputParams<'w, 's> {
 }
 
 #[derive(SystemParam)]
-pub struct CombatResources<'w, 's> {
+pub struct CombatResources<'w> {
     pub shake: ResMut<'w, crate::resources::polish::ScreenShake>,
     pub meshes: ResMut<'w, Assets<Mesh>>,
     pub materials: ResMut<'w, Assets<ColorMaterial>>,
     pub cached_assets: Res<'w, crate::resources::cached_assets::CachedAssets>,
-    pub exploding_query: Query<'w, 's, &'static crate::components::weapon::ExplodingProjectile>,
     pub effect_pool: ResMut<'w, VisualEffectPool>,
 }
 

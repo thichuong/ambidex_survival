@@ -119,15 +119,13 @@ pub fn damage_processing_system(
 ) -> Result<(), String> {
     for event in collision_events.read() {
         // Retrieve projectile data
-        let projectile = match projectile_query.get(event.projectile) {
-            Ok(p) => p,
-            Err(_) => continue, // Projectile might have been despawned
+        let Ok(projectile) = projectile_query.get(event.projectile) else {
+            continue; // Projectile might have been despawned
         };
 
         // Retrieve enemy data
-        let mut enemy = match enemy_query.get_mut(event.target) {
-            Ok(e) => e,
-            Err(_) => continue, // Enemy might have been despawned
+        let Ok(mut enemy) = enemy_query.get_mut(event.target) else {
+            continue; // Enemy might have been despawned
         };
 
         let mut final_damage = projectile.damage;
@@ -147,7 +145,6 @@ pub fn damage_processing_system(
             }
         } else {
             // Fallback if player dead/missing, just calc crit
-            let mut rng = rand::thread_rng();
             // We can't access stats without query. Assume no crit/no lifesteal if player missing.
         }
 
@@ -172,7 +169,7 @@ pub fn enemy_death_system(
     mut commands: Commands,
     mut enemy_query: Query<(Entity, &mut Enemy, &Transform)>,
     mut player_query: Query<&mut Currency, With<Player>>,
-    mut res: ResMut<crate::resources::cached_assets::CachedAssets>,
+    res: Res<crate::resources::cached_assets::CachedAssets>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) -> Result<(), String> {
     for (entity, enemy, transform) in &mut enemy_query {
