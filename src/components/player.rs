@@ -2,9 +2,17 @@ use super::physics::{Collider, Velocity};
 use super::weapon::{GunState, MagicLoadout, SwordState, Weapon, WeaponType};
 use bevy::prelude::*;
 
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct Currency {
     pub gold: u32,
+}
+
+impl Default for Currency {
+    fn default() -> Self {
+        Self {
+            gold: crate::configs::player::STARTING_GOLD,
+        }
+    }
 }
 
 #[derive(Component)]
