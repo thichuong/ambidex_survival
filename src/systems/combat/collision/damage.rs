@@ -17,7 +17,6 @@ pub fn damage_processing_system(
     projectile_query: Query<&Projectile>,
     mut enemy_query: Query<&mut Enemy>,
     mut player_query: Query<(&mut Health, &CombatStats), With<Player>>,
-    mut damage_events: MessageWriter<DamageEvent>,
 ) -> Result<(), String> {
     for event in collision_events.read() {
         // Retrieve projectile data
@@ -52,7 +51,7 @@ pub fn damage_processing_system(
 
         enemy.health -= final_damage;
 
-        damage_events.write(DamageEvent {
+        commands.trigger(DamageEvent {
             damage: final_damage,
             position: event.position,
             is_crit,
