@@ -47,6 +47,7 @@ fn main() {
                 }),
         )
         .add_message::<systems::combat::DamageEvent>()
+        .add_message::<systems::combat::CollisionEvent>()
         .add_message::<systems::ui::PurchaseEvent>()
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
@@ -69,7 +70,10 @@ fn main() {
                 systems::combat::gun_weapon_system.pipe(log_error),
                 systems::combat::magic_weapon_system.pipe(log_error),
                 systems::combat::manage_lifetime.pipe(log_error),
-                systems::combat::resolve_damage.pipe(log_error),
+                systems::combat::collision_detection_system.pipe(log_error),
+                systems::combat::damage_processing_system.pipe(log_error),
+                systems::combat::projectile_effect_system.pipe(log_error),
+                systems::combat::enemy_death_system.pipe(log_error),
                 systems::combat::update_sword_mechanics.pipe(log_error),
                 systems::combat::handle_player_collision.pipe(log_error),
             )

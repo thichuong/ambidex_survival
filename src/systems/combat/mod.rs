@@ -8,6 +8,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 pub mod collision;
+pub mod events;
 pub mod gun;
 pub mod magic;
 pub mod player_collision;
@@ -16,6 +17,7 @@ pub mod sword;
 pub mod sword_mechanics;
 
 pub use collision::*;
+pub use events::*;
 pub use gun::*;
 pub use magic::*;
 pub use player_collision::*;
