@@ -2,6 +2,7 @@ use super::components::{GameOverUI, NewGameButton};
 use crate::components::player::{CombatStats, Currency, Health, Player, Progression};
 use bevy::prelude::*;
 
+#[allow(clippy::too_many_lines)]
 pub fn spawn_game_over_menu(commands: &mut Commands) {
     commands
         .spawn((
