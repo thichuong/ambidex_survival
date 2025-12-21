@@ -7,6 +7,7 @@ use bevy::render::{
 
 mod components;
 mod configs;
+mod plugins;
 mod resources;
 mod systems;
 mod utils;
@@ -19,8 +20,6 @@ use bevy::window::PrimaryWindow;
 use components::player::GameCamera;
 use resources::cached_assets::CachedAssets;
 use resources::game_state::GameState;
-use systems::player::{aim_player, move_player, spawn_player};
-use utils::log_error;
 
 fn main() {
     App::new()
@@ -29,7 +28,6 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "Ambidex Survival".into(),
-                        // options removed for flexibility
                         ..default()
                     }),
                     ..default()
@@ -46,81 +44,20 @@ fn main() {
                     ..default()
                 }),
         )
-        .add_message::<systems::combat::DamageEvent>()
-        .add_message::<systems::combat::CollisionEvent>()
-        .add_message::<systems::ui::PurchaseEvent>()
+        .add_plugins((
+            plugins::combat::CombatPlugin,
+            plugins::physics::PhysicsPlugin,
+            plugins::ui::UiPlugin,
+            plugins::player::PlayerPlugin,
+            plugins::visuals::VisualsPlugin,
+        ))
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
         .init_resource::<resources::polish::ScreenShake>()
         .init_resource::<components::physics::UniformGrid>()
         .init_resource::<systems::object_pooling::VisualEffectPool>()
-        .add_systems(Startup, (setup_camera, spawn_player, init_cached_assets))
+        .add_systems(Startup, (setup_camera, init_cached_assets))
         .add_systems(Update, maximize_window)
-        .add_systems(
-            Update,
-            (
-                systems::combat::update_enemy_grid.pipe(log_error),
-                systems::physics::apply_velocity.pipe(log_error),
-                move_player.pipe(log_error),
-                resources::polish::spawn_trails,
-                systems::combat::shuriken_weapon_system.pipe(log_error),
-                systems::combat::sword_weapon_system.pipe(log_error),
-                systems::combat::gun_weapon_system.pipe(log_error),
-                systems::combat::magic_weapon_system.pipe(log_error),
-                systems::combat::manage_lifetime.pipe(log_error),
-                systems::combat::collision_detection_system.pipe(log_error),
-                systems::combat::damage_processing_system.pipe(log_error),
-                systems::combat::projectile_effect_system.pipe(log_error),
-                systems::combat::enemy_death_system.pipe(log_error),
-                systems::combat::update_sword_mechanics.pipe(log_error),
-                systems::combat::handle_player_collision.pipe(log_error),
-            )
-                .run_if(in_state(GameState::Playing)),
-        )
-        .add_systems(
-            PostUpdate,
-            (
-                aim_player.pipe(log_error),
-                resources::polish::update_camera_shake,
-            )
-                .run_if(in_state(GameState::Playing)),
-        )
-        .add_systems(
-            Update,
-            (
-                systems::enemy::enemy_chase_player.pipe(log_error),
-                systems::enemy::spawn_waves.pipe(log_error),
-                systems::damage_text::spawn_damage_text.pipe(log_error),
-                systems::damage_text::update_damage_text.pipe(log_error),
-            )
-                .run_if(in_state(GameState::Playing)),
-        )
-        .add_systems(
-            Update,
-            (
-                systems::ui::update_ui_visibility.pipe(log_error),
-                systems::ui::update_hud_indicators.pipe(log_error),
-                systems::ui::update_magic_ui.pipe(log_error),
-                systems::ui::update_health_ui.pipe(log_error),
-                systems::ui::update_gold_ui,
-                systems::ui::update_round_text,
-                systems::ui::update_menu_gold_text,
-                systems::ui::update_menu_health_text,
-            ),
-        )
-        .add_systems(
-            Update,
-            (
-                systems::ui::update_menu_damage_text,
-                systems::ui::update_menu_crit_text,
-                systems::ui::update_menu_lifesteal_text,
-                systems::ui::update_menu_cdr_text,
-                systems::ui::update_cooldown_indicators,
-                systems::ui::update_shuriken_count_ui,
-                systems::ui::handle_purchases,
-            ),
-        )
-        .add_systems(Startup, systems::ui::setup_ui)
         .run();
 }
 

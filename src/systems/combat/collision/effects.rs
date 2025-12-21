@@ -33,7 +33,7 @@ pub fn projectile_effect_system(
             continue;
         }
 
-        if let Ok((projectile, exploding, aoe, transform, pending)) =
+        if let Ok((projectile, exploding, _aoe, transform, _pending)) =
             projectile_query.get(event.projectile)
         {
             // Handle Explosions
@@ -76,13 +76,23 @@ pub fn projectile_effect_system(
                 }
             }
 
-            // Despawn projectiles marked with PendingDespawn (non-AoE projectiles that hit)
-            if pending.is_some() && aoe.is_none() {
-                commands.entity(event.projectile).despawn();
-            }
-
             processed_projectiles.push(event.projectile);
         }
+    }
+    Ok(())
+}
+
+/// Standalone system to clean up projectiles marked for despawn.
+/// This runs after collision detection to ensure projectiles are removed recursively,
+/// cleaning up all visual child entities.
+#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::unnecessary_wraps)]
+pub fn cleanup_pending_despawn(
+    mut commands: Commands,
+    query: Query<Entity, (With<PendingDespawn>, Without<AoEProjectile>)>,
+) -> Result<(), String> {
+    for entity in &query {
+        commands.entity(entity).despawn();
     }
     Ok(())
 }

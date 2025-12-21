@@ -8,78 +8,72 @@ pub struct DamageText {
 }
 
 #[allow(clippy::needless_pass_by_value)]
-#[allow(clippy::unnecessary_wraps)]
-pub fn spawn_damage_text(
-    mut commands: Commands,
-    mut damage_events: MessageReader<DamageEvent>,
-) -> Result<(), String> {
-    for event in damage_events.read() {
-        let size = if event.is_crit {
-            crate::configs::visuals::DAMAGE_TEXT_SIZE_CRIT
-        } else {
-            crate::configs::visuals::DAMAGE_TEXT_SIZE_NORMAL
-        };
-        let color = if event.is_crit {
-            Color::srgb(1.0, 0.0, 0.0) // Red
-        } else {
-            Color::srgb(1.0, 1.0, 1.0) // White
-        };
+pub fn spawn_damage_text(trigger: On<DamageEvent>, mut commands: Commands) {
+    let event = trigger.event();
+    let size = if event.is_crit {
+        crate::configs::visuals::DAMAGE_TEXT_SIZE_CRIT
+    } else {
+        crate::configs::visuals::DAMAGE_TEXT_SIZE_NORMAL
+    };
+    let color = if event.is_crit {
+        Color::srgb(1.0, 0.0, 0.0) // Red
+    } else {
+        Color::srgb(1.0, 1.0, 1.0) // White
+    };
 
-        if event.is_crit {
-            // Spawn white border/shadow layers
-            let offsets = [
-                Vec2::new(-1.0, -1.0),
-                Vec2::new(1.0, -1.0),
-                Vec2::new(-1.0, 1.0),
-                Vec2::new(1.0, 1.0),
-            ];
+    if event.is_crit {
+        // Spawn white border/shadow layers
+        let offsets = [
+            Vec2::new(-1.0, -1.0),
+            Vec2::new(1.0, -1.0),
+            Vec2::new(-1.0, 1.0),
+            Vec2::new(1.0, 1.0),
+        ];
 
-            for offset in offsets {
-                commands.spawn((
-                    Text2d::new(format!("{:.0}", event.damage)),
-                    TextFont {
-                        font_size: size,
-                        ..default()
-                    },
-                    TextColor(Color::srgb(1.0, 1.0, 1.0)), // White border
-                    Transform::from_translation(
-                        (event.position + offset)
-                            .extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX - 1.0), // Slightly behind
-                    ),
-                    DamageText {
-                        lifetime: Timer::from_seconds(
-                            crate::configs::visuals::DAMAGE_TEXT_LIFETIME,
-                            TimerMode::Once,
-                        ),
-                        velocity: crate::configs::visuals::DAMAGE_TEXT_VELOCITY,
-                    },
-                ));
-            }
-        }
-
-        // Main text
-        commands.spawn((
-            Text2d::new(format!("{:.0}", event.damage)),
-            TextFont {
-                font_size: size,
-                ..default()
-            },
-            TextColor(color),
-            Transform::from_translation(
-                event
-                    .position
-                    .extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX),
-            ),
-            DamageText {
-                lifetime: Timer::from_seconds(
-                    crate::configs::visuals::DAMAGE_TEXT_LIFETIME,
-                    TimerMode::Once,
+        for offset in offsets {
+            commands.spawn((
+                Text2d::new(format!("{:.0}", event.damage)),
+                TextFont {
+                    font_size: size,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 1.0, 1.0)), // White border
+                Transform::from_translation(
+                    (event.position + offset)
+                        .extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX - 1.0), // Slightly behind
                 ),
-                velocity: crate::configs::visuals::DAMAGE_TEXT_VELOCITY,
-            },
-        ));
+                DamageText {
+                    lifetime: Timer::from_seconds(
+                        crate::configs::visuals::DAMAGE_TEXT_LIFETIME,
+                        TimerMode::Once,
+                    ),
+                    velocity: crate::configs::visuals::DAMAGE_TEXT_VELOCITY,
+                },
+            ));
+        }
     }
-    Ok(())
+
+    // Main text
+    commands.spawn((
+        Text2d::new(format!("{:.0}", event.damage)),
+        TextFont {
+            font_size: size,
+            ..default()
+        },
+        TextColor(color),
+        Transform::from_translation(
+            event
+                .position
+                .extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX),
+        ),
+        DamageText {
+            lifetime: Timer::from_seconds(
+                crate::configs::visuals::DAMAGE_TEXT_LIFETIME,
+                TimerMode::Once,
+            ),
+            velocity: crate::configs::visuals::DAMAGE_TEXT_VELOCITY,
+        },
+    ));
 }
 
 #[allow(clippy::needless_pass_by_value)]

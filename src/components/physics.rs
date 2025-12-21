@@ -24,9 +24,13 @@ impl UniformGrid {
         }
     }
 
-    /// Clear all entities from the grid
+    /// Clear all entities from the grid while keeping allocations
     pub fn clear(&mut self) {
-        self.cells.clear();
+        for vec in self.cells.values_mut() {
+            vec.clear();
+        }
+        // Optional: Remove truly empty cells if the map gets too bloated
+        // self.cells.retain(|_, v| !v.is_empty());
     }
 
     /// Get cell coordinates for a world position

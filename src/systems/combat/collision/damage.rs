@@ -12,6 +12,7 @@ use rand::Rng;
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::unnecessary_wraps)]
 pub fn damage_processing_system(
+    mut commands: Commands,
     mut collision_events: MessageReader<CollisionEvent>,
     projectile_query: Query<&Projectile>,
     mut enemy_query: Query<&mut Enemy>,
@@ -57,7 +58,12 @@ pub fn damage_processing_system(
             is_crit,
         });
 
-        // Screen shake disabled
+        if enemy.health <= 0.0 {
+            commands.trigger(crate::systems::combat::EnemyDeathEvent {
+                entity: event.target,
+                position: event.position,
+            });
+        }
     }
     Ok(())
 }
