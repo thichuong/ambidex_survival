@@ -62,8 +62,6 @@ fn main() {
                 systems::combat::update_enemy_grid.pipe(log_error),
                 systems::physics::apply_velocity.pipe(log_error),
                 move_player.pipe(log_error),
-                aim_player.pipe(log_error),
-                resources::polish::update_camera_shake,
                 resources::polish::spawn_trails,
                 systems::combat::shuriken_weapon_system.pipe(log_error),
                 systems::combat::sword_weapon_system.pipe(log_error),
@@ -76,6 +74,14 @@ fn main() {
                 systems::combat::enemy_death_system.pipe(log_error),
                 systems::combat::update_sword_mechanics.pipe(log_error),
                 systems::combat::handle_player_collision.pipe(log_error),
+            )
+                .run_if(in_state(GameState::Playing)),
+        )
+        .add_systems(
+            PostUpdate,
+            (
+                aim_player.pipe(log_error),
+                resources::polish::update_camera_shake,
             )
                 .run_if(in_state(GameState::Playing)),
         )
