@@ -24,8 +24,11 @@ impl Default for RoundManager {
         Self {
             current_round: 1,
             round_timer: Timer::from_seconds(5.0, TimerMode::Once), // Break time
-            spawn_timer: Timer::from_seconds(1.0, TimerMode::Repeating),
-            enemies_to_spawn: 10,
+            spawn_timer: Timer::from_seconds(
+                crate::configs::enemy::BASE_SPAWN_INTERVAL,
+                TimerMode::Repeating,
+            ),
+            enemies_to_spawn: crate::configs::enemy::BASE_ENEMY_COUNT,
 
             round_state: RoundState::Spawning,
         }

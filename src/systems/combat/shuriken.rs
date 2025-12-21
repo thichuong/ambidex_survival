@@ -66,15 +66,17 @@ pub fn shuriken_weapon_system(
         }
 
         // Skill logic (Teleport)
-        if skill_pressed && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown
+        if skill_pressed
+            && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown
             && perform_shuriken_skill(
                 &mut params,
                 cursor_pos,
                 player_entity,
                 &mut player_transform,
-            ) {
-                weapon_data.last_skill_use = now;
-            }
+            )
+        {
+            weapon_data.last_skill_use = now;
+        }
     }
 
     Ok(())
@@ -110,10 +112,10 @@ fn fire_shuriken(
         .spawn((
             Transform::from_translation(spawn_pos.extend(0.0)),
             Visibility::Visible,
-            Collider::ball(5.0),
+            Collider::ball(shuriken::COLLIDER_RADIUS),
             Velocity {
                 linvel: direction * shuriken::SPEED,
-                angvel: 15.0,
+                angvel: shuriken::ROTATION_SPEED,
             },
             Projectile {
                 kind: WeaponType::Shuriken,
@@ -155,18 +157,20 @@ fn perform_shuriken_skill(
         params.commands.spawn((
             Mesh2d(params.cached_assets.unit_circle.clone()),
             MeshMaterial2d(params.cached_assets.mat_cyan_50.clone()),
-            Transform::from_translation(player_transform.translation).with_scale(Vec3::splat(15.0)),
+            Transform::from_translation(player_transform.translation)
+                .with_scale(Vec3::splat(shuriken::TELEPORT_VISUAL_SCALE)),
             Lifetime {
-                timer: Timer::from_seconds(0.2, TimerMode::Once),
+                timer: Timer::from_seconds(shuriken::TELEPORT_VISUAL_LIFETIME, TimerMode::Once),
             },
         ));
         player_transform.translation = location;
         params.commands.spawn((
             Mesh2d(params.cached_assets.unit_circle.clone()),
             MeshMaterial2d(params.cached_assets.mat_cyan_50.clone()),
-            Transform::from_translation(location).with_scale(Vec3::splat(15.0)),
+            Transform::from_translation(location)
+                .with_scale(Vec3::splat(shuriken::TELEPORT_VISUAL_SCALE)),
             Lifetime {
-                timer: Timer::from_seconds(0.2, TimerMode::Once),
+                timer: Timer::from_seconds(shuriken::TELEPORT_VISUAL_LIFETIME, TimerMode::Once),
             },
         ));
         params.commands.entity(entity).despawn();

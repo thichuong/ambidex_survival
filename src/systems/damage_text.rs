@@ -14,7 +14,11 @@ pub fn spawn_damage_text(
     mut damage_events: MessageReader<DamageEvent>,
 ) -> Result<(), String> {
     for event in damage_events.read() {
-        let size = if event.is_crit { 30.0 } else { 20.0 };
+        let size = if event.is_crit {
+            crate::configs::visuals::DAMAGE_TEXT_SIZE_CRIT
+        } else {
+            crate::configs::visuals::DAMAGE_TEXT_SIZE_NORMAL
+        };
         let color = if event.is_crit {
             Color::srgb(1.0, 0.0, 0.0) // Red
         } else {
@@ -39,11 +43,15 @@ pub fn spawn_damage_text(
                     },
                     TextColor(Color::srgb(1.0, 1.0, 1.0)), // White border
                     Transform::from_translation(
-                        (event.position + offset).extend(9.0), // Slightly behind
+                        (event.position + offset)
+                            .extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX - 1.0), // Slightly behind
                     ),
                     DamageText {
-                        lifetime: Timer::from_seconds(0.8, TimerMode::Once),
-                        velocity: Vec2::new(0.0, 50.0),
+                        lifetime: Timer::from_seconds(
+                            crate::configs::visuals::DAMAGE_TEXT_LIFETIME,
+                            TimerMode::Once,
+                        ),
+                        velocity: crate::configs::visuals::DAMAGE_TEXT_VELOCITY,
                     },
                 ));
             }
@@ -57,10 +65,17 @@ pub fn spawn_damage_text(
                 ..default()
             },
             TextColor(color),
-            Transform::from_translation(event.position.extend(10.0)),
+            Transform::from_translation(
+                event
+                    .position
+                    .extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX),
+            ),
             DamageText {
-                lifetime: Timer::from_seconds(0.8, TimerMode::Once),
-                velocity: Vec2::new(0.0, 50.0),
+                lifetime: Timer::from_seconds(
+                    crate::configs::visuals::DAMAGE_TEXT_LIFETIME,
+                    TimerMode::Once,
+                ),
+                velocity: crate::configs::visuals::DAMAGE_TEXT_VELOCITY,
             },
         ));
     }

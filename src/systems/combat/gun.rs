@@ -127,7 +127,7 @@ fn fire_gun(
                 Transform::from_translation(spawn_pos.extend(0.0))
                     .with_rotation(Quat::from_rotation_z(angle)),
                 Visibility::Visible,
-                Collider::cuboid(10.0, 2.5),
+                Collider::cuboid(gun::BULLET_SIZE.0, gun::BULLET_SIZE.1),
                 Velocity {
                     linvel: dir * speed,
                     angvel: 0.0,
@@ -140,7 +140,7 @@ fn fire_gun(
                     owner_entity: owner,
                 },
                 Lifetime {
-                    timer: Timer::from_seconds(3.0, TimerMode::Once),
+                    timer: Timer::from_seconds(gun::BULLET_LIFETIME, TimerMode::Once),
                 },
             ))
             .with_children(|parent| {

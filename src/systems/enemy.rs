@@ -79,7 +79,9 @@ fn spawn_random_enemy(
     // Random position outside screen? Or just circle around player?
     // Circle around player (radius 500-800)
     let angle = rng.gen_range(0.0..std::f32::consts::TAU);
-    let radius = rng.gen_range(500.0..800.0);
+    let radius = rng.gen_range(
+        crate::configs::enemy::SPAWN_RADIUS_MIN..crate::configs::enemy::SPAWN_RADIUS_MAX,
+    );
     let x = angle.cos() * radius;
     let y = angle.sin() * radius;
     let spawn_pos = player_pos + Vec2::new(x, y);
@@ -102,11 +104,11 @@ fn spawn_random_enemy(
 
     commands.spawn((
         (
-            Mesh2d(meshes.add(Circle::new(15.0))),
+            Mesh2d(meshes.add(Circle::new(crate::configs::enemy::VISUAL_RADIUS))),
             MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::RED))),
-            Transform::from_translation(spawn_pos.extend(0.1)),
+            Transform::from_translation(spawn_pos.extend(crate::configs::enemy::VISUAL_Z_INDEX)),
         ),
-        Collider::ball(15.0),
+        Collider::ball(crate::configs::enemy::COLLIDER_RADIUS),
         Velocity::default(),
         Enemy {
             health,

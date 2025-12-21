@@ -1,4 +1,4 @@
-use bevy::color::palettes::css::AQUA;
+// use bevy::prelude::*; // Was: use bevy::color::palettes::css::AQUA; - Removed unused import
 use bevy::prelude::*;
 
 use crate::components::physics::{Collider, Velocity};
@@ -13,13 +13,15 @@ pub fn spawn_player(
     commands
         .spawn((
             (
-                Mesh2d(meshes.add(Circle::new(20.0))),
-                MeshMaterial2d(materials.add(Color::from(AQUA))),
+                Mesh2d(meshes.add(Circle::new(crate::configs::player::RADIUS))),
+                MeshMaterial2d(materials.add(Color::from(crate::configs::player::COLOR))),
                 Transform::from_xyz(0.0, 0.0, 0.0),
             ),
-            Collider::ball(20.0),
+            Collider::ball(crate::configs::player::RADIUS),
             Velocity::zero(),
-            Currency { gold: 500 },
+            Currency {
+                gold: crate::configs::player::STARTING_GOLD,
+            },
             Player,
         ))
         .with_children(|parent| {
