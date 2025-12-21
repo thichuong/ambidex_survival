@@ -10,7 +10,6 @@ use rand::Rng;
 #[allow(clippy::type_complexity)]
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::unnecessary_wraps)]
-#[allow(clippy::needless_pass_by_value)]
 pub fn enemy_death_system(
     trigger: On<crate::systems::combat::EnemyDeathEvent>,
     mut commands: Commands,

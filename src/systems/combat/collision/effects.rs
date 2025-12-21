@@ -8,11 +8,6 @@ use crate::systems::weapon_visuals::spawn_bolt_explosion_visuals;
 use bevy::prelude::*;
 use rand::Rng;
 
-/// Handles visual effects and projectile logic (piercing, explosions, despawning) upon collision.
-/// Despawns projectiles marked with `PendingDespawn`.
-#[allow(clippy::type_complexity)]
-#[allow(clippy::needless_pass_by_value)]
-#[allow(clippy::unnecessary_wraps)]
 pub fn projectile_effect_system(
     mut commands: Commands,
     mut collision_events: MessageReader<CollisionEvent>,
@@ -24,8 +19,8 @@ pub fn projectile_effect_system(
         Option<&PendingDespawn>,
     )>,
     mut res: CombatResources,
-) -> Result<(), String> {
-    let mut processed_projectiles = Vec::new();
+) {
+    let mut processed_projectiles = Vec::new(); // Still needs mut because we push to it!
 
     for event in collision_events.read() {
         // Skip already processed projectiles this frame
@@ -75,24 +70,19 @@ pub fn projectile_effect_system(
                     });
                 }
             }
-
             processed_projectiles.push(event.projectile);
         }
     }
-    Ok(())
 }
 
 /// Standalone system to clean up projectiles marked for despawn.
 /// This runs after collision detection to ensure projectiles are removed recursively,
 /// cleaning up all visual child entities.
-#[allow(clippy::needless_pass_by_value)]
-#[allow(clippy::unnecessary_wraps)]
 pub fn cleanup_pending_despawn(
     mut commands: Commands,
     query: Query<Entity, (With<PendingDespawn>, Without<AoEProjectile>)>,
-) -> Result<(), String> {
+) {
     for entity in &query {
         commands.entity(entity).despawn();
     }
-    Ok(())
 }

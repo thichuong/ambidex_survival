@@ -7,7 +7,6 @@ pub struct DamageText {
     pub velocity: Vec2,
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn spawn_damage_text(trigger: On<DamageEvent>, mut commands: Commands) {
     let event = trigger.event();
     let size = if event.is_crit {
@@ -76,13 +75,11 @@ pub fn spawn_damage_text(trigger: On<DamageEvent>, mut commands: Commands) {
     ));
 }
 
-#[allow(clippy::needless_pass_by_value)]
-#[allow(clippy::unnecessary_wraps)]
 pub fn update_damage_text(
     mut commands: Commands,
     time: Res<Time>,
     mut query: Query<(Entity, &mut Transform, &mut TextColor, &mut DamageText)>,
-) -> Result<(), String> {
+) {
     for (entity, mut transform, mut text_color, mut damage_text) in &mut query {
         damage_text.lifetime.tick(time.delta());
 
@@ -97,5 +94,4 @@ pub fn update_damage_text(
             text_color.0.set_alpha(alpha);
         }
     }
-    Ok(())
 }

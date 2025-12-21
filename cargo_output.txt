@@ -1,0 +1,2 @@
+    Checking ambidex_survival v0.1.0 (/home/tchuong/Màn hình nền/ambidex_survival)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 0.35s

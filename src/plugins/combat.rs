@@ -26,12 +26,12 @@ impl Plugin for CombatPlugin {
                     manage_lifetime.pipe(log_error),
                     collision_detection_system.pipe(log_error),
                     damage_processing_system.pipe(log_error),
-                    projectile_effect_system.pipe(log_error),
+                    projectile_effect_system,
                     update_sword_mechanics.pipe(log_error),
                     handle_player_collision.pipe(log_error),
                     enemy_chase_player.pipe(log_error),
                     spawn_waves.pipe(log_error),
-                    cleanup_pending_despawn.pipe(log_error),
+                    cleanup_pending_despawn,
                 )
                     .run_if(in_state(crate::resources::game_state::GameState::Playing)),
             );

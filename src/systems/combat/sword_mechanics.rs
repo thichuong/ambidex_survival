@@ -1,8 +1,7 @@
-use super::{CombatResources, DamageEvent};
+use super::DamageEvent;
 use crate::components::enemy::Enemy;
-use crate::components::physics::Velocity;
-use crate::components::player::{CombatStats, Currency, Hand, Health, Player};
-use crate::components::weapon::{Lifetime, SwingState, SwordSwing};
+use crate::components::player::{CombatStats, Hand, Health, Player};
+use crate::components::weapon::{SwingState, SwordSwing};
 use bevy::prelude::*;
 use rand::Rng;
 
@@ -17,9 +16,7 @@ pub fn update_sword_mechanics(
     mut sword_query: Query<(Entity, &mut SwordSwing, &mut Transform)>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<SwordSwing>>,
     hand_query: Query<&GlobalTransform, With<Hand>>,
-    mut res: CombatResources,
-    mut damage_events: MessageWriter<DamageEvent>,
-    mut player_query: Query<(&mut Health, &CombatStats, &mut Currency), With<Player>>,
+    mut player_query: Query<(&mut Health, &CombatStats), With<Player>>,
 ) -> Result<(), String> {
     for (entity, mut swing, mut transform) in &mut sword_query {
         if let Ok(hand_transform) = hand_query.get(swing.hand_entity) {
@@ -58,7 +55,7 @@ pub fn update_sword_mechanics(
                                 let mut final_damage = swing.damage;
                                 let mut is_crit = false;
 
-                                if let Ok((mut health, stats, _)) = player_query.single_mut() {
+                                if let Some((mut health, stats)) = player_query.iter_mut().next() {
                                     // Crit Check
                                     let mut rng = rand::thread_rng();
                                     if rng.gen_range(0.0..1.0) < stats.crit_chance {
@@ -74,40 +71,18 @@ pub fn update_sword_mechanics(
                                 }
 
                                 enemy.health -= final_damage;
-                                damage_events.write(DamageEvent {
+
+                                commands.trigger(DamageEvent {
                                     damage: final_damage,
                                     position: enemy_tf.translation.truncate(),
                                     is_crit,
                                 });
-                                // Screen shake disabled
-                                if enemy.health <= 0.0 {
-                                    if let Ok((_, _, mut currency)) = player_query.single_mut() {
-                                        currency.gold += 10;
-                                    }
-                                    commands.entity(enemy_entity).despawn();
 
-                                    let mut rng = rand::thread_rng();
-                                    for _ in 0..5 {
-                                        let dir = Vec2::new(
-                                            rng.gen_range(-1.0..1.0),
-                                            rng.gen_range(-1.0..1.0),
-                                        )
-                                        .normalize_or_zero();
-                                        commands.spawn((
-                                            Mesh2d(res.meshes.add(Circle::new(3.0))),
-                                            MeshMaterial2d(
-                                                res.materials.add(Color::srgb(1.0, 0.0, 0.0)),
-                                            ),
-                                            Transform::from_translation(enemy_tf.translation),
-                                            Velocity {
-                                                linvel: dir * 100.0,
-                                                angvel: 0.0,
-                                            },
-                                            Lifetime {
-                                                timer: Timer::from_seconds(0.5, TimerMode::Once),
-                                            },
-                                        ));
-                                    }
+                                if enemy.health <= 0.0 {
+                                    commands.trigger(crate::systems::combat::EnemyDeathEvent {
+                                        entity: enemy_entity,
+                                        position: enemy_tf.translation.truncate(),
+                                    });
                                 }
                             }
                         }
