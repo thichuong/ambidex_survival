@@ -211,7 +211,7 @@ pub fn update_menu_lifesteal_text(
 ) {
     for mut text in &mut query {
         let life = player.lifesteal * 100.0;
-        text.0 = format!("Life Steal: {life:.0}%");
+        text.0 = format!("Life Steal: {life:.0}% (50% for AOE)");
     }
 }
 
