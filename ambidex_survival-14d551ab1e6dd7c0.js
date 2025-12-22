@@ -321,20 +321,20 @@ if (!('encodeInto' in cachedTextEncoder)) {
 
 let WASM_VECTOR_LEN = 0;
 
-function __wasm_bindgen_func_elem_96755(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_96755(arg0, arg1, addHeapObject(arg2));
-}
-
-function __wasm_bindgen_func_elem_90804(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_90804(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_100017(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_100017(arg0, arg1, isLikeNone(arg2) ? 0 : addHeapObject(arg2));
 }
 
 function __wasm_bindgen_func_elem_94968(arg0, arg1) {
     wasm.__wasm_bindgen_func_elem_94968(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_100017(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_100017(arg0, arg1, isLikeNone(arg2) ? 0 : addHeapObject(arg2));
+function __wasm_bindgen_func_elem_96755(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_96755(arg0, arg1, addHeapObject(arg2));
+}
+
+function __wasm_bindgen_func_elem_90804(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_90804(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
 const __wbindgen_enum_GamepadMappingType = ["", "standard"];
