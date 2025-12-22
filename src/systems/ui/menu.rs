@@ -7,6 +7,7 @@ use crate::components::player::{
     CombatStats, Currency, Hand, HandType, Health, Player, PlayerStats,
 };
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
+
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -45,7 +46,7 @@ pub fn get_weapon_description(weapon_type: WeaponType, loadout: Option<&MagicLoa
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
+pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Weapon Selection Menu (Full Screen)
     commands
         .spawn((
@@ -53,7 +54,7 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 position_type: PositionType::Absolute,
-                display: Display::None,
+                display: Display::Flex, // Changed from None to Flex as we spawn on enter
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::FlexStart, // Align to top
                 align_items: AlignItems::Center,
@@ -218,8 +219,8 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                                     ..default()
                                 }).with_children(|details| {
                                     // Magic Panel (Initially Hidden, managed by logic)
-                                    spawn_magic_panel(details, HandType::Left, asset_server);
-                                    spawn_weapon_detail_panel(details, HandType::Left, asset_server);
+                                    spawn_magic_panel(details, HandType::Left, &asset_server);
+                                    spawn_weapon_detail_panel(details, HandType::Left, &asset_server);
                                 });
                             });
                         });
@@ -353,8 +354,8 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                                     width: Val::Percent(65.0),
                                     ..default()
                                 }).with_children(|details| {
-                                    spawn_magic_panel(details, HandType::Right, asset_server);
-                                    spawn_weapon_detail_panel(details, HandType::Right, asset_server);
+                                    spawn_magic_panel(details, HandType::Right, &asset_server);
+                                    spawn_weapon_detail_panel(details, HandType::Right, &asset_server);
                                 });
                             });
                         });
@@ -476,6 +477,12 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                         });
                 });
         });
+}
+
+pub fn despawn_weapon_menu(mut commands: Commands, query: Query<Entity, With<WeaponMenuUI>>) {
+    for entity in &query {
+        commands.entity(entity).despawn();
+    }
 }
 
 #[allow(clippy::too_many_lines)]

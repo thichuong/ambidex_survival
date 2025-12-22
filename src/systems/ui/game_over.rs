@@ -1,16 +1,17 @@
 use super::components::{GameOverUI, NewGameButton};
 use crate::components::player::{CombatStats, Currency, Health, Player, Progression};
+
 use bevy::prelude::*;
 
 #[allow(clippy::too_many_lines)]
-pub fn spawn_game_over_menu(commands: &mut Commands) {
+pub fn spawn_game_over_menu(mut commands: Commands) {
     commands
         .spawn((
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 position_type: PositionType::Absolute,
-                display: Display::None,
+                display: Display::Flex,
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
@@ -118,4 +119,10 @@ pub fn spawn_game_over_menu(commands: &mut Commands) {
                     ));
                 });
         });
+}
+
+pub fn despawn_game_over_menu(mut commands: Commands, query: Query<Entity, With<GameOverUI>>) {
+    for entity in &query {
+        commands.entity(entity).despawn();
+    }
 }

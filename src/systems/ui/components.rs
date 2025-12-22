@@ -121,3 +121,6 @@ pub struct WeaponStateGroup {
     pub side: HandType,
     pub weapon_type: WeaponType,
 }
+
+#[derive(Component)]
+pub struct HUDRoot;

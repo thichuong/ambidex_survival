@@ -1,10 +1,12 @@
+use crate::resources::game_state::GameState;
 use crate::systems::ui::{
-    PurchaseEvent, handle_menu_toggle, handle_purchases, setup_ui, update_cooldown_indicators,
-    update_gold_ui, update_health_ui, update_hud_indicators, update_hud_magic_ui,
-    update_menu_cdr_text, update_menu_crit_text, update_menu_damage_text, update_menu_gold_text,
-    update_menu_health_text, update_menu_lifesteal_text, update_menu_magic_ui,
-    update_menu_weapon_buttons, update_menu_weapon_details_ui, update_round_text,
-    update_shuriken_count_ui, update_ui_visibility,
+    PurchaseEvent, despawn_game_over_menu, despawn_hud, despawn_tutorial_ui, despawn_weapon_menu,
+    handle_menu_toggle, handle_purchases, spawn_game_over_menu, spawn_hud, spawn_tutorial_ui,
+    spawn_weapon_menu, update_cooldown_indicators, update_gold_ui, update_health_ui,
+    update_hud_indicators, update_hud_magic_ui, update_menu_cdr_text, update_menu_crit_text,
+    update_menu_damage_text, update_menu_gold_text, update_menu_health_text,
+    update_menu_lifesteal_text, update_menu_magic_ui, update_menu_weapon_buttons,
+    update_menu_weapon_details_ui, update_round_text, update_shuriken_count_ui,
 };
 use bevy::prelude::*;
 
@@ -13,25 +15,48 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<PurchaseEvent>()
-            .add_systems(Startup, setup_ui)
-            .add_systems(Update, update_ui_visibility)
-            .add_systems(Update, update_hud_indicators)
-            .add_systems(Update, update_hud_magic_ui)
-            .add_systems(Update, update_menu_magic_ui)
-            .add_systems(Update, update_menu_weapon_details_ui)
-            .add_systems(Update, update_menu_weapon_buttons)
-            .add_systems(Update, update_health_ui)
-            .add_systems(Update, update_gold_ui)
-            .add_systems(Update, update_round_text)
-            .add_systems(Update, update_menu_gold_text)
-            .add_systems(Update, update_menu_health_text)
-            .add_systems(Update, update_menu_damage_text)
-            .add_systems(Update, update_menu_crit_text)
-            .add_systems(Update, update_menu_lifesteal_text)
-            .add_systems(Update, update_menu_cdr_text)
-            .add_systems(Update, update_cooldown_indicators)
-            .add_systems(Update, update_shuriken_count_ui)
-            .add_systems(Update, handle_purchases)
-            .add_systems(Update, handle_menu_toggle);
+            // Main Menu / Weapon Menu
+            .add_systems(OnEnter(GameState::WeaponMenu), spawn_weapon_menu)
+            .add_systems(OnExit(GameState::WeaponMenu), despawn_weapon_menu)
+            // HUD (Playing)
+            .add_systems(OnEnter(GameState::Playing), spawn_hud)
+            .add_systems(OnExit(GameState::Playing), despawn_hud)
+            // Tutorial
+            .add_systems(OnEnter(GameState::Tutorial), spawn_tutorial_ui)
+            .add_systems(OnExit(GameState::Tutorial), despawn_tutorial_ui)
+            // Game Over
+            .add_systems(OnEnter(GameState::GameOver), spawn_game_over_menu)
+            .add_systems(OnExit(GameState::GameOver), despawn_game_over_menu)
+            // Update Systems
+            .add_systems(
+                Update,
+                (
+                    update_hud_indicators,
+                    update_hud_magic_ui,
+                    update_shuriken_count_ui,
+                    update_health_ui,
+                    update_gold_ui,
+                    update_round_text,
+                    update_cooldown_indicators,
+                    handle_menu_toggle,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
+            .add_systems(
+                Update,
+                (
+                    update_menu_magic_ui,
+                    update_menu_weapon_details_ui,
+                    update_menu_weapon_buttons,
+                    update_menu_gold_text,
+                    update_menu_health_text,
+                    update_menu_damage_text,
+                    update_menu_crit_text,
+                    update_menu_lifesteal_text,
+                    update_menu_cdr_text,
+                    handle_purchases,
+                )
+                    .run_if(in_state(GameState::WeaponMenu)),
+            );
     }
 }

@@ -1,16 +1,17 @@
 use super::components::TutorialUI;
 use crate::resources::game_state::GameState;
+
 use bevy::prelude::*;
 
 #[allow(clippy::too_many_lines)]
-pub fn spawn_tutorial_ui(commands: &mut Commands) {
+pub fn spawn_tutorial_ui(mut commands: Commands) {
     commands
         .spawn((
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 position_type: PositionType::Absolute,
-                display: Display::None,
+                display: Display::Flex,
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
@@ -154,4 +155,10 @@ fn spawn_tutorial_line(parent: &mut ChildSpawnerCommands, label: &str, value: &s
                 TextColor(Color::WHITE),
             ));
         });
+}
+
+pub fn despawn_tutorial_ui(mut commands: Commands, query: Query<Entity, With<TutorialUI>>) {
+    for entity in &query {
+        commands.entity(entity).despawn();
+    }
 }

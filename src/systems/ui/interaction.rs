@@ -1,59 +1,8 @@
-use super::components::{GameOverUI, PurchaseEvent, ShopButton, TutorialUI, WeaponMenuUI};
+use super::components::{PurchaseEvent, ShopButton};
 use crate::components::player::{CombatStats, Currency, Health, Player, PlayerStats, Progression};
 use crate::configs::shop::get_card_config;
 use crate::resources::game_state::GameState;
 use bevy::prelude::*;
-
-#[allow(
-    clippy::unnecessary_wraps,
-    clippy::needless_pass_by_value,
-    clippy::type_complexity
-)]
-pub fn update_ui_visibility(
-    mut weapon_menu_query: Query<
-        &mut Node,
-        (With<WeaponMenuUI>, Without<GameOverUI>, Without<TutorialUI>),
-    >,
-    mut game_over_query: Query<
-        &mut Node,
-        (With<GameOverUI>, Without<WeaponMenuUI>, Without<TutorialUI>),
-    >,
-    mut tutorial_query: Query<
-        &mut Node,
-        (With<TutorialUI>, Without<WeaponMenuUI>, Without<GameOverUI>),
-    >,
-    game_state: Res<State<crate::resources::game_state::GameState>>,
-    round_manager: Res<crate::resources::round::RoundManager>,
-) {
-    // 1. Weapon Menu / Shop Visibility
-    for mut node in &mut weapon_menu_query {
-        node.display = if *game_state.get() == crate::resources::game_state::GameState::WeaponMenu
-            || round_manager.round_state == crate::resources::round::RoundState::Shop
-        {
-            Display::Flex
-        } else {
-            Display::None
-        };
-    }
-
-    // 2. Game Over Visibility
-    for mut node in &mut game_over_query {
-        node.display = if *game_state.get() == crate::resources::game_state::GameState::GameOver {
-            Display::Flex
-        } else {
-            Display::None
-        };
-    }
-
-    // 3. Tutorial Visibility
-    for mut node in &mut tutorial_query {
-        node.display = if *game_state.get() == crate::resources::game_state::GameState::Tutorial {
-            Display::Flex
-        } else {
-            Display::None
-        };
-    }
-}
 
 #[allow(
     clippy::too_many_arguments,

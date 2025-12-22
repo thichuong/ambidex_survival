@@ -1,13 +1,14 @@
 use super::components::{
-    CooldownOverlay, GoldText, HUDHandIndicator, HUDIcon, HealthBar, HealthText,
+    CooldownOverlay, GoldText, HUDHandIndicator, HUDIcon, HUDRoot, HealthBar, HealthText,
     MagicSlotIndicator, MenuButton, RoundText, ShurikenCountText,
 };
 use crate::components::player::{CombatStats, Currency, Hand, HandType, Health, Player};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
+
 use bevy::prelude::*;
 
 #[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
-pub fn spawn_hud(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+pub fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Root UI Node (HUD)
     commands
         .spawn((
@@ -20,6 +21,7 @@ pub fn spawn_hud(commands: &mut Commands, asset_server: &Res<AssetServer>) {
                 ..default()
             },
             Pickable::IGNORE,
+            HUDRoot,
         ))
         .with_children(|parent| {
             // Gold Display (Top Left)
@@ -458,5 +460,11 @@ pub fn update_shuriken_count_ui(
                 text.0 = String::new();
             }
         }
+    }
+}
+
+pub fn despawn_hud(mut commands: Commands, query: Query<Entity, With<HUDRoot>>) {
+    for entity in &query {
+        commands.entity(entity).despawn();
     }
 }
