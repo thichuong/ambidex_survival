@@ -599,8 +599,8 @@ fn spawn_magic_panel(
                         .spawn((
                             ImageNode::new(asset_server.load("ui/icons/magic_bolt.png")), // Default
                             Node {
-                                width: Val::Px(48.0),
-                                height: Val::Px(48.0),
+                                width: Val::Px(80.0),
+                                height: Val::Px(80.0),
                                 margin: UiRect::right(Val::Px(10.0)),
                                 ..default()
                             },
@@ -621,8 +621,8 @@ fn spawn_magic_panel(
                     icons.spawn((
                         ImageNode::new(asset_server.load("ui/icons/magic_blink.png")), // Default
                         Node {
-                            width: Val::Px(32.0),
-                            height: Val::Px(32.0), // Slightly smaller
+                            width: Val::Px(60.0),
+                            height: Val::Px(60.0), // Slightly smaller
                             ..default()
                         },
                         MagicCycleButton {
@@ -760,9 +760,9 @@ fn spawn_weapon_detail_panel(
                     group.spawn((
                         ImageNode::new(asset_server.load("ui/icons/sword_normal.png")),
                         Node {
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
+                            margin: UiRect::horizontal(Val::Px(10.0)),
                             ..default()
                         },
                     ));
@@ -770,9 +770,9 @@ fn spawn_weapon_detail_panel(
                     group.spawn((
                         ImageNode::new(asset_server.load("ui/icons/sword_shattered.png")),
                         Node {
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
+                            margin: UiRect::horizontal(Val::Px(10.0)),
                             ..default()
                         },
                     ));
@@ -798,9 +798,9 @@ fn spawn_weapon_detail_panel(
                     group.spawn((
                         ImageNode::new(asset_server.load("ui/icons/gun_single.png")),
                         Node {
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
+                            margin: UiRect::horizontal(Val::Px(10.0)),
                             ..default()
                         },
                     ));
@@ -808,9 +808,9 @@ fn spawn_weapon_detail_panel(
                     group.spawn((
                         ImageNode::new(asset_server.load("ui/icons/gun_shotgun.png")),
                         Node {
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
+                            margin: UiRect::horizontal(Val::Px(10.0)),
                             ..default()
                         },
                     ));
@@ -818,9 +818,9 @@ fn spawn_weapon_detail_panel(
                     group.spawn((
                         ImageNode::new(asset_server.load("ui/icons/gun_rapid.png")),
                         Node {
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
+                            margin: UiRect::horizontal(Val::Px(10.0)),
                             ..default()
                         },
                     ));
@@ -845,8 +845,8 @@ fn spawn_weapon_detail_panel(
                     group.spawn((
                         ImageNode::new(asset_server.load("ui/icons/shuriken.png")),
                         Node {
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
+                            width: Val::Px(80.0),
+                            height: Val::Px(80.0),
                             ..default()
                         },
                     ));
