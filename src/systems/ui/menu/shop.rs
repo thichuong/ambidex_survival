@@ -239,7 +239,7 @@ const fn get_shop_button_content(
         ShopButton::MaxHealthUp => ("Max HP", "+20", "150G"),
         ShopButton::CritDamageUp => ("Crit Dmg", "+50%", "200G"),
         ShopButton::CritChanceUp => ("Crit Rate", "+10%", "250G"),
-        ShopButton::LifestealUp => ("Lifesteal", "+10% / AOE:5%", "300G"),
+        ShopButton::LifestealUp => ("Lifesteal", "+10% |\nAOE: +5%", "300G"),
         ShopButton::CooldownReductionUp => ("CDR", "+10%", "350G"),
     }
 }
