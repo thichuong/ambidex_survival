@@ -45,6 +45,20 @@ cargo run
 trunk serve
 ```
 
+## 🧪 Testing
+
+The project includes unit tests for core mechanics like physics, spatial partitioning, and combat systems.
+
+### Run Tests
+```bash
+cargo test
+```
+
+### Run Tests with Logging
+```bash
+cargo test -- --nocapture
+```
+
 ## 🔫 Weapons & Skills
 
 Every weapon features a primary attack and a unique "Skill" (`Q` for Left Hand, `E` for Right Hand).
