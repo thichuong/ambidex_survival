@@ -478,13 +478,9 @@ fn spawn_weapon_button(
         .observe(
             |trigger: On<Pointer<Click>>,
              button_query: Query<&WeaponButton>,
-             mut hand_query: Query<(&mut Hand, &mut crate::components::weapon::Weapon)>,
-             mut color_query: Query<&mut BackgroundColor>| {
+             mut hand_query: Query<(&mut Hand, &mut crate::components::weapon::Weapon)>| {
                 if let Ok(button_data) = button_query.get(trigger.entity) {
-                    if let Ok(mut color) = color_query.get_mut(trigger.entity) {
-                        *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
-                    }
-
+                    // Update internal state
                     for (mut hand, mut weapon) in &mut hand_query {
                         if hand.side == button_data.side {
                             hand.equipped_weapon = Some(button_data.kind);
@@ -514,20 +510,7 @@ fn spawn_weapon_button(
                 }
             },
         )
-        .observe(
-            |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
-                if let Ok(mut color) = color.get_mut(trigger.entity) {
-                    *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 1.0));
-                }
-            },
-        )
-        .observe(
-            |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
-                if let Ok(mut color) = color.get_mut(trigger.entity) {
-                    *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0));
-                }
-            },
-        )
+        // Removed Observers that fight with system based highlighting
         .with_children(|btn| {
             btn.spawn((
                 Text::new(label),
@@ -563,9 +546,9 @@ fn spawn_magic_panel(
             MagicPanel { side },
         ))
         .with_children(|panel| {
-            // Label "Lựa chọn spell"
+            // Label "Select Spell"
             panel.spawn((
-                Text::new("Lựa chọn spell"),
+                Text::new("Select Spell"),
                 TextFont {
                     font_size: 18.0,
                     ..default()
@@ -1096,5 +1079,28 @@ pub fn update_menu_cdr_text(
             let cdr = stats.cooldown_reduction * 100.0;
             text.0 = format!("CDR: {cdr:.0}%");
         }
+    }
+}
+
+pub fn update_menu_weapon_buttons(
+    mut button_query: Query<(&WeaponButton, &mut BackgroundColor)>,
+    hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
+) {
+    // Iterate all buttons and check if they match the equipped weapon for their side
+    for (button, mut color) in &mut button_query {
+        let mut is_active = false;
+
+        // Find the hand matching the button's side
+        if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == button.side) {
+            if weapon.kind == button.kind {
+                is_active = true;
+            }
+        }
+
+        if is_active {
+            *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0)); // Green for active
+        } else {
+            *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)); // Gray for inactive
+        };
     }
 }
