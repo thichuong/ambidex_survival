@@ -121,12 +121,12 @@ Modularized UI systems:
 #### `combat/`
 Modularized combat systems following Bevy 0.17 ECS best practices:
 - `mod.rs`: `CombatInputParams` SystemParam bundle using `Single<T>` for Camera/Window access.
-- `sword.rs`: Sword swings and mode switching (Normal/Shattered).
-- `sword_mechanics.rs`: Advanced sword logic and hit detection.
-- `gun.rs`: Gun firing modes (Single, Shotgun, Rapid) and automatic fire.
-- `shuriken.rs`: Shuriken projectiles and teleport skill.
-- `events.rs`: Combat-related events (`CollisionEvent`, `EnemyDeathEvent`).
-- `player_collision.rs`: Player hitbox and damage reception.
+- `sword.rs` & `sword_mechanics.rs`: Advanced sword logic, swing states, and frame-accurate hit detection.
+- `gun.rs`: Multi-mode firearm systems (Single, Shotgun, Rapid) with automatic fire logic.
+- `shuriken.rs`: Velocity-based shuriken projectiles and teleportation skill.
+- `events.rs`: Unified combat events using `Message` derive for `MessageReader` compatibility.
+- `player_collision.rs`: Player-enemy overlap handling and reactive damage reception.
+- **Architectural Note**: All systems use `()` return types and communicate via `MessageWriter`/`MessageReader` or reactive `On<E>` observers.
 
 #### `combat/magic/`
 Magic spell sub-system:
@@ -146,9 +146,9 @@ Collision detection and damage processing pipeline:
 - `enemy_death.rs`: Enemy death particles and gold drops.
 
 ### `src/systems/` (Root Level)
-- `player.rs`: Player spawning and movement.
-- `enemy.rs`: Enemy AI, movement, and spawning logic.
-- `physics.rs`: Movement and velocity systems.
-- `weapon_visuals.rs`: Visual effects for projectiles and sword swings.
-- `damage_text.rs`: Floating damage number system.
-- `object_pooling.rs`: Entity recycling for performance.
+- `player.rs`: Player spawning and movement using `Single<Window>`.
+- `enemy.rs`: Enemy AI, movement, and wave spawning logic.
+- `physics.rs`: Decoupled movement and velocity integration systems.
+- `weapon_visuals.rs`: Visual effects for projectiles and swing animations.
+- `damage_text.rs`: Reactive floating numbers triggered by `On<DamageEvent>`.
+- `object_pooling.rs`: Entity recycling for performance-critical objects.

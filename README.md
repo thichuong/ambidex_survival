@@ -18,12 +18,13 @@ The core of the game is the **Ambidex System**, which gives you independent cont
 The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17, organized into a **Plugin-based Architecture** for modularity and maintainability.
 
 ### Core Principles
-- **Plugin Organization**: The app is structured into independent plugins (`CombatPlugin`, `UIPlugin`, `PhysicsPlugin`, `VisualsPlugin`, `PlayerPlugin`) for clean separation of concerns.
-- **Modular Weapon Systems**: Each weapon (Sword, Gun, Shuriken, Magic) is an independent system with specialized logic (e.g., automatic fire, teleportation, spell slots).
-- **Modern System Parameters**: Uses `Single<T>` for singleton component access (Camera, Window) and `SystemParam` bundles for complex parameter sets.
-- **Collision Pipeline**: A dedicated `collision/` sub-module handles detection, damage processing, visual effects, and enemy death in separate, focused systems.
-- **Reactive Event-Driven Design**: Systems communicate via Events (`PurchaseEvent`, `DamageEvent`, `CollisionEvent`) and reactive observers (`Trigger`) for state consistency.
-- **GameState Management**: The game uses `States` (Playing, Paused, GameOver, WeaponMenu) for proper system scheduling and UI transitions.
+- **Plugin Organization**: Structured into independent plugins (`CombatPlugin`, `UIPlugin`, `PhysicsPlugin`, `VisualsPlugin`, `PlayerPlugin`) for clean separation of concerns.
+- **Modular Weapon Systems**: Every weapon (Sword, Gun, Shuriken, Magic) is an independent system using optimized ECS filters and trait-like component patterns.
+- **Bevy 0.17 Ergonomics**: Leverages `Single<T>` for singleton access, `Mut<T>` for efficient change detection, and `()` system return types for standard compliance.
+- **Event-Driven Communication**: Unified event handling using Bevy's native `Event` system enhanced with `Message` derive, providing typesafe `MessageReader` and `MessageWriter` for inter-plugin communication.
+- **Reactive Observers**: High-performance reactive logic triggered by `On<E>` observers (e.g., spawn damage text on hit, trigger effects on death), reducing per-frame overhead.
+- **Collision Pipeline**: Dedicated `collision/` sub-module handles detection, damage processing, and visual effects in separate, focused systems.
+- **GameState Management**: Proper system scheduling and UI transitions via Bevy `States` (Playing, Paused, GameOver, WeaponMenu).
 
 ## 📁 Project Structure
 For a detailed breakdown of the codebase organization, see [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md).
