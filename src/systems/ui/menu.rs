@@ -428,6 +428,22 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                                 next_state.set(crate::resources::game_state::GameState::Playing);
                             },
                         )
+                        .observe(
+                            |trigger: On<Pointer<Over>>,
+                             mut color: Query<&mut BackgroundColor>| {
+                                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                                    *color = BackgroundColor(Color::srgba(0.2, 0.6, 0.2, 1.0));
+                                }
+                            },
+                        )
+                        .observe(
+                            |trigger: On<Pointer<Out>>,
+                             mut color: Query<&mut BackgroundColor>| {
+                                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                                    *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0));
+                                }
+                            },
+                        )
                         .with_children(|btn| {
                             btn.spawn((
                                 Text::new("BACK TO GAME"),
