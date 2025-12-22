@@ -231,73 +231,81 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                             Node {
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
-                                width: Val::Percent(30.0),
-                                height: Val::Percent(100.0), // Fill height
-                                padding: UiRect::all(Val::Px(20.0)),
+                                width: Val::Percent(38.0),
+                                min_width: Val::Px(400.0),
+                                max_height: Val::Percent(85.0),
+                                padding: UiRect::all(Val::Px(16.0)),
                                 border: UiRect::all(Val::Px(2.0)),
+                                overflow: Overflow::scroll_y(),
                                 ..default()
                             },
-                            BorderColor::all(Color::srgba(0.5, 0.5, 0.5, 0.5)),
-                            BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.5)),
+                            BorderColor::all(Color::srgba(0.4, 0.4, 0.5, 0.8)),
+                            BorderRadius::all(Val::Px(16.0)),
+                            BackgroundColor(Color::srgba(0.08, 0.08, 0.12, 0.9)),
                         ))
                         .with_children(|shop_container| {
+                            // Shop Title with gradient-like styling
                             shop_container.spawn((
-                                Text::new("SHOP"),
+                                Text::new("⚒️ SHOP"),
                                 TextFont {
-                                    font_size: 32.0,
+                                    font_size: 28.0,
                                     ..default()
                                 },
-                                TextColor(Color::WHITE),
+                                TextColor(Color::srgb(1.0, 0.9, 0.5)),
                                 Node {
-                                    margin: UiRect::bottom(Val::Px(20.0)),
+                                    margin: UiRect::bottom(Val::Px(16.0)),
                                     ..default()
                                 },
                             ));
 
+                            // Cards Grid Container
                             shop_container
                                 .spawn(Node {
                                     flex_direction: FlexDirection::Row,
                                     flex_wrap: FlexWrap::Wrap,
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::FlexStart,
+                                    align_content: AlignContent::FlexStart,
                                     width: Val::Percent(100.0),
+                                    row_gap: Val::Px(8.0),
+                                    column_gap: Val::Px(8.0),
                                     ..default()
                                 })
                                 .with_children(|shop_row| {
                                     spawn_shop_button(
                                         shop_row,
                                         ShopButton::Heal,
-                                        "Heal\n(+30 HP)\n50G",
+                                        "",
                                     );
                                     spawn_shop_button(
                                         shop_row,
                                         ShopButton::DamageUp,
-                                        "Damage Up\n(+10%)\n100G",
+                                        "",
                                     );
                                     spawn_shop_button(
                                         shop_row,
                                         ShopButton::MaxHealthUp,
-                                        "Max HP Up\n(+20)\n150G",
+                                        "",
                                     );
                                     spawn_shop_button(
                                         shop_row,
                                         ShopButton::CritDamageUp,
-                                        "Crit Damage\n(+50%)\n200G",
+                                        "",
                                     );
                                     spawn_shop_button(
                                         shop_row,
                                         ShopButton::CritChanceUp,
-                                        "Crit Chance\n(+10%)\n250G",
+                                        "",
                                     );
                                     spawn_shop_button(
                                         shop_row,
                                         ShopButton::LifestealUp,
-                                        "Lifesteal\n(+10%)\n300G",
+                                        "",
                                     );
                                     spawn_shop_button(
                                         shop_row,
                                         ShopButton::CooldownReductionUp,
-                                        "Magic CDR\n(+10%)\n350G",
+                                        "",
                                     );
                                 });
                         });
@@ -486,31 +494,60 @@ pub fn despawn_weapon_menu(mut commands: Commands, query: Query<Entity, With<Wea
 }
 
 #[allow(clippy::too_many_lines)]
-fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, label: &str) {
+fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, _label: &str) {
+    // Determine card type: BLUE (Advanced) or WHITE (Basic)
     let is_blue = matches!(
         btn_type,
         ShopButton::CritChanceUp | ShopButton::LifestealUp | ShopButton::CooldownReductionUp
     );
 
+    // Get icon, title, description, and price for each upgrade type
+    let (icon, title, desc, price) = match btn_type {
+        ShopButton::Heal => ("❤️", "Heal", "+30 HP", "50G"),
+        ShopButton::DamageUp => ("⚔️", "Damage", "+10%", "100G"),
+        ShopButton::MaxHealthUp => ("💖", "Max HP", "+20", "150G"),
+        ShopButton::CritDamageUp => ("💥", "Crit Dmg", "+50%", "200G"),
+        ShopButton::CritChanceUp => ("🎯", "Crit Rate", "+10%", "250G"),
+        ShopButton::LifestealUp => ("🩸", "Lifesteal", "+10%", "300G"),
+        ShopButton::CooldownReductionUp => ("⏱️", "CDR", "+10%", "350G"),
+    };
+
+    // Card colors based on type
+    let (border_color, bg_color, bg_hover, text_accent) = if is_blue {
+        (
+            Color::srgb(0.0, 0.7, 1.0),          // Bright cyan border
+            Color::srgba(0.0, 0.12, 0.25, 0.95), // Dark blue background
+            Color::srgba(0.0, 0.2, 0.4, 1.0),    // Hover blue
+            Color::srgb(0.4, 0.9, 1.0),          // Cyan accent text
+        )
+    } else {
+        (
+            Color::srgb(0.9, 0.9, 0.95),         // Soft white border
+            Color::srgba(0.15, 0.15, 0.2, 0.95), // Dark gray background
+            Color::srgba(0.25, 0.25, 0.3, 1.0),  // Hover gray
+            Color::srgb(1.0, 1.0, 1.0),          // White accent text
+        )
+    };
+
     parent
         .spawn((
             Button,
             Node {
-                width: Val::Px(140.0), // Square-ish card
-                height: Val::Px(140.0),
-                margin: UiRect::all(Val::Px(10.0)),
-                justify_content: JustifyContent::Center,
+                width: Val::Px(130.0),
+                min_width: Val::Px(100.0),
+                height: Val::Px(160.0),
+                min_height: Val::Px(140.0),
+                margin: UiRect::all(Val::Px(8.0)),
+                padding: UiRect::all(Val::Px(12.0)),
+                justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,
-                flex_direction: FlexDirection::Column, // Stack text if needed
-                border: UiRect::all(Val::Px(4.0)),
+                flex_direction: FlexDirection::Column,
+                border: UiRect::all(Val::Px(3.0)),
                 ..default()
             },
-            if is_blue {
-                BorderColor::all(Color::srgb(0.0, 0.5, 1.0))
-            } else {
-                BorderColor::all(Color::WHITE)
-            },
-            BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
+            BorderColor::all(border_color),
+            BorderRadius::all(Val::Px(12.0)),
+            BackgroundColor(bg_color),
             btn_type,
         ))
         .observe(
@@ -526,28 +563,76 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
             },
         )
         .observe(
-            |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+            move |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
                 if let Ok(mut color) = color.get_mut(trigger.entity) {
-                    *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 1.0));
+                    *color = BackgroundColor(bg_hover);
                 }
             },
         )
         .observe(
-            |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+            move |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
                 if let Ok(mut color) = color.get_mut(trigger.entity) {
-                    *color = BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0));
+                    *color = BackgroundColor(bg_color);
                 }
             },
         )
-        .with_children(|btn| {
-            btn.spawn((
-                Text::new(label),
+        .with_children(|card| {
+            // Icon (large emoji at top)
+            card.spawn((
+                Text::new(icon),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: 32.0,
                     ..default()
                 },
                 TextColor(Color::WHITE),
+                Node {
+                    margin: UiRect::bottom(Val::Px(4.0)),
+                    ..default()
+                },
             ));
+
+            // Title (upgrade name)
+            card.spawn((
+                Text::new(title),
+                TextFont {
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(text_accent),
+            ));
+
+            // Description (effect)
+            card.spawn((
+                Text::new(desc),
+                TextFont {
+                    font_size: 13.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.7, 0.7, 0.7)),
+            ));
+
+            // Price container
+            card.spawn((
+                Node {
+                    margin: UiRect::top(Val::Px(8.0)),
+                    padding: UiRect::axes(Val::Px(10.0), Val::Px(4.0)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.3)),
+                BorderRadius::all(Val::Px(6.0)),
+            ))
+            .with_children(|price_box| {
+                price_box.spawn((
+                    Text::new(format!("💰 {price}")),
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(1.0, 0.85, 0.0)), // Gold color
+                ));
+            });
         });
 }
 
