@@ -48,6 +48,7 @@ ambidex_survival/
 │   │   │   │   └── nova.rs
 │   │   │   ├── mod.rs          # CombatInputParams, shared types, events
 │   │   │   ├── events.rs
+│   │   │   ├── elite_ai.rs     # AI for Elite enemies (Teleport + Spread fire)
 │   │   │   ├── gun.rs
 │   │   │   ├── player_collision.rs
 │   │   │   ├── shuriken.rs
@@ -82,6 +83,7 @@ Components are pure data structs that attach to entities.
 - `enemy.rs`: Enemy marker and stat components.
 - `physics.rs`: Velocity, Collider labels, sensor markers.
 - `attack_effects.rs`: Components for projectiles and damage effects.
+- `faction.rs`: Unified `Faction` enum for targeting logic (Player vs Enemy).
 
 ### `src/configs/`
 Configuration modules for gameplay balancing. All constants in one place.
@@ -141,10 +143,13 @@ Magic spell sub-system:
 #### `combat/collision/`
 Collision detection and damage processing pipeline:
 - `mod.rs`: Shared types (`ProjectileQueryItem`) and re-exports.
-- `detection.rs`: Spatial collision detection between projectiles and enemies.
+- `detection.rs`: Faction-aware spatial collision detection.
 - `damage.rs`: Damage calculation, critical hits, lifesteal.
 - `effects.rs`: Explosion effects and projectile despawning.
 - `enemy_death.rs`: Enemy death particles and gold drops.
+
+#### `systems/` (Combat Root Extensions)
+- `elite_ai.rs`: State-machine based AI for elite enemies featuring teleportation, predictive targeting, and damage scaling.
 
 ### `src/systems/` (Root Level)
 - `player.rs`: Player spawning and movement using `Single<Window>`.

@@ -4,7 +4,7 @@
   <img src="assets/icon-512.png" alt="Ambidex Survival Icon" width="200" />
 </p>
 
-**Ambidex Survival** is a high-octane dual-stick survival shooter built with **Rust** and the **Bevy** engine. Take control of two independent hands, customize your loadout with a variety of weapons and spells, and survive as long as you can against ever-increasing waves of enemies.
+**Ambidex Survival** is a high-octane dual-stick survival shooter built with **Rust** and the **Bevy** engine. Take control of two independent hands, customize your loadout with a variety of weapons and spells, and survive as long as you can against ever-increasing waves of enemies, including dangerous **Elite** variants.
 
 ## ⚔️ The "Ambidex" Combat System
 
@@ -25,6 +25,7 @@ The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17, organized int
 - **Reactive Observers**: High-performance reactive logic triggered by `On<E>` observers (e.g., spawn damage text on hit, trigger effects on death), reducing per-frame overhead.
 - **Collision Pipeline**: Dedicated `collision/` sub-module handles detection, damage processing, and visual effects in separate, focused systems.
 - **GameState Management**: Proper system scheduling and UI transitions via Bevy `States` (Playing, Paused, GameOver, WeaponMenu, Tutorial).
+- **Faction System**: Integrated targeting logic ensures attacks hit intended factions while preventing friendly fire among enemies.
 
 ## 📁 Project Structure
 For a detailed breakdown of the codebase organization, see [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md).
@@ -93,6 +94,23 @@ The most customizable weapon. Each Magic Hand has two spell slots: **Primary** a
     - **Nova**: A radial burst centered on the player for high area damage.
     - **Blink**: Short-range teleport to the cursor position.
     - **Global**: A massive strike that hits everything on screen.
+
+## 👺 Enemies & AI
+
+The game features intelligent enemies that scale in difficulty as rounds progress.
+
+### 🧟 Normal Enemies
+Swarm-type enemies that chase the player and deal contact damage.
+- **Scaling**: HP and speed increase with each round.
+- **Reward**: **10G** per kill.
+
+### ⚡ Elite Enemies
+Advanced variants that appear in later rounds with unique combat logic.
+- **Teleportation**: Randomly teleports near the player to maintain pressure.
+- **Spread Shot**: Fires purple high-velocity shurikens in a wide arc.
+- **Damage Scaling**: Elite shuriken damage scales with the player's own damage upgrades, making them a constant threat.
+- **HP Scaling**: Gains **20 Max HP** per round for increased tankiness.
+- **Reward**: **100G** per kill.
 
 ## 💰 Economy & Progression
 
