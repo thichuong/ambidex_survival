@@ -283,3 +283,164 @@ pub fn check_collision(
         _ => false,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_grid_cell_coords() {
+        let grid = UniformGrid::new(100.0);
+        assert_eq!(grid.cell_coords(Vec2::new(50.0, 50.0)), (0, 0));
+        assert_eq!(grid.cell_coords(Vec2::new(150.0, -50.0)), (1, -1));
+        assert_eq!(grid.cell_coords(Vec2::new(-50.0, 150.0)), (-1, 1));
+    }
+
+    #[test]
+    fn test_grid_insert_and_query() {
+        let mut grid = UniformGrid::new(100.0);
+        let mut world = World::new();
+        let e1 = world.spawn_empty().id();
+        let e2 = world.spawn_empty().id();
+
+        grid.insert(e1, Vec2::new(50.0, 50.0));
+        grid.insert(e2, Vec2::new(150.0, 50.0));
+
+        let nearby = grid.query_nearby(Vec2::new(50.0, 50.0));
+        assert!(nearby.contains(&e1));
+        assert!(nearby.contains(&e2)); // e2 is in (1,0), which is a neighbor of (0,0)
+
+        let far_nearby = grid.query_nearby(Vec2::new(350.0, 350.0));
+        assert!(far_nearby.is_empty());
+    }
+
+    #[test]
+    fn test_grid_clear() {
+        let mut grid = UniformGrid::new(100.0);
+        let mut world = World::new();
+        let e1 = world.spawn_empty().id();
+        grid.insert(e1, Vec2::new(50.0, 50.0));
+
+        grid.clear();
+        let nearby = grid.query_nearby(Vec2::new(50.0, 50.0));
+        assert!(nearby.is_empty());
+    }
+
+    #[test]
+    fn test_circle_circle_collision() {
+        // Overlap
+        assert!(circle_circle_collision(
+            Vec2::ZERO,
+            10.0,
+            Vec2::new(5.0, 0.0),
+            10.0
+        ));
+        // Touching
+        assert!(circle_circle_collision(
+            Vec2::ZERO,
+            10.0,
+            Vec2::new(20.0, 0.0),
+            10.0
+        ));
+        // No overlap
+        assert!(!circle_circle_collision(
+            Vec2::ZERO,
+            10.0,
+            Vec2::new(21.0, 0.0),
+            10.0
+        ));
+    }
+
+    #[test]
+    fn test_circle_rect_collision() {
+        let rect_pos = Vec2::ZERO;
+        let hw = 10.0;
+        let hh = 10.0;
+
+        // Inside
+        assert!(circle_rect_collision(Vec2::ZERO, 5.0, rect_pos, hw, hh));
+        // Overlap edge
+        assert!(circle_rect_collision(
+            Vec2::new(12.0, 0.0),
+            5.0,
+            rect_pos,
+            hw,
+            hh
+        ));
+        // Overlap corner
+        assert!(circle_rect_collision(
+            Vec2::new(12.0, 12.0),
+            5.0,
+            rect_pos,
+            hw,
+            hh
+        ));
+        // No overlap
+        assert!(!circle_rect_collision(
+            Vec2::new(20.0, 0.0),
+            5.0,
+            rect_pos,
+            hw,
+            hh
+        ));
+    }
+
+    #[test]
+    fn test_circle_line_collision() {
+        let line_start = Vec2::ZERO;
+        let direction = Vec2::X;
+        let length = 100.0;
+        let width = 5.0;
+
+        // On line
+        assert!(circle_line_collision(
+            Vec2::new(50.0, 0.0),
+            5.0,
+            line_start,
+            direction,
+            length,
+            width
+        ));
+        // Near start
+        assert!(circle_line_collision(
+            Vec2::new(-2.0, 0.0),
+            5.0,
+            line_start,
+            direction,
+            length,
+            width
+        ));
+        // Near end
+        assert!(circle_line_collision(
+            Vec2::new(102.0, 0.0),
+            5.0,
+            line_start,
+            direction,
+            length,
+            width
+        ));
+        // Too far side
+        assert!(!circle_line_collision(
+            Vec2::new(50.0, 20.0),
+            5.0,
+            line_start,
+            direction,
+            length,
+            width
+        ));
+    }
+
+    #[test]
+    fn test_aabb_collision() {
+        let col = Collider::cuboid(10.0, 10.0);
+        // Overlap
+        assert!(check_collision(Vec2::ZERO, &col, Vec2::new(5.0, 5.0), &col));
+        // No overlap
+        assert!(!check_collision(
+            Vec2::ZERO,
+            &col,
+            Vec2::new(25.0, 0.0),
+            &col
+        ));
+    }
+}

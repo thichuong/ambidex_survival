@@ -83,3 +83,43 @@ pub fn manage_lifetime(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[test]
+    fn test_manage_lifetime() {
+        let mut app = App::new();
+
+        let entity = app
+            .world_mut()
+            .spawn(Lifetime {
+                timer: Timer::new(Duration::from_millis(100), TimerMode::Once),
+            })
+            .id();
+
+        app.init_resource::<Time>();
+        app.add_systems(Update, manage_lifetime);
+
+        // One frame pass (50ms)
+        {
+            let mut time = app.world_mut().resource_mut::<Time>();
+            time.advance_by(Duration::from_millis(50));
+        }
+        app.update();
+
+        // Entity should still exist. In Bevy 0.17, world.get_entity returns Result.
+        assert!(app.world().get_entity(entity).is_ok());
+
+        // Another frame pass (100ms total)
+        let mut time = app.world_mut().resource_mut::<Time>();
+        time.advance_by(Duration::from_millis(100));
+
+        app.update();
+
+        // Entity should be despawned
+        assert!(app.world().get_entity(entity).is_err());
+    }
+}
