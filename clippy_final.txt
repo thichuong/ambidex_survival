@@ -1,0 +1,149 @@
+    Checking ambidex_survival v0.1.0 (/home/tchuong/Màn hình nền/ambidex_survival)
+error: this argument is passed by value, but not consumed in the function body
+  --> src/systems/combat/collision/effects.rs:24:10
+   |
+24 |     res: Res<crate::resources::cached_assets::CachedAssets>,
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+   = note: `-D clippy::needless-pass-by-value` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::needless_pass_by_value)]`
+help: consider taking a reference instead
+   |
+24 |     res: &Res<crate::resources::cached_assets::CachedAssets>,
+   |          +
+
+error: this argument is passed by value, but not consumed in the function body
+   --> src/systems/ui/hud.rs:322:13
+    |
+322 |     player: Single<&Health, With<Player>>,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+help: consider taking a reference instead
+    |
+322 |     player: &Single<&Health, With<Player>>,
+    |             +
+
+error: this argument is passed by value, but not consumed in the function body
+   --> src/systems/ui/hud.rs:338:13
+    |
+338 |     player: Single<&Currency, With<Player>>,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+help: consider taking a reference instead
+    |
+338 |     player: &Single<&Currency, With<Player>>,
+    |             +
+
+error: this argument is passed by value, but not consumed in the function body
+   --> src/systems/ui/hud.rs:357:13
+    |
+357 |     player: Single<&MagicLoadout, With<Player>>,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+help: consider taking a reference instead
+    |
+357 |     player: &Single<&MagicLoadout, With<Player>>,
+    |             +
+
+error: this argument is passed by value, but not consumed in the function body
+   --> src/systems/ui/hud.rs:358:19
+    |
+358 |     asset_server: Res<AssetServer>,
+    |                   ^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+help: consider taking a reference instead
+    |
+358 |     asset_server: &Res<AssetServer>,
+    |                   +
+
+error: this argument is passed by value, but not consumed in the function body
+   --> src/systems/ui/hud.rs:389:13
+    |
+389 |     player: Single<&CombatStats, With<Player>>,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+help: consider taking a reference instead
+    |
+389 |     player: &Single<&CombatStats, With<Player>>,
+    |             +
+
+error: this argument is passed by value, but not consumed in the function body
+   --> src/systems/ui/hud.rs:390:11
+    |
+390 |     time: Res<Time>,
+    |           ^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+help: consider taking a reference instead
+    |
+390 |     time: &Res<Time>,
+    |           +
+
+error: this argument is passed by value, but not consumed in the function body
+   --> src/systems/ui/interaction.rs:193:12
+    |
+193 |     input: Res<ButtonInput<KeyCode>>,
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+help: consider taking a reference instead
+    |
+193 |     input: &Res<ButtonInput<KeyCode>>,
+    |            +
+
+error: this argument is passed by value, but not consumed in the function body
+   --> src/systems/ui/interaction.rs:194:12
+    |
+194 |     state: Res<State<GameState>>,
+    |            ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_pass_by_value
+help: consider taking a reference instead
+    |
+194 |     state: &Res<State<GameState>>,
+    |            +
+
+error: these match arms have identical bodies
+   --> src/systems/ui/interaction.rs:199:13
+    |
+199 | /             GameState::Playing => {
+200 | |                 next_state.set(GameState::WeaponMenu);
+201 | |             }
+    | |_____________^
+...
+205 | /             GameState::Tutorial => {
+206 | |                 next_state.set(GameState::WeaponMenu);
+207 | |             }
+    | |_____________^
+    |
+    = help: if this is unintentional make the arms return different values
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#match_same_arms
+    = note: `-D clippy::match-same-arms` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::match_same_arms)]`
+help: otherwise merge the patterns into a single arm
+    |
+199 ~             GameState::WeaponMenu => {
+200 |                 next_state.set(GameState::Playing);
+201 |             }
+202 ~             GameState::Playing | GameState::Tutorial => {
+    |
+
+error: wildcard matches only a single variant and will also match any future added variants
+   --> src/systems/ui/interaction.rs:208:13
+    |
+208 |             _ => {}
+    |             ^ help: try: `GameState::GameOver`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#match_wildcard_for_single_variants
+    = note: `-D clippy::match-wildcard-for-single-variants` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::match_wildcard_for_single_variants)]`
+
+error: could not compile `ambidex_survival` (bin "ambidex_survival") due to 11 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `ambidex_survival` (bin "ambidex_survival" test) due to 11 previous errors

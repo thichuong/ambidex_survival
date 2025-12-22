@@ -1,7 +1,7 @@
 //! Damage processing when collisions occur
 
 use crate::components::enemy::Enemy;
-use crate::components::player::{CombatStats, Health};
+use crate::components::player::{CombatStats, Health, Player};
 use crate::components::weapon::Projectile;
 use crate::systems::combat::{CollisionEvent, DamageEvent};
 use bevy::prelude::*;
@@ -16,9 +16,9 @@ pub fn damage_processing_system(
     mut collision_events: MessageReader<CollisionEvent>,
     projectile_query: Query<&Projectile>,
     mut enemy_query: Query<&mut Enemy>,
-    mut player: Single<(&mut Health, &CombatStats)>,
+    player: Single<(&mut Health, &CombatStats), With<Player>>,
 ) {
-    let (ref mut player_health, player_stats) = *player;
+    let (mut player_health, player_stats) = player.into_inner();
     for event in collision_events.read() {
         // Retrieve projectile data
         let Ok(projectile) = projectile_query.get(event.projectile) else {

@@ -1,0 +1,27 @@
+    Checking ambidex_survival v0.1.0 (/home/tchuong/Màn hình nền/ambidex_survival)
+error[E0596]: cannot borrow `player` as mutable, as it is not declared as mutable
+  --> src/systems/player.rs:79:38
+   |
+79 |     let (ref mut velocity, stats) = *player;
+   |                                      ^^^^^^ cannot borrow as mutable
+   |
+help: consider changing this to be mutable
+   |
+77 |     mut player: Single<(&mut Velocity, &PlayerStats), With<Player>>,
+   |     +++
+
+error[E0596]: cannot borrow `player` as mutable, as it is not declared as mutable
+   --> src/systems/player.rs:117:9
+    |
+117 |         player.rotation = Quat::from_rotation_z(angle);
+    |         ^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+106 |     mut player: Single<&mut Transform, With<Player>>,
+    |     +++
+
+For more information about this error, try `rustc --explain E0596`.
+error: could not compile `ambidex_survival` (bin "ambidex_survival") due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `ambidex_survival` (bin "ambidex_survival" test) due to 2 previous errors

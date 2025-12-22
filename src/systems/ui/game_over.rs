@@ -49,7 +49,7 @@ pub fn spawn_game_over_menu(commands: &mut Commands) {
                 .observe(
                     |_trigger: On<Pointer<Click>>,
                      mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>,
-                     mut player_query: Query<
+                     player: Single<
                         (
                             &mut Health,
                             &mut Currency,
@@ -67,20 +67,14 @@ pub fn spawn_game_over_menu(commands: &mut Commands) {
                     >,
                      mut commands: Commands| {
                         // Reset Player
-                        if let Ok((
-                            mut health,
-                            mut currency,
-                            mut combat,
-                            mut progression,
-                            mut transform,
-                        )) = player_query.single_mut()
-                        {
-                            *health = Health::default();
-                            *currency = Currency::default();
-                            *combat = CombatStats::default();
-                            *progression = Progression::default();
-                            transform.translation = Vec3::ZERO;
-                        }
+                        let (mut health, mut currency, mut combat, mut progression, mut transform) =
+                            player.into_inner();
+
+                        *health = Health::default();
+                        *currency = Currency::default();
+                        *combat = CombatStats::default();
+                        *progression = Progression::default();
+                        transform.translation = Vec3::ZERO;
 
                         // Reset Round
                         *round_manager = crate::resources::round::RoundManager::default();

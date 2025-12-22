@@ -10,10 +10,10 @@ impl ScreenShake {}
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_camera_shake(
-    mut camera_query: Query<&mut Transform, With<crate::components::player::GameCamera>>,
+    camera: Single<&mut Transform, With<crate::components::player::GameCamera>>,
     mut shake: ResMut<ScreenShake>,
     time: Res<Time>,
-    player_query: Query<
+    player: Single<
         &Transform,
         (
             With<crate::components::player::Player>,
@@ -31,13 +31,9 @@ pub fn update_camera_shake(
     let offset_y = rng.gen_range(-1.0..1.0) * shake_amount;
 
     // Camera follows player + Shake
-    if let Ok(player_tf) = player_query.single() {
-        for mut cam_tf in &mut camera_query {
-            cam_tf.translation.x = player_tf.translation.x + offset_x;
-            cam_tf.translation.y = player_tf.translation.y + offset_y;
-            // Keep Z
-        }
-    }
+    let mut cam_tf = camera.into_inner();
+    cam_tf.translation.x = player.translation.x + offset_x;
+    cam_tf.translation.y = player.translation.y + offset_y;
 }
 
 #[allow(clippy::needless_pass_by_value)]

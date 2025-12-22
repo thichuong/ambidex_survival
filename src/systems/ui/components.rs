@@ -104,3 +104,9 @@ pub struct MenuCDRText;
 pub struct MagicSlotIndicator {
     pub slot: crate::components::weapon::ActiveSpellSlot,
 }
+
+#[derive(Component)]
+pub struct TutorialUI;
+
+#[derive(Component)]
+pub struct TutorialButton;

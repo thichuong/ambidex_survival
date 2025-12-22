@@ -316,32 +316,31 @@ pub fn update_hud_indicators(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_health_ui(
     mut health_bar_query: Query<&mut Node, (With<HealthBar>, Without<HealthText>)>,
     mut health_text_query: Query<&mut Text, (With<HealthText>, Without<HealthBar>)>,
-    player_query: Query<&Health, With<Player>>,
+    player: Single<&Health, With<Player>>,
 ) {
-    if let Some(health) = player_query.iter().next() {
-        for mut node in &mut health_bar_query {
-            // Player health is 0..max_health
-            let percent = (health.current / health.max).clamp(0.0, 1.0) * 100.0;
-            node.width = Val::Percent(percent);
-        }
+    let health = *player;
+    for mut node in &mut health_bar_query {
+        // Player health is 0..max_health
+        let percent = (health.current / health.max).clamp(0.0, 1.0) * 100.0;
+        node.width = Val::Percent(percent);
+    }
 
-        for mut text in &mut health_text_query {
-            text.0 = format!("{:.0} / {:.0}", health.current, health.max);
-        }
+    for mut text in &mut health_text_query {
+        text.0 = format!("{:.0} / {:.0}", health.current, health.max);
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_gold_ui(
     mut gold_text_query: Query<&mut Text, With<GoldText>>,
-    player_query: Query<&Currency, With<Player>>,
+    player: Single<&Currency, With<Player>>,
 ) {
-    if let Some(currency) = player_query.iter().next() {
-        for mut text in &mut gold_text_query {
-            text.0 = format!("Gold: {}", currency.gold);
-        }
+    for mut text in &mut gold_text_query {
+        text.0 = format!("Gold: {}", player.gold);
     }
 }
 
@@ -358,53 +357,50 @@ pub fn update_round_text(
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_hud_magic_ui(
     mut query: Query<(&mut ImageNode, &mut BackgroundColor, &MagicSlotIndicator)>,
-    player_query: Query<&MagicLoadout, With<Player>>,
+    player: Single<&MagicLoadout, With<Player>>,
     asset_server: Res<AssetServer>,
 ) {
-    if let Some(magic) = player_query.iter().next() {
-        for (mut image, mut bg, slot) in &mut query {
-            // Highlight active slot
-            if magic.active_slot == slot.slot {
-                bg.0 = Color::srgba(1.0, 1.0, 1.0, 0.4);
-            } else {
-                bg.0 = Color::srgba(0.0, 0.0, 0.0, 0.4);
-            }
-
-            let spell = match slot.slot {
-                crate::components::weapon::ActiveSpellSlot::Primary => magic.primary,
-                crate::components::weapon::ActiveSpellSlot::Secondary => magic.secondary,
-            };
-
-            // Set icon
-            let icon_path = match spell {
-                SpellType::EnergyBolt => "ui/icons/magic_bolt.png",
-                SpellType::Laser => "ui/icons/magic_laser.png",
-                SpellType::Nova => "ui/icons/magic_nova.png",
-                SpellType::Blink => "ui/icons/magic_blink.png",
-                SpellType::Global => "ui/icons/magic_global.png",
-            };
-            image.image = asset_server.load(icon_path);
+    let magic = *player;
+    for (mut image, mut bg, slot) in &mut query {
+        // Highlight active slot
+        if magic.active_slot == slot.slot {
+            bg.0 = Color::srgba(1.0, 1.0, 1.0, 0.4);
+        } else {
+            bg.0 = Color::srgba(0.0, 0.0, 0.0, 0.4);
         }
+
+        let spell = match slot.slot {
+            crate::components::weapon::ActiveSpellSlot::Primary => magic.primary,
+            crate::components::weapon::ActiveSpellSlot::Secondary => magic.secondary,
+        };
+
+        // Set icon
+        let icon_path = match spell {
+            SpellType::EnergyBolt => "ui/icons/magic_bolt.png",
+            SpellType::Laser => "ui/icons/magic_laser.png",
+            SpellType::Nova => "ui/icons/magic_nova.png",
+            SpellType::Blink => "ui/icons/magic_blink.png",
+            SpellType::Global => "ui/icons/magic_global.png",
+        };
+        image.image = asset_server.load(icon_path);
     }
 }
 
-#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_cooldown_indicators(
     mut overlay_query: Query<(&mut Node, &CooldownOverlay)>,
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
-    player_query: Query<&CombatStats, With<Player>>,
+    player: Single<&CombatStats, With<Player>>,
     time: Res<Time>,
 ) {
     let now = time.elapsed_secs();
-    let combat_stats = player_query.iter().next();
+    let combat_stats = *player;
 
     for (mut node, overlay) in &mut overlay_query {
         if let Some((hand, weapon)) = hand_query.iter().find(|(h, _)| h.side == overlay.side) {
             // Apply CDR only to Magic weapons
             let effective_cooldown = if hand.equipped_weapon == Some(WeaponType::Magic) {
-                combat_stats.map_or(weapon.cooldown, |stats| {
-                    weapon.cooldown * (1.0 - stats.cooldown_reduction)
-                })
+                weapon.cooldown * (1.0 - combat_stats.cooldown_reduction)
             } else {
                 weapon.cooldown
             };

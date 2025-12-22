@@ -4,6 +4,7 @@ pub mod hud;
 pub mod interaction;
 pub mod menu;
 pub mod setup;
+pub mod tutorial;
 
 pub use components::*;
 pub use hud::*;

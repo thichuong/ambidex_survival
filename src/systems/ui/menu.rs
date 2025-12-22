@@ -1,6 +1,7 @@
 use super::components::{
     MagicCycleButton, MagicPanel, MenuCDRText, MenuCritText, MenuDamageText, MenuGoldText,
-    MenuHealthText, MenuLifestealText, PurchaseEvent, ShopButton, WeaponButton, WeaponMenuUI,
+    MenuHealthText, MenuLifestealText, PurchaseEvent, ShopButton, TutorialButton, WeaponButton,
+    WeaponMenuUI,
 };
 use crate::components::player::{
     CombatStats, Currency, Hand, HandType, Health, Player, PlayerStats,
@@ -324,6 +325,64 @@ pub fn spawn_weapon_menu(commands: &mut Commands) {
                         },
                         TextColor(Color::WHITE),
                     ));
+                });
+
+            // Action Buttons Row (Tutorial + Back)
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    margin: UiRect::top(Val::Px(20.0)),
+                    ..default()
+                })
+                .with_children(|row| {
+                    // Tutorial Button
+                    row.spawn((
+                        Button,
+                        Node {
+                            width: Val::Px(180.0),
+                            height: Val::Px(50.0),
+                            margin: UiRect::horizontal(Val::Px(10.0)),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            border: UiRect::all(Val::Px(2.0)),
+                            ..default()
+                        },
+                        BorderColor::all(Color::srgb(0.0, 0.8, 1.0)),
+                        BackgroundColor(Color::srgba(0.1, 0.2, 0.3, 1.0)),
+                        TutorialButton,
+                    ))
+                    .observe(
+                        |_: On<Pointer<Click>>,
+                         mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
+                            next_state.set(crate::resources::game_state::GameState::Tutorial);
+                        },
+                    )
+                    .observe(
+                        |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) {
+                                *color = BackgroundColor(Color::srgba(0.2, 0.4, 0.6, 1.0));
+                            }
+                        },
+                    )
+                    .observe(
+                        |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) {
+                                *color = BackgroundColor(Color::srgba(0.1, 0.2, 0.3, 1.0));
+                            }
+                        },
+                    )
+                    .with_children(|btn| {
+                        btn.spawn((
+                            Text::new("TUTORIAL"),
+                            TextFont {
+                                font_size: 20.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                        ));
+                    });
                 });
         });
 }
@@ -680,64 +739,54 @@ pub fn update_menu_magic_ui(
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_gold_text(
     mut query: Query<&mut Text, With<MenuGoldText>>,
-    player_query: Query<&Currency, With<Player>>,
+    player: Single<&Currency, With<Player>>,
 ) {
-    if let Ok(currency) = player_query.single() {
-        for mut text in &mut query {
-            text.0 = format!("Gold: {}", currency.gold);
-        }
+    for mut text in &mut query {
+        text.0 = format!("Gold: {}", player.gold);
     }
 }
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_health_text(
     mut query: Query<&mut Text, With<MenuHealthText>>,
-    player_query: Query<&Health, With<Player>>,
+    player: Single<&Health, With<Player>>,
 ) {
-    if let Ok(health) = player_query.single() {
-        for mut text in &mut query {
-            text.0 = format!("HP: {:.0}/{:.0}", health.current, health.max);
-        }
+    for mut text in &mut query {
+        text.0 = format!("HP: {:.0}/{:.0}", player.current, player.max);
     }
 }
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_damage_text(
     mut query: Query<&mut Text, With<MenuDamageText>>,
-    player_query: Query<&PlayerStats, With<Player>>,
+    player: Single<&PlayerStats, With<Player>>,
 ) {
-    if let Ok(stats) = player_query.single() {
-        for mut text in &mut query {
-            let bonus = (stats.damage_multiplier - 1.0) * 100.0;
-            text.0 = format!("Dmg: +{bonus:.0}%");
-        }
+    for mut text in &mut query {
+        let bonus = (player.damage_multiplier - 1.0) * 100.0;
+        text.0 = format!("Dmg: +{bonus:.0}%");
     }
 }
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_crit_text(
     mut query: Query<&mut Text, With<MenuCritText>>,
-    player_query: Query<&CombatStats, With<Player>>,
+    player: Single<&CombatStats, With<Player>>,
 ) {
-    if let Ok(stats) = player_query.single() {
-        for mut text in &mut query {
-            let chance = stats.crit_chance * 100.0;
-            let damage = stats.crit_damage;
-            text.0 = format!("Crit: {chance:.0}% (x{damage:.1})");
-        }
+    for mut text in &mut query {
+        let chance = player.crit_chance * 100.0;
+        let damage = player.crit_damage;
+        text.0 = format!("Crit: {chance:.0}% (x{damage:.1})");
     }
 }
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_lifesteal_text(
     mut query: Query<&mut Text, With<MenuLifestealText>>,
-    player_query: Query<&CombatStats, With<Player>>,
+    player: Single<&CombatStats, With<Player>>,
 ) {
-    if let Ok(stats) = player_query.single() {
-        for mut text in &mut query {
-            let life = stats.lifesteal * 100.0;
-            text.0 = format!("Life Steal: {life:.0}%");
-        }
+    for mut text in &mut query {
+        let life = player.lifesteal * 100.0;
+        text.0 = format!("Life Steal: {life:.0}%");
     }
 }
 

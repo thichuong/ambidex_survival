@@ -6,5 +6,6 @@ pub enum GameState {
     Playing,
     #[default]
     WeaponMenu,
+    Tutorial,
     GameOver,
 }
