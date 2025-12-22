@@ -32,13 +32,14 @@ pub fn get_weapon_description(weapon_type: WeaponType, loadout: Option<&MagicLoa
         }
         WeaponType::Shuriken => "Shuriken (Utility)\n\nAttack: Throw fast-moving stars (Max 12).\nSkill: Teleport to nearest shuriken.\nGreat for dodging.".to_string(),
         WeaponType::Magic => {
-            if let Some(loadout) = loadout {
-                 let p_desc = get_spell_description(loadout.primary);
-                 let s_desc = get_spell_description(loadout.secondary);
-                 format!("Magic (Spellcasting)\n\nPrimary - {}\n\nSecondary - {}\n\nSkill: Toggle Spell Slot.\nBenefits from CDR upgrades.", p_desc, s_desc)
-            } else {
-                "Magic (Spellcasting)\n\nMost customizable weapon.\nTwo spell slots (Primary/Secondary).\nSelect a spell to see details.".to_string()
-            }
+        loadout.map_or_else(
+            || "Magic (Spellcasting)\n\nMost customizable weapon.\nTwo spell slots (Primary/Secondary).\nSelect a spell to see details.".to_string(),
+            |loadout| {
+                let p_desc = get_spell_description(loadout.primary);
+                let s_desc = get_spell_description(loadout.secondary);
+                format!("Magic (Spellcasting)\n\nPrimary - {p_desc}\n\nSecondary - {s_desc}\n\nSkill: Toggle Spell Slot.\nBenefits from CDR upgrades.")
+            },
+        )
         }
     }
 }
@@ -1125,7 +1126,7 @@ pub fn update_menu_weapon_details_ui(
 
             for &child in children {
                 if let Ok(mut text) = text_query.get_mut(child) {
-                    text.0 = desc.clone();
+                    text.0.clone_from(&desc);
                 }
             }
 
