@@ -230,23 +230,33 @@ const fn get_shop_button_colors(btn_type: ShopButton) -> (Color, Color, Color, C
     }
 }
 
-const fn get_shop_button_content(
-    btn_type: ShopButton,
-) -> (&'static str, &'static str, &'static str) {
-    match btn_type {
-        ShopButton::Heal => ("Heal", "+30 HP", "50G"),
-        ShopButton::DamageUp => ("Damage", "+10%", "100G"),
-        ShopButton::MaxHealthUp => ("Max HP", "+20", "150G"),
-        ShopButton::CritDamageUp => ("Crit Dmg", "+50%", "200G"),
-        ShopButton::CritChanceUp => ("Crit Rate", "+10%", "250G"),
-        ShopButton::LifestealUp => ("Lifesteal", "+10% |\nAOE: +5%", "300G"),
-        ShopButton::CooldownReductionUp => ("CDR", "+10%", "350G"),
-    }
+pub fn get_shop_button_content(btn_type: ShopButton) -> (String, String, String) {
+    let config = crate::configs::shop::get_card_config(btn_type);
+    let title = config.name.to_string();
+    let price = format!("{}G", config.price);
+
+    let desc = match btn_type {
+        ShopButton::Heal => format!("+{} HP", config.value),
+        ShopButton::DamageUp | ShopButton::CritChanceUp | ShopButton::CooldownReductionUp => {
+            format!("+{}%", (config.value * 100.0) as u32)
+        }
+        ShopButton::MaxHealthUp => format!("+{}", config.value as u32),
+        ShopButton::CritDamageUp => format!("+{}%", (config.value * 100.0) as u32),
+        ShopButton::LifestealUp => {
+            format!(
+                "+{}% |\nAOE: +{}%",
+                (config.value * 100.0) as u32,
+                (config.value * 50.0) as u32
+            )
+        }
+    };
+
+    (title, desc, price)
 }
 
 pub fn spawn_shop_icon(parent: &mut ChildSpawnerCommands, btn_type: ShopButton) {
     let container_node = Node {
-        width: Val::Px(50.0),
+        width: Val::Px(100.0),
         height: Val::Px(50.0),
         margin: UiRect::bottom(Val::Px(8.0)),
         justify_content: JustifyContent::Center,

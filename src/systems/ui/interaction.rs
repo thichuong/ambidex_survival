@@ -52,45 +52,45 @@ pub fn handle_purchases(
                 ShopButton::Heal => {
                     if health.current < health.max {
                         currency.gold -= config.price;
-                        health.current = (health.current + 30.0).min(health.max);
+                        health.current = (health.current + config.value).min(health.max);
                         progression.heal_count += 1;
                         success = true;
                     }
                 }
                 ShopButton::DamageUp => {
                     currency.gold -= config.price;
-                    stats.damage_multiplier += 0.1;
+                    stats.damage_multiplier += config.value;
                     progression.damage_upgrades += 1;
                     success = true;
                 }
                 ShopButton::MaxHealthUp => {
                     currency.gold -= config.price;
-                    health.max += 20.0;
-                    health.current += 20.0;
+                    health.max += config.value;
+                    health.current += config.value;
                     progression.max_health_upgrades += 1;
                     success = true;
                 }
                 ShopButton::CritDamageUp => {
                     currency.gold -= config.price;
-                    combat.crit_damage += 0.5;
+                    combat.crit_damage += config.value;
                     progression.crit_damage_upgrades += 1;
                     success = true;
                 }
                 ShopButton::CritChanceUp => {
                     currency.gold -= config.price;
-                    combat.crit_chance = (combat.crit_chance + 0.1).min(1.0);
+                    combat.crit_chance = (combat.crit_chance + config.value).min(1.0);
                     progression.crit_chance_upgrades += 1;
                     success = true;
                 }
                 ShopButton::LifestealUp => {
                     currency.gold -= config.price;
-                    combat.lifesteal = (combat.lifesteal + 0.1).min(0.5);
+                    combat.lifesteal = (combat.lifesteal + config.value).min(0.5);
                     progression.lifesteal_upgrades += 1;
                     success = true;
                 }
                 ShopButton::CooldownReductionUp => {
                     currency.gold -= config.price;
-                    combat.cooldown_reduction = (combat.cooldown_reduction + 0.1).min(0.8);
+                    combat.cooldown_reduction = (combat.cooldown_reduction + config.value).min(0.8);
                     progression.cdr_upgrades += 1;
                     success = true;
                 }
