@@ -59,7 +59,8 @@ ambidex_survival/
 │   │   │   ├── hud.rs
 │   │   │   ├── interaction.rs
 │   │   │   ├── menu.rs
-│   │   │   └── setup.rs
+│   │   │   ├── setup.rs
+│   │   │   └── tutorial.rs
 │   │   ├── damage_text.rs
 │   │   ├── enemy.rs
 │   │   ├── physics.rs
@@ -102,7 +103,7 @@ Modular plugins that encapsulate system registration.
 ### `src/resources/`
 ECS Resources for global game state.
 - `cached_assets.rs`: Asset handles cache to avoid redundant loads.
-- `game_state.rs`: GameState enum (Playing, Paused, GameOver).
+- `game_state.rs`: GameState enum (Playing, Paused, GameOver, WeaponMenu, Tutorial).
 - `round.rs`: Wave progression and round management.
 - `polish.rs`: Screen shake and particle trail effects.
 
@@ -116,6 +117,7 @@ Modularized UI systems:
 - `interaction.rs`: Click handling and shop purchases via `PurchaseEvent`.
 - `menu.rs`: Weapon selection menu and shop UI logic.
 - `game_over.rs`: Game Over screen and restart logic.
+- `tutorial.rs`: Interaction guide and skill descriptions.
 
 #### `combat/`
 Modularized combat systems following Bevy 0.17 ECS best practices:
