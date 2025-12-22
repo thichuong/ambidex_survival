@@ -104,7 +104,7 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
         });
 }
 
-fn get_shop_button_colors(btn_type: ShopButton) -> (Color, Color, Color, Color) {
+const fn get_shop_button_colors(btn_type: ShopButton) -> (Color, Color, Color, Color) {
     let is_blue = matches!(
         btn_type,
         ShopButton::CritChanceUp | ShopButton::LifestealUp | ShopButton::CooldownReductionUp
@@ -127,7 +127,7 @@ fn get_shop_button_colors(btn_type: ShopButton) -> (Color, Color, Color, Color) 
     }
 }
 
-fn get_shop_button_content(btn_type: ShopButton) -> (&'static str, &'static str, &'static str) {
+const fn get_shop_button_content(btn_type: ShopButton) -> (&'static str, &'static str, &'static str) {
     match btn_type {
         ShopButton::Heal => ("Heal", "+30 HP", "50G"),
         ShopButton::DamageUp => ("Damage", "+10%", "100G"),
