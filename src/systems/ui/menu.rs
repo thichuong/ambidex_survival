@@ -203,10 +203,10 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                                     width: Val::Percent(35.0),
                                     ..default()
                                 }).with_children(|btns| {
-                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Shuriken, "Shuriken ❄");
-                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Sword, "Sword 🗡");
-                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Gun, "Gun 🔫");
-                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Magic, "Magic 🔮");
+                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Shuriken, "Shuriken");
+                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Sword, "Sword");
+                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Gun, "Gun");
+                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Magic, "Magic");
                                 });
 
                                 // Column 2: Details & Magic Panel
@@ -339,10 +339,10 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                                     width: Val::Percent(35.0),
                                     ..default()
                                 }).with_children(|btns| {
-                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Shuriken, "Shuriken ❄");
-                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Sword, "Sword 🗡");
-                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Gun, "Gun 🔫");
-                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Magic, "Magic 🔮");
+                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Shuriken, "Shuriken");
+                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Sword, "Sword");
+                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Gun, "Gun");
+                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Magic, "Magic");
                                 });
 
                                 // Column 2: Details & Magic Panel
