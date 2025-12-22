@@ -108,7 +108,7 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
                     margin: UiRect::top(Val::Px(4.0)),
                     ..default()
                 },
-                Text::new("[0 / Infinity]"),
+                Text::new("[0 / oo]"),
                 TextFont {
                     font_size: 11.0,
                     ..default()
@@ -467,7 +467,7 @@ pub fn update_shop_cards_ui(
                 if let Some(limit) = config.limit {
                     text.0 = format!("[{count} / {limit}]");
                 } else {
-                    text.0 = format!("[{count} / Infinity]");
+                    text.0 = format!("[{count} / oo]");
                 }
             }
         }
