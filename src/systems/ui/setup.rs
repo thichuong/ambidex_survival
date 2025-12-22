@@ -7,7 +7,7 @@ use bevy::prelude::*;
 #[allow(clippy::needless_pass_by_value)]
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     spawn_hud(&mut commands, &asset_server);
-    spawn_weapon_menu(&mut commands);
+    spawn_weapon_menu(&mut commands, &asset_server);
     spawn_tutorial_ui(&mut commands);
     spawn_game_over_menu(&mut commands);
 }

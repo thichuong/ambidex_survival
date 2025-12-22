@@ -1,7 +1,7 @@
 use super::components::{
     MagicCycleButton, MagicPanel, MenuCDRText, MenuCritText, MenuDamageText, MenuGoldText,
     MenuHealthText, MenuLifestealText, PurchaseEvent, ShopButton, TutorialButton, WeaponButton,
-    WeaponMenuUI,
+    WeaponDetailPanel, WeaponMenuUI, WeaponStateGroup,
 };
 use crate::components::player::{
     CombatStats, Currency, Hand, HandType, Health, Player, PlayerStats,
@@ -10,7 +10,7 @@ use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
 use bevy::prelude::*;
 
 #[allow(clippy::too_many_lines)]
-pub fn spawn_weapon_menu(commands: &mut Commands) {
+pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
     // Weapon Selection Menu (Full Screen)
     commands
         .spawn((
@@ -160,7 +160,8 @@ pub fn spawn_weapon_menu(commands: &mut Commands) {
 
                             // Magic Panel (Initially Hidden, managed by logic)
                             // We place it here so it appears under the left column when active
-                            spawn_magic_panel(col, HandType::Left);
+                            spawn_magic_panel(col, HandType::Left, asset_server);
+                            spawn_weapon_detail_panel(col, HandType::Left, asset_server);
                         });
 
                     // --- CENTER SHOP SECTION ---
@@ -275,7 +276,8 @@ pub fn spawn_weapon_menu(commands: &mut Commands) {
                             );
 
                             // Magic Panel
-                            spawn_magic_panel(col, HandType::Right);
+                            spawn_magic_panel(col, HandType::Right, asset_server);
+                            spawn_weapon_detail_panel(col, HandType::Right, asset_server);
                         });
                 });
 
@@ -539,24 +541,42 @@ fn spawn_weapon_button(
 }
 
 #[allow(clippy::too_many_lines)]
-fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
+fn spawn_magic_panel(
+    parent: &mut ChildSpawnerCommands,
+    side: HandType,
+    asset_server: &AssetServer,
+) {
     parent
         .spawn((
             Node {
-                width: Val::Percent(100.0), // Responsive to column width
-                height: Val::Auto,          // Adjust to content
+                width: Val::Percent(100.0),
+                height: Val::Auto,
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 margin: UiRect::vertical(Val::Px(20.0)),
                 padding: UiRect::all(Val::Px(10.0)),
-                display: Display::None, // Hidden by default
+                display: Display::None,
                 ..default()
             },
             BackgroundColor(Color::srgba(0.2, 0.0, 0.2, 0.8)),
             MagicPanel { side },
         ))
         .with_children(|panel| {
+            // Label "Lựa chọn spell"
+            panel.spawn((
+                Text::new("Lựa chọn spell"),
+                TextFont {
+                    font_size: 18.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 0.5, 1.0)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(10.0)),
+                    ..default()
+                },
+            ));
+
             let label = match side {
                 HandType::Left => "Left Magic (Q): ",
                 HandType::Right => "Right Magic (E): ",
@@ -569,6 +589,54 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
                 },
                 TextColor(Color::WHITE),
             ));
+
+            // Icons Container
+            panel
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    margin: UiRect::vertical(Val::Px(10.0)),
+                    ..default()
+                })
+                .with_children(|icons| {
+                    // Primary Icon (Left)
+                    icons
+                        .spawn((
+                            ImageNode::new(asset_server.load("ui/icons/magic_bolt.png")), // Default
+                            Node {
+                                width: Val::Px(48.0),
+                                height: Val::Px(48.0),
+                                margin: UiRect::right(Val::Px(10.0)),
+                                ..default()
+                            },
+                            MagicCycleButton {
+                                side,
+                                is_primary: true,
+                            }, // Re-using this component for tracking, but maybe we need separate one for icon?
+                               // Actually, let's keep it simple. The button below controls it.
+                               // But I need to update this icon.
+                               // I'll attach a marker to this logic.
+                        ))
+                        .insert(MagicCycleButton {
+                            side,
+                            is_primary: true,
+                        });
+
+                    // Secondary Icon (Right)
+                    icons.spawn((
+                        ImageNode::new(asset_server.load("ui/icons/magic_blink.png")), // Default
+                        Node {
+                            width: Val::Px(32.0),
+                            height: Val::Px(32.0), // Slightly smaller
+                            ..default()
+                        },
+                        MagicCycleButton {
+                            side,
+                            is_primary: false,
+                        },
+                    ));
+                });
 
             // Primary Cycle Button
             panel
@@ -660,6 +728,138 @@ fn spawn_magic_panel(parent: &mut ChildSpawnerCommands, side: HandType) {
         });
 }
 
+fn spawn_weapon_detail_panel(
+    parent: &mut ChildSpawnerCommands,
+    side: HandType,
+    asset_server: &AssetServer,
+) {
+    parent
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                margin: UiRect::top(Val::Px(10.0)),
+                display: Display::None,
+                ..default()
+            },
+            WeaponDetailPanel { side },
+        ))
+        .with_children(|panel| {
+            // Sword Group
+            panel
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        display: Display::None, // Hidden by default
+                        ..default()
+                    },
+                    WeaponStateGroup {
+                        side,
+                        weapon_type: WeaponType::Sword,
+                    },
+                ))
+                .with_children(|group| {
+                    // Normal
+                    group.spawn((
+                        ImageNode::new(asset_server.load("ui/icons/sword_normal.png")),
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            ..default()
+                        },
+                    ));
+                    // Shattered
+                    group.spawn((
+                        ImageNode::new(asset_server.load("ui/icons/sword_shattered.png")),
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            ..default()
+                        },
+                    ));
+                });
+
+            // Gun Group
+            panel
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        display: Display::None,
+                        ..default()
+                    },
+                    WeaponStateGroup {
+                        side,
+                        weapon_type: WeaponType::Gun,
+                    },
+                ))
+                .with_children(|group| {
+                    // Single
+                    group.spawn((
+                        ImageNode::new(asset_server.load("ui/icons/gun_single.png")),
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            ..default()
+                        },
+                    ));
+                    // Shotgun
+                    group.spawn((
+                        ImageNode::new(asset_server.load("ui/icons/gun_shotgun.png")),
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            ..default()
+                        },
+                    ));
+                    // Rapid
+                    group.spawn((
+                        ImageNode::new(asset_server.load("ui/icons/gun_rapid.png")),
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            margin: UiRect::horizontal(Val::Px(5.0)),
+                            ..default()
+                        },
+                    ));
+                });
+
+            // Shuriken Group (Just one icon)
+            panel
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        display: Display::None,
+                        ..default()
+                    },
+                    WeaponStateGroup {
+                        side,
+                        weapon_type: WeaponType::Shuriken,
+                    },
+                ))
+                .with_children(|group| {
+                    group.spawn((
+                        ImageNode::new(asset_server.load("ui/icons/shuriken.png")),
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            ..default()
+                        },
+                    ));
+                });
+        });
+}
+
 #[allow(clippy::needless_pass_by_value)]
 fn magic_button_observer(
     trigger: On<Pointer<Click>>,
@@ -696,42 +896,138 @@ fn magic_button_observer(
 #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn update_menu_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
-    hand_query: Query<&Hand>,
-    button_node_query: Query<(&Children, &MagicCycleButton)>,
+    hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
+    button_node_query: Query<(&Children, &MagicCycleButton), With<Button>>,
+    mut icon_query: Query<(&mut ImageNode, &MagicCycleButton), Without<Button>>,
     mut text_query: Query<&mut Text>,
     loadout_query: Query<&MagicLoadout>,
+    asset_server: Res<AssetServer>,
 ) {
     // 1. Update Panel Visibility
-    for (mut node, _) in &mut panel_query {
-        node.display = Display::Flex;
+    for (mut node, panel) in &mut panel_query {
+        let mut show = false;
+        if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == panel.side) {
+            if weapon.kind == WeaponType::Magic {
+                show = true;
+            }
+        }
+        node.display = if show { Display::Flex } else { Display::None };
     }
 
-    // 2. Update Button Text from Loadout
-    for (children, btn_data) in button_node_query.iter() {
+    // 2. Update Icons and Text
+    for (hand, _) in &hand_query {
+        // Find corresponding loadout
+        // Note: MagicLoadout is likely on the same entity as Hand? Or Player?
+        // Checking components/weapon.rs: MagicLoadout is a component.
+        // Assuming Hand entity has MagicLoadout.
+        // But the previous code used `hand_query.iter().zip(loadout_query.iter())`.
+        // This relies on matching order, which is risky if they aren't on same entity or query isn't aligned.
+        // Best to query together if possible.
+        // Let's assume they are separate entities for now matching previous logic, OR check if I can join them.
+        // Previous logic:
+        /*
         if let Some((_, loadout)) = hand_query
             .iter()
             .zip(loadout_query.iter())
             .find(|(hand, _)| hand.side == btn_data.side)
-        {
-            let spell = if btn_data.is_primary {
-                loadout.primary
-            } else {
-                loadout.secondary
-            };
-            let spell_name = match spell {
-                SpellType::EnergyBolt => "Bolt",
-                SpellType::Laser => "Laser",
-                SpellType::Nova => "Nova",
-                SpellType::Blink => "Blink",
-                SpellType::Global => "Global",
-            };
-            let prefix = if btn_data.is_primary { "Pri" } else { "Sec" };
+        */
+        // This implies 1-to-1 match.
 
-            for &child in children {
-                if let Ok(mut text) = text_query.get_mut(child) {
-                    **text = format!("{prefix}: {spell_name}");
+        // Let's use two loops matching by side.
+
+        // Find loadout for this hand
+        let loadout_opt =
+            loadout_query
+                .iter()
+                .zip(hand_query.iter())
+                .find_map(|(loadout, (h, _))| {
+                    if h.side == hand.side {
+                        Some(loadout)
+                    } else {
+                        None
+                    }
+                });
+
+        if let Some(loadout) = loadout_opt {
+            // Update Buttons Text
+            for (children, btn_data) in &button_node_query {
+                if btn_data.side == hand.side {
+                    let spell = if btn_data.is_primary {
+                        loadout.primary
+                    } else {
+                        loadout.secondary
+                    };
+                    let spell_name = match spell {
+                        SpellType::EnergyBolt => "Bolt",
+                        SpellType::Laser => "Laser",
+                        SpellType::Nova => "Nova",
+                        SpellType::Blink => "Blink",
+                        SpellType::Global => "Global",
+                    };
+                    let prefix = if btn_data.is_primary { "Pri" } else { "Sec" };
+                    for &child in children {
+                        if let Ok(mut text) = text_query.get_mut(child) {
+                            **text = format!("{prefix}: {spell_name}");
+                        }
+                    }
                 }
             }
+
+            // Update Icons
+            for (mut image, icon_data) in &mut icon_query {
+                if icon_data.side == hand.side {
+                    let spell = if icon_data.is_primary {
+                        loadout.primary
+                    } else {
+                        loadout.secondary
+                    };
+                    let path = match spell {
+                        SpellType::EnergyBolt => "ui/icons/magic_bolt.png",
+                        SpellType::Laser => "ui/icons/magic_laser.png",
+                        SpellType::Nova => "ui/icons/magic_nova.png",
+                        SpellType::Blink => "ui/icons/magic_blink.png",
+                        SpellType::Global => "ui/icons/magic_global.png",
+                    };
+                    image.image = asset_server.load(path);
+                }
+            }
+        }
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
+pub fn update_menu_weapon_details_ui(
+    mut panel_query: Query<(&mut Node, &WeaponDetailPanel)>,
+    mut group_query: Query<(&mut Node, &WeaponStateGroup), Without<WeaponDetailPanel>>,
+    hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
+) {
+    for (mut panel_node, panel) in &mut panel_query {
+        let mut active_weapon: Option<WeaponType> = None;
+
+        // Find active weapon for this side
+        if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == panel.side) {
+            active_weapon = Some(weapon.kind);
+        }
+
+        if let Some(weapon_kind) = active_weapon {
+            if weapon_kind == WeaponType::Magic {
+                panel_node.display = Display::None;
+            } else {
+                panel_node.display = Display::Flex;
+
+                // Show matching group, hide others
+                for (mut group_node, group) in &mut group_query {
+                    if group.side == panel.side {
+                        if group.weapon_type == weapon_kind {
+                            group_node.display = Display::Flex;
+                        } else {
+                            group_node.display = Display::None;
+                        }
+                    }
+                }
+            }
+        } else {
+            panel_node.display = Display::None;
         }
     }
 }

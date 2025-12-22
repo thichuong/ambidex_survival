@@ -110,3 +110,14 @@ pub struct TutorialUI;
 
 #[derive(Component)]
 pub struct TutorialButton;
+
+#[derive(Component)]
+pub struct WeaponDetailPanel {
+    pub side: HandType,
+}
+
+#[derive(Component)]
+pub struct WeaponStateGroup {
+    pub side: HandType,
+    pub weapon_type: WeaponType,
+}
