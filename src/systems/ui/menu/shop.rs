@@ -1,4 +1,5 @@
-use super::super::components::{PurchaseEvent, ShopButton};
+use super::super::components::{PurchaseEvent, ShopButton, ShopCardCount};
+use crate::components::player::Progression;
 use bevy::prelude::*;
 
 pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, _label: &str) {
@@ -101,6 +102,20 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
                     TextColor(Color::srgb(1.0, 0.85, 0.0)), // Gold color
                 ));
             });
+            // Shop Card Count
+            card.spawn((
+                Node {
+                    margin: UiRect::top(Val::Px(4.0)),
+                    ..default()
+                },
+                Text::new("[0 / ∞]"),
+                TextFont {
+                    font_size: 11.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                ShopCardCount,
+            ));
         });
 }
 
@@ -109,6 +124,7 @@ const fn get_shop_button_colors(btn_type: ShopButton) -> (Color, Color, Color, C
         btn_type,
         ShopButton::CritChanceUp | ShopButton::LifestealUp | ShopButton::CooldownReductionUp
     );
+    let is_green = matches!(btn_type, ShopButton::MaxHealthUp);
 
     if is_blue {
         (
@@ -116,6 +132,13 @@ const fn get_shop_button_colors(btn_type: ShopButton) -> (Color, Color, Color, C
             Color::srgba(0.0, 0.12, 0.25, 0.95), // Dark blue background
             Color::srgba(0.0, 0.2, 0.4, 1.0),    // Hover blue
             Color::srgb(0.4, 0.9, 1.0),          // Cyan accent text
+        )
+    } else if is_green {
+        (
+            Color::srgb(0.2, 1.0, 0.4),         // Bright green border
+            Color::srgba(0.05, 0.2, 0.1, 0.95), // Dark green background
+            Color::srgba(0.1, 0.3, 0.15, 1.0),  // Hover green
+            Color::srgb(0.5, 1.0, 0.6),         // Green accent text
         )
     } else {
         (
@@ -402,4 +425,42 @@ fn spawn_cdr_icon(parent: &mut ChildSpawnerCommands) {
         },
         BackgroundColor(Color::srgb(0.3, 0.8, 1.0)),
     ));
+}
+
+#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
+pub fn update_shop_cards_ui(
+    progression: Single<&Progression, With<crate::components::player::Player>>,
+    mut card_query: Query<(&ShopButton, &mut BackgroundColor, &Children)>,
+    mut count_text_query: Query<&mut Text, With<ShopCardCount>>,
+) {
+    for (btn_type, mut bg_color, children) in &mut card_query {
+        let config = crate::configs::shop::get_card_config(*btn_type);
+        let count = match btn_type {
+            ShopButton::Heal => progression.heal_count,
+            ShopButton::DamageUp => progression.damage_upgrades,
+            ShopButton::MaxHealthUp => progression.max_health_upgrades,
+            ShopButton::CritDamageUp => progression.crit_damage_upgrades,
+            ShopButton::CritChanceUp => progression.crit_chance_upgrades,
+            ShopButton::LifestealUp => progression.lifesteal_upgrades,
+            ShopButton::CooldownReductionUp => progression.cdr_upgrades,
+        };
+
+        // Update count text
+        for &child in children {
+            if let Ok(mut text) = count_text_query.get_mut(child) {
+                if let Some(limit) = config.limit {
+                    text.0 = format!("[{count} / {limit}]");
+                } else {
+                    text.0 = format!("[{count} / ∞]");
+                }
+            }
+        }
+
+        // Dim if maxed
+        if let Some(limit) = config.limit {
+            if count >= limit {
+                bg_color.0 = bg_color.0.with_alpha(0.3);
+            }
+        }
+    }
 }

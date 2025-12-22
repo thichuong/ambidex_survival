@@ -28,7 +28,7 @@ pub const fn get_card_config(btn_type: ShopButton) -> CardConfig {
         ShopButton::MaxHealthUp => CardConfig {
             name: "Max Health Up",
             price: 150,
-            limit: None,
+            limit: Some(10),
             is_blue: false,
             description: "+20 Max HP",
         },

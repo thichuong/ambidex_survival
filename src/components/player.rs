@@ -66,9 +66,12 @@ impl Default for CombatStats {
     }
 }
 
-#[allow(clippy::struct_field_names)]
 #[derive(Component, Default)]
 pub struct Progression {
+    pub heal_count: u32,
+    pub damage_upgrades: u32,
+    pub max_health_upgrades: u32,
+    pub crit_damage_upgrades: u32,
     pub crit_chance_upgrades: u32,
     pub lifesteal_upgrades: u32,
     pub cdr_upgrades: u32,

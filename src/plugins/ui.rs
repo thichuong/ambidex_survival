@@ -6,7 +6,8 @@ use crate::systems::ui::{
     update_hud_indicators, update_hud_magic_ui, update_menu_cdr_text, update_menu_crit_text,
     update_menu_damage_text, update_menu_gold_text, update_menu_health_text,
     update_menu_lifesteal_text, update_menu_magic_ui, update_menu_weapon_buttons,
-    update_menu_weapon_details_ui, update_round_text, update_shuriken_count_ui,
+    update_menu_weapon_details_ui, update_round_text, update_shop_cards_ui,
+    update_shuriken_count_ui,
 };
 use bevy::prelude::*;
 
@@ -54,6 +55,7 @@ impl Plugin for UiPlugin {
                     update_menu_crit_text,
                     update_menu_lifesteal_text,
                     update_menu_cdr_text,
+                    update_shop_cards_ui,
                     handle_purchases,
                 )
                     .run_if(in_state(GameState::WeaponMenu)),

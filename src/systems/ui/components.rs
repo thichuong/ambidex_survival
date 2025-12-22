@@ -124,3 +124,6 @@ pub struct WeaponStateGroup {
 
 #[derive(Component)]
 pub struct HUDRoot;
+
+#[derive(Component)]
+pub struct ShopCardCount;
