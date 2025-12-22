@@ -39,7 +39,9 @@ pub fn damage_processing_system(
             is_crit = true;
         }
         if player_stats.lifesteal > 0.0 {
-            let heal_amount = final_damage * player_stats.lifesteal;
+            // AOE projectiles have 50% reduced lifesteal
+            let lifesteal_multiplier = if projectile.is_aoe { 0.5 } else { 1.0 };
+            let heal_amount = final_damage * player_stats.lifesteal * lifesteal_multiplier;
             player_health.current = (player_health.current + heal_amount).min(player_health.max);
         }
 

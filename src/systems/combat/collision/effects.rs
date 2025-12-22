@@ -58,6 +58,7 @@ pub fn projectile_effect_system(
                             speed: 0.0,
                             direction: Vec2::ZERO,
                             owner_entity: projectile.owner_entity,
+                            is_aoe: true, // Explosion is AOE
                         },
                         AoEProjectile::default(),         // Reset hit list
                         Collider::ball(exploding.radius), // Set correct explosion size

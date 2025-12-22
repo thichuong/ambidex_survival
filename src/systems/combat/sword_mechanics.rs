@@ -65,9 +65,9 @@ pub fn update_sword_mechanics(
                                         is_crit = true;
                                     }
 
-                                    // Lifesteal
+                                    // Lifesteal (Sword is AOE, 50% penalty)
                                     if stats.lifesteal > 0.0 {
-                                        let heal = final_damage * stats.lifesteal;
+                                        let heal = final_damage * stats.lifesteal * 0.5;
                                         health.current = (health.current + heal).min(health.max);
                                     }
                                 }

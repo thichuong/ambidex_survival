@@ -132,6 +132,7 @@ fn fire_gun(
                     speed,
                     direction: dir,
                     owner_entity: owner,
+                    is_aoe: false,
                 },
                 Lifetime {
                     timer: Timer::from_seconds(gun::BULLET_LIFETIME, TimerMode::Once),

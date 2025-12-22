@@ -77,6 +77,8 @@ pub struct Projectile {
     #[allow(dead_code)]
     pub direction: Vec2,
     pub owner_entity: Entity,
+    /// AOE projectiles have 50% reduced lifesteal
+    pub is_aoe: bool,
 }
 
 #[derive(Component)]

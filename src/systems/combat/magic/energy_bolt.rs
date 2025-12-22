@@ -30,6 +30,7 @@ pub fn spawn_energy_bolt(
                 speed: energy_bolt::SPEED,
                 direction,
                 owner_entity: player_entity,
+                is_aoe: false, // Initial hit is single-target, explosion is AOE
             },
             Lifetime {
                 timer: Timer::from_seconds(energy_bolt::LIFETIME, TimerMode::Once),

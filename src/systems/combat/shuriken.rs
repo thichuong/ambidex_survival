@@ -113,6 +113,7 @@ fn fire_shuriken(
                 speed: shuriken::SPEED,
                 direction,
                 owner_entity: owner,
+                is_aoe: false,
             },
             Lifetime {
                 timer: Timer::from_seconds(shuriken::LIFETIME, TimerMode::Once),

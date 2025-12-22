@@ -23,6 +23,7 @@ pub fn spawn_global_spell(
                 speed: 0.0,
                 direction: Vec2::ZERO,
                 owner_entity: player_entity,
+                is_aoe: true,
             },
             Lifetime {
                 timer: Timer::from_seconds(global::LIFETIME, TimerMode::Once),

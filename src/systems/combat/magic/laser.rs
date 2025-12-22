@@ -26,6 +26,7 @@ pub fn spawn_laser(
                 speed: 0.0,
                 direction,
                 owner_entity: player_entity,
+                is_aoe: true,
             },
             Lifetime {
                 timer: Timer::from_seconds(laser::LIFETIME, TimerMode::Once),
