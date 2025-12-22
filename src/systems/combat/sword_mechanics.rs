@@ -1,7 +1,8 @@
 use super::DamageEvent;
 use crate::components::enemy::Enemy;
-use crate::components::player::{CombatStats, Hand, Health, Player};
+use crate::components::player::{CombatStats, Hand, HandType, Health, Player};
 use crate::components::weapon::{SwingState, SwordSwing};
+use crate::configs::weapons::sword::SWORD_SIDE_OFFSET;
 use bevy::prelude::*;
 use rand::Rng;
 
@@ -15,13 +16,29 @@ pub fn update_sword_mechanics(
     time: Res<Time>,
     mut sword_query: Query<(Entity, &mut SwordSwing, &mut Transform)>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<SwordSwing>>,
-    hand_query: Query<&GlobalTransform, With<Hand>>,
+    hand_query: Query<(&GlobalTransform, &Hand)>,
     player_query: Single<(&mut Health, &CombatStats), With<Player>>,
 ) {
     let mut player = player_query;
     for (entity, mut swing, mut transform) in &mut sword_query {
-        if let Ok(hand_transform) = hand_query.get(swing.hand_entity) {
-            transform.translation = hand_transform.translation().truncate().extend(0.0);
+        if let Ok((hand_transform, hand)) = hand_query.get(swing.hand_entity) {
+            let hand_pos = hand_transform.translation().truncate();
+            let hand_side = hand.side;
+
+            // Calculate offset direction (perpendicular to base_angle)
+            // If base_angle is forward, side offset is to the right (+90 deg) or left (-90 deg)
+            let side_multiplier = match hand_side {
+                HandType::Left => -1.0,
+                HandType::Right => 1.0,
+            };
+
+            let offset_angle = swing.base_angle - (std::f32::consts::FRAC_PI_2 * side_multiplier);
+            let offset_vec = Vec2::new(offset_angle.cos(), offset_angle.sin()) * SWORD_SIDE_OFFSET;
+
+            transform.translation = (hand_pos + offset_vec).extend(0.0);
+
+            // Set swing direction based on hand
+            swing.swing_direction = side_multiplier;
         }
 
         swing.timer.tick(time.delta());
@@ -29,11 +46,11 @@ pub fn update_sword_mechanics(
         match swing.state {
             SwingState::Swinging => {
                 let progress = swing.timer.fraction();
-                // If direction is 1.0 (CCW), goes from -PI/2 to +PI/2
-                // If direction is -1.0 (CW), should go from +PI/2 to -PI/2?
-                // Wait, (progress - 0.5) is [-0.5, 0.5].
-                // * PI => [-PI/2, PI/2].
-                // If we want reversed, we negate this offset.
+                // Left hand (side_multiplier -1.0): offset goes from PI/2 to -PI/2?
+                // Actually, the user wants it to be a semi-circle based on the hand.
+                // If we use swing_direction = side_multiplier:
+                // Left hand: offset = (progress - 0.5) * PI * -1.0 => [0.5PI, -0.5PI]
+                // Right hand: offset = (progress - 0.5) * PI * 1.0 => [-0.5PI, 0.5PI]
                 let offset = (progress - 0.5) * std::f32::consts::PI * swing.swing_direction;
                 let current_angle = swing.base_angle + offset;
                 transform.rotation = Quat::from_rotation_z(current_angle);

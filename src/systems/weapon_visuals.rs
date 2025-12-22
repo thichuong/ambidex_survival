@@ -329,11 +329,12 @@ pub fn spawn_sword_normal_visuals(
     let blade_length = sword::NORMAL_RANGE;
     let blade_width = 16.0;
 
+    // --- Blade Logic ---
     // Blade Body (Steel)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_steel.clone()),
-        Transform::from_xyz(blade_length * 0.4, 0.0, 0.0).with_scale(Vec3::new(
+        Transform::from_xyz(blade_length * 0.5, 0.0, 0.0).with_scale(Vec3::new(
             blade_length,
             blade_width,
             1.0,
@@ -344,41 +345,33 @@ pub fn spawn_sword_normal_visuals(
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_steel_bright.clone()),
-        Transform::from_xyz(blade_length * 0.4, 0.0, 0.1).with_scale(Vec3::new(
+        Transform::from_xyz(blade_length * 0.5, 0.0, 0.1).with_scale(Vec3::new(
             blade_length * 0.95,
             blade_width * 0.4,
             1.0,
         )),
     ));
 
+    // --- Hilt Logic (Standardized) ---
     // Guard (Gold)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_gold_polished.clone()),
-        Transform::from_xyz(-blade_length * 0.1, 0.0, 0.2).with_scale(Vec3::new(
-            8.0,
-            blade_width * 2.8,
-            1.0,
-        )),
+        Transform::from_xyz(0.0, 0.0, 0.2).with_scale(Vec3::new(8.0, blade_width * 2.8, 1.0)),
     ));
 
     // Handle (Dark Wood)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_wood_dark.clone()),
-        Transform::from_xyz(-blade_length * 0.2, 0.0, 0.1).with_scale(Vec3::new(
-            blade_length * 0.2,
-            blade_width * 0.6,
-            1.0,
-        )),
+        Transform::from_xyz(-12.0, 0.0, 0.1).with_scale(Vec3::new(24.0, blade_width * 0.6, 1.0)),
     ));
 
     // Pommel (Gold)
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
         MeshMaterial2d(cached.mat_gold_polished.clone()),
-        Transform::from_xyz(-blade_length * 0.3, 0.0, 0.25)
-            .with_scale(Vec3::splat(blade_width * 0.7)),
+        Transform::from_xyz(-24.0, 0.0, 0.25).with_scale(Vec3::splat(blade_width * 0.7)),
     ));
 }
 
@@ -389,34 +382,37 @@ pub fn spawn_sword_shattered_visuals(
 ) {
     let mut rng = rand::thread_rng();
 
-    // Stub is proportional to range? User asked "broken_blade_len depends on sword::SHATTERED_RANGE"
     let broken_blade_len = sword::SHATTERED_RANGE * 0.15;
     let blade_width = 16.0;
 
-    // --- Hilt Logic (Same as normal sword, but broken blade) ---
+    // --- Hilt Logic (Standardized) ---
     // Guard (Gold)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_gold_polished.clone()),
-        Transform::from_xyz(-10.0, 0.0, 0.2).with_scale(Vec3::new(8.0, blade_width * 2.8, 1.0)),
+        Transform::from_xyz(0.0, 0.0, 0.2).with_scale(Vec3::new(8.0, blade_width * 2.8, 1.0)),
     ));
+
     // Handle (Dark Wood)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_wood_dark.clone()),
-        Transform::from_xyz(-20.0, 0.0, 0.1).with_scale(Vec3::new(24.0, blade_width * 0.6, 1.0)),
+        Transform::from_xyz(-12.0, 0.0, 0.1).with_scale(Vec3::new(24.0, blade_width * 0.6, 1.0)),
     ));
+
     // Pommel (Gold)
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
         MeshMaterial2d(cached.mat_gold_polished.clone()),
-        Transform::from_xyz(-32.0, 0.0, 0.25).with_scale(Vec3::splat(blade_width * 0.7)),
+        Transform::from_xyz(-24.0, 0.0, 0.25).with_scale(Vec3::splat(blade_width * 0.7)),
     ));
+
+    // --- Blade Logic ---
     // Broken Blade Stub
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
-        MeshMaterial2d(cached.mat_steel.clone()), // Darker break
-        Transform::from_xyz(5.0, 0.0, 0.0).with_scale(Vec3::new(
+        MeshMaterial2d(cached.mat_steel.clone()),
+        Transform::from_xyz(broken_blade_len * 0.5, 0.0, 0.0).with_scale(Vec3::new(
             broken_blade_len,
             blade_width,
             1.0,
@@ -429,9 +425,7 @@ pub fn spawn_sword_shattered_visuals(
 
     for _ in 0..num_fragments {
         let dist = rng.gen_range(20.0..total_range);
-        // Scatter Y slightly
         let y_off = rng.gen_range(-10.0..10.0);
-
         let size_x = rng.gen_range(4.0..12.0);
         let size_y = rng.gen_range(2.0..8.0);
         let rot = rng.gen_range(-0.5..0.5);
