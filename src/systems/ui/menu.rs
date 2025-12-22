@@ -9,6 +9,40 @@ use crate::components::player::{
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
 use bevy::prelude::*;
 
+#[derive(Component)]
+pub struct WeaponDescriptionText;
+
+pub fn get_spell_description(spell_type: SpellType) -> String {
+    match spell_type {
+        SpellType::EnergyBolt => "Energy Bolt: Creates a large explosion on impact.".to_string(),
+        SpellType::Laser => "Laser: Instant-hit high-velocity beam.".to_string(),
+        SpellType::Nova => "Nova: Radial burst of high area damage.".to_string(),
+        SpellType::Blink => "Blink: Teleport to cursor & Invulnerable.".to_string(),
+        SpellType::Global => "Global: Massive strike hitting ALL enemies.".to_string(),
+    }
+}
+
+pub fn get_weapon_description(weapon_type: WeaponType, loadout: Option<&MagicLoadout>) -> String {
+    match weapon_type {
+        WeaponType::Sword => {
+            "Sword (Melee)\n\nNormal Mode: Moderate range, high damage.\nShattered Mode (Skill): Blade fragments cover massive area, lower damage.".to_string()
+        }
+        WeaponType::Gun => {
+            "Gun (Firearm)\n\nModes: Single, Shotgun, Rapid.\nSkill Cycle: Toggle between modes.\nRapid: Hold to spray.".to_string()
+        }
+        WeaponType::Shuriken => "Shuriken (Utility)\n\nAttack: Throw fast-moving stars (Max 12).\nSkill: Teleport to nearest shuriken.\nGreat for dodging.".to_string(),
+        WeaponType::Magic => {
+            if let Some(loadout) = loadout {
+                 let p_desc = get_spell_description(loadout.primary);
+                 let s_desc = get_spell_description(loadout.secondary);
+                 format!("Magic (Spellcasting)\n\nPrimary - {}\n\nSecondary - {}\n\nSkill: Toggle Spell Slot.\nBenefits from CDR upgrades.", p_desc, s_desc)
+            } else {
+                "Magic (Spellcasting)\n\nMost customizable weapon.\nTwo spell slots (Primary/Secondary).\nSelect a spell to see details.".to_string()
+            }
+        }
+    }
+}
+
 #[allow(clippy::too_many_lines)]
 pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
     // Weapon Selection Menu (Full Screen)
@@ -740,6 +774,22 @@ fn spawn_weapon_detail_panel(
             WeaponDetailPanel { side },
         ))
         .with_children(|panel| {
+            // Description Text
+            panel.spawn((
+                Text::new("Description..."),
+                TextFont {
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(10.0)),
+                    max_width: Val::Px(250.0), // Limit width for wrapping
+                    ..default()
+                },
+                WeaponDescriptionText,
+            ));
+
             spawn_sword_group(panel, side, asset_server);
             spawn_gun_group(panel, side, asset_server);
             spawn_shuriken_group(panel, side, asset_server);
@@ -1003,32 +1053,48 @@ pub fn update_menu_magic_ui(
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_weapon_details_ui(
-    mut panel_query: Query<(&mut Node, &WeaponDetailPanel)>,
+    mut panel_query: Query<(&mut Node, &Children, &WeaponDetailPanel)>,
     mut group_query: Query<(&mut Node, &WeaponStateGroup), Without<WeaponDetailPanel>>,
-    hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
+    mut text_query: Query<&mut Text, With<WeaponDescriptionText>>,
+    hand_query: Query<(
+        &Hand,
+        &crate::components::weapon::Weapon,
+        Option<&MagicLoadout>,
+    )>,
 ) {
-    for (mut panel_node, panel) in &mut panel_query {
-        let active_weapon =
-            if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == panel.side) {
-                Some(weapon.kind)
+    for (mut panel_node, children, panel) in &mut panel_query {
+        // Find active weapon and loadout for this side
+        let active_data = hand_query.iter().find(|(h, _, _)| h.side == panel.side);
+
+        if let Some((_, weapon, loadout_opt)) = active_data {
+            // Always show panel if weapon is selected
+            panel_node.display = Display::Flex;
+            let weapon_kind = weapon.kind;
+
+            // Update Description
+            let loadout = if weapon_kind == WeaponType::Magic {
+                loadout_opt
             } else {
                 None
             };
 
-        if let Some(weapon_kind) = active_weapon {
-            if weapon_kind == WeaponType::Magic {
-                panel_node.display = Display::None;
-            } else {
-                panel_node.display = Display::Flex;
+            let desc = get_weapon_description(weapon_kind, loadout);
 
-                // Show matching group, hide others
-                for (mut group_node, group) in &mut group_query {
-                    if group.side == panel.side {
-                        if group.weapon_type == weapon_kind {
-                            group_node.display = Display::Flex;
-                        } else {
-                            group_node.display = Display::None;
-                        }
+            for &child in children {
+                if let Ok(mut text) = text_query.get_mut(child) {
+                    text.0 = desc.clone();
+                }
+            }
+
+            // Show matching group, hide others
+            // Note: Magic has no "group" in this logic (no specific icons in detail panel except maybe generic?)
+            // If Magic, we hide all weapon groups.
+            for (mut group_node, group) in &mut group_query {
+                if group.side == panel.side {
+                    if group.weapon_type == weapon_kind {
+                        group_node.display = Display::Flex;
+                    } else {
+                        group_node.display = Display::None;
                     }
                 }
             }
