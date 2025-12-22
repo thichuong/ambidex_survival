@@ -336,22 +336,16 @@ pub fn spawn_sword_normal_visuals(
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_steel.clone()),
-        Transform::from_xyz(blade_length * 0.5 + grip_offset, 0.0, 0.0).with_scale(Vec3::new(
-            blade_length,
-            blade_width,
-            1.0,
-        )),
+        Transform::from_xyz(blade_length.mul_add(0.5, grip_offset), 0.0, 0.0)
+            .with_scale(Vec3::new(blade_length, blade_width, 1.0)),
     ));
 
     // Blade Ridge (Brighter center line)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_steel_bright.clone()),
-        Transform::from_xyz(blade_length * 0.5 + grip_offset, 0.0, 0.1).with_scale(Vec3::new(
-            blade_length * 0.95,
-            blade_width * 0.4,
-            1.0,
-        )),
+        Transform::from_xyz(blade_length.mul_add(0.5, grip_offset), 0.0, 0.1)
+            .with_scale(Vec3::new(blade_length * 0.95, blade_width * 0.4, 1.0)),
     ));
 
     // --- Hilt Logic (Standardized) ---

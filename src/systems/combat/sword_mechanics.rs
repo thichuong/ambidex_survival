@@ -32,7 +32,8 @@ pub fn update_sword_mechanics(
                 HandType::Right => 1.0,
             };
 
-            let offset_angle = swing.base_angle - (std::f32::consts::FRAC_PI_2 * side_multiplier);
+            let offset_angle =
+                std::f32::consts::FRAC_PI_2.mul_add(-side_multiplier, swing.base_angle);
             let offset_vec = Vec2::new(offset_angle.cos(), offset_angle.sin()) * SWORD_SIDE_OFFSET;
 
             transform.translation = (hand_pos + offset_vec).extend(0.0);
