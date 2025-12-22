@@ -321,12 +321,12 @@ if (!('encodeInto' in cachedTextEncoder)) {
 
 let WASM_VECTOR_LEN = 0;
 
-function __wasm_bindgen_func_elem_90739(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_90739(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
-}
-
 function __wasm_bindgen_func_elem_96690(arg0, arg1, arg2) {
     wasm.__wasm_bindgen_func_elem_96690(arg0, arg1, addHeapObject(arg2));
+}
+
+function __wasm_bindgen_func_elem_90739(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_90739(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
 function __wasm_bindgen_func_elem_94903(arg0, arg1) {
