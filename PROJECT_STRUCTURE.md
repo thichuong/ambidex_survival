@@ -62,7 +62,6 @@ ambidex_survival/
 │   │   │   └── setup.rs
 │   │   ├── damage_text.rs
 │   │   ├── enemy.rs
-│   │   ├── object_pooling.rs
 │   │   ├── physics.rs
 │   │   ├── player.rs
 │   │   └── weapon_visuals.rs
@@ -151,4 +150,3 @@ Collision detection and damage processing pipeline:
 - `physics.rs`: Decoupled movement and velocity integration systems.
 - `weapon_visuals.rs`: Visual effects for projectiles and swing animations.
 - `damage_text.rs`: Reactive floating numbers triggered by `On<DamageEvent>`.
-- `object_pooling.rs`: Entity recycling for performance-critical objects.

@@ -2,7 +2,6 @@ use crate::components::enemy::Enemy;
 use crate::components::physics::UniformGrid;
 use crate::components::player::{GameCamera, Player};
 use crate::components::weapon::{Lifetime, Projectile};
-use crate::systems::object_pooling::{PooledEffect, VisualEffectPool};
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -59,12 +58,6 @@ pub struct CombatInputParams<'w, 's> {
     >,
 }
 
-#[derive(SystemParam)]
-pub struct CombatResources<'w> {
-    pub cached_assets: Res<'w, crate::resources::cached_assets::CachedAssets>,
-    pub effect_pool: ResMut<'w, VisualEffectPool>,
-}
-
 /// Update enemy grid for spatial partitioning - rebuilds grid each frame
 #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 pub fn update_enemy_grid(
@@ -81,17 +74,12 @@ pub fn update_enemy_grid(
 pub fn manage_lifetime(
     mut commands: Commands,
     time: Res<Time>,
-    mut query: Query<(Entity, &mut Lifetime, Option<&PooledEffect>)>,
-    mut effect_pool: ResMut<VisualEffectPool>,
+    mut query: Query<(Entity, &mut Lifetime)>,
 ) {
-    for (entity, mut lifetime, pooled) in &mut query {
+    for (entity, mut lifetime) in &mut query {
         lifetime.timer.tick(time.delta());
         if lifetime.timer.is_finished() {
-            if let Some(pooled) = pooled {
-                effect_pool.return_to_pool(entity, pooled.kind, &mut commands);
-            } else {
-                commands.entity(entity).despawn();
-            }
+            commands.entity(entity).despawn();
         }
     }
 }

@@ -1,9 +1,6 @@
-//! Projectile visual effects and despawning upon collision
-
 use crate::components::physics::{Collider, IgnoreGrid, Velocity};
 use crate::components::weapon::{AoEProjectile, ExplodingProjectile, Lifetime, Projectile};
-use crate::systems::combat::{CollisionEvent, CombatResources, PendingDespawn};
-use crate::systems::object_pooling::EffectType;
+use crate::systems::combat::{CollisionEvent, PendingDespawn};
 use crate::systems::weapon_visuals::spawn_bolt_explosion_visuals;
 use bevy::prelude::*;
 use rand::Rng;
@@ -24,7 +21,7 @@ pub fn projectile_effect_system(
     mut commands: Commands,
     mut collision_events: MessageReader<CollisionEvent>,
     projectile_query: ProjectileEffectQuery,
-    mut res: CombatResources,
+    res: Res<crate::resources::cached_assets::CachedAssets>,
 ) {
     let mut processed_projectiles = Vec::new(); // Still needs mut because we push to it!
 
@@ -48,33 +45,26 @@ pub fn projectile_effect_system(
                     timer: Timer::from_seconds(0.1, TimerMode::Once),
                 };
 
-                let req = res.effect_pool.spawn_or_get(
-                    &mut commands,
-                    EffectType::BoltExplosion,
-                    spawn_transform,
-                    lifetime,
-                );
-
-                // Update the explosion entity components
-                commands.entity(req.entity).insert((
-                    Velocity::default(),
-                    Projectile {
-                        kind: projectile.kind,
-                        damage: exploding.damage,
-                        speed: 0.0,
-                        direction: Vec2::ZERO,
-                        owner_entity: projectile.owner_entity,
-                    },
-                    AoEProjectile::default(), // Reset hit list for pooled entities
-                    Collider::ball(exploding.radius), // Set correct explosion size
-                    IgnoreGrid,               // Reliable AOE coverage
-                ));
-
-                if req.is_new {
-                    commands.entity(req.entity).with_children(|parent| {
-                        spawn_bolt_explosion_visuals(parent, &res.cached_assets, exploding.radius);
+                commands
+                    .spawn((
+                        Visibility::Visible,
+                        spawn_transform,
+                        lifetime,
+                        Velocity::default(),
+                        Projectile {
+                            kind: projectile.kind,
+                            damage: exploding.damage,
+                            speed: 0.0,
+                            direction: Vec2::ZERO,
+                            owner_entity: projectile.owner_entity,
+                        },
+                        AoEProjectile::default(),         // Reset hit list
+                        Collider::ball(exploding.radius), // Set correct explosion size
+                        IgnoreGrid,                       // Reliable AOE coverage
+                    ))
+                    .with_children(|parent| {
+                        spawn_bolt_explosion_visuals(parent, &res, exploding.radius);
                     });
-                }
             }
             processed_projectiles.push(event.projectile);
         }

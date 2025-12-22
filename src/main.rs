@@ -12,10 +12,6 @@ mod resources;
 mod systems;
 mod utils;
 
-pub mod object_pooling {
-    pub use crate::systems::object_pooling::*;
-}
-
 use bevy::window::PrimaryWindow;
 use components::player::GameCamera;
 use resources::cached_assets::CachedAssets;
@@ -55,7 +51,6 @@ fn main() {
         .init_resource::<resources::round::RoundManager>()
         .init_resource::<resources::polish::ScreenShake>()
         .init_resource::<components::physics::UniformGrid>()
-        .init_resource::<systems::object_pooling::VisualEffectPool>()
         .add_systems(Startup, (setup_camera, init_cached_assets))
         .add_systems(Update, maximize_window)
         .run();
