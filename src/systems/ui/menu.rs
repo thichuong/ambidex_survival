@@ -20,8 +20,9 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                 position_type: PositionType::Absolute,
                 display: Display::None,
                 flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
+                justify_content: JustifyContent::FlexStart, // Align to top
                 align_items: AlignItems::Center,
+                padding: UiRect::all(Val::Px(20.0)),
                 ..default()
             },
             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 1.0)),
@@ -281,110 +282,120 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                         });
                 });
 
-            // Close Button
-            parent
-                .spawn((
-                    Button,
-                    Node {
-                        width: Val::Px(200.0),
-                        height: Val::Px(60.0),
-                        margin: UiRect::top(Val::Px(40.0)),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
-                ))
-                .observe(
-                    |_: On<Pointer<Click>>,
-                     mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>,
-                     mut round_manager: ResMut<crate::resources::round::RoundManager>| {
-                        // Nếu đang ở Shop state thì bắt đầu round mới
-                        if round_manager.round_state == crate::resources::round::RoundState::Shop {
-                            round_manager.current_round += 1;
-                            round_manager.enemies_to_spawn = crate::configs::enemy::BASE_ENEMY_COUNT
-                                + (round_manager.current_round
-                                    * crate::configs::enemy::ENEMY_COUNT_SCALING_PER_ROUND);
-                            #[allow(clippy::cast_precision_loss)]
-                            let exponent = round_manager.current_round as f32;
-                            round_manager.spawn_timer = bevy::time::Timer::from_seconds(
-                                crate::configs::enemy::BASE_SPAWN_INTERVAL
-                                    * (crate::configs::enemy::SPAWN_INTERVAL_DECAY).powf(exponent),
-                                bevy::time::TimerMode::Repeating,
-                            );
-                            round_manager.round_state = crate::resources::round::RoundState::Spawning;
-                            println!("Starting Round {}!", round_manager.current_round);
-                        }
-                        next_state.set(crate::resources::game_state::GameState::Playing);
-                    },
-                )
-                .with_children(|btn| {
-                    btn.spawn((
-                        Text::new("BACK TO GAME"),
-                        TextFont {
-                            font_size: 24.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ));
-                });
-
-            // Action Buttons Row (Tutorial + Back)
+            // Footer Container (Pushed to bottom)
             parent
                 .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::Center,
+                    flex_direction: FlexDirection::Column,
                     align_items: AlignItems::Center,
-                    margin: UiRect::top(Val::Px(20.0)),
+                    justify_content: JustifyContent::Center,
+                    width: Val::Percent(100.0),
+                    margin: UiRect::top(Val::Auto), // Push to bottom
+                    padding: UiRect::bottom(Val::Px(20.0)),
                     ..default()
                 })
-                .with_children(|row| {
-                    // Tutorial Button
-                    row.spawn((
-                        Button,
-                        Node {
-                            width: Val::Px(180.0),
-                            height: Val::Px(50.0),
-                            margin: UiRect::horizontal(Val::Px(10.0)),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            border: UiRect::all(Val::Px(2.0)),
-                            ..default()
-                        },
-                        BorderColor::all(Color::srgb(0.0, 0.8, 1.0)),
-                        BackgroundColor(Color::srgba(0.1, 0.2, 0.3, 1.0)),
-                        TutorialButton,
-                    ))
-                    .observe(
-                        |_: On<Pointer<Click>>,
-                         mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
-                            next_state.set(crate::resources::game_state::GameState::Tutorial);
-                        },
-                    )
-                    .observe(
-                        |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
-                            if let Ok(mut color) = color.get_mut(trigger.entity) {
-                                *color = BackgroundColor(Color::srgba(0.2, 0.4, 0.6, 1.0));
-                            }
-                        },
-                    )
-                    .observe(
-                        |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
-                            if let Ok(mut color) = color.get_mut(trigger.entity) {
-                                *color = BackgroundColor(Color::srgba(0.1, 0.2, 0.3, 1.0));
-                            }
-                        },
-                    )
-                    .with_children(|btn| {
-                        btn.spawn((
-                            Text::new("TUTORIAL"),
-                            TextFont {
-                                font_size: 20.0,
+                .with_children(|footer| {
+                    // Close Button
+                    footer
+                        .spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(200.0),
+                                height: Val::Px(60.0),
+                                margin: UiRect::bottom(Val::Px(20.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
                                 ..default()
                             },
-                            TextColor(Color::WHITE),
-                        ));
-                    });
+                            BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
+                        ))
+                        .observe(
+                            |_: On<Pointer<Click>>,
+                             mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>,
+                             mut round_manager: ResMut<crate::resources::round::RoundManager>| {
+                                // Nếu đang ở Shop state thì bắt đầu round mới
+                                if round_manager.round_state
+                                    == crate::resources::round::RoundState::Shop
+                                {
+                                    round_manager.current_round += 1;
+                                    round_manager.enemies_to_spawn =
+                                        crate::configs::enemy::BASE_ENEMY_COUNT
+                                            + (round_manager.current_round
+                                                * crate::configs::enemy::ENEMY_COUNT_SCALING_PER_ROUND);
+                                    #[allow(clippy::cast_precision_loss)]
+                                    let exponent = round_manager.current_round as f32;
+                                    round_manager.spawn_timer = bevy::time::Timer::from_seconds(
+                                        crate::configs::enemy::BASE_SPAWN_INTERVAL
+                                            * (crate::configs::enemy::SPAWN_INTERVAL_DECAY)
+                                                .powf(exponent),
+                                        bevy::time::TimerMode::Repeating,
+                                    );
+                                    round_manager.round_state =
+                                        crate::resources::round::RoundState::Spawning;
+                                    println!("Starting Round {}!", round_manager.current_round);
+                                }
+                                next_state.set(crate::resources::game_state::GameState::Playing);
+                            },
+                        )
+                        .with_children(|btn| {
+                            btn.spawn((
+                                Text::new("BACK TO GAME"),
+                                TextFont {
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::WHITE),
+                            ));
+                        });
+
+                    // Tutorial Button
+                    footer
+                        .spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(180.0),
+                                height: Val::Px(50.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BorderColor::all(Color::srgb(0.0, 0.8, 1.0)),
+                            BackgroundColor(Color::srgba(0.1, 0.2, 0.3, 1.0)),
+                            TutorialButton,
+                        ))
+                        .observe(
+                            |_: On<Pointer<Click>>,
+                             mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
+                                next_state
+                                    .set(crate::resources::game_state::GameState::Tutorial);
+                            },
+                        )
+                        .observe(
+                            |trigger: On<Pointer<Over>>,
+                             mut color: Query<&mut BackgroundColor>| {
+                                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                                    *color = BackgroundColor(Color::srgba(0.2, 0.4, 0.6, 1.0));
+                                }
+                            },
+                        )
+                        .observe(
+                            |trigger: On<Pointer<Out>>,
+                             mut color: Query<&mut BackgroundColor>| {
+                                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                                    *color = BackgroundColor(Color::srgba(0.1, 0.2, 0.3, 1.0));
+                                }
+                            },
+                        )
+                        .with_children(|btn| {
+                            btn.spawn((
+                                Text::new("TUTORIAL"),
+                                TextFont {
+                                    font_size: 20.0,
+                                    ..default()
+                                },
+                                TextColor(Color::WHITE),
+                            ));
+                        });
                 });
         });
 }
