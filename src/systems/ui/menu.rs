@@ -47,122 +47,91 @@ pub fn get_weapon_description(weapon_type: WeaponType, loadout: Option<&MagicLoa
 
 #[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
 pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // Weapon Selection Menu (Full Screen)
+    // Main Container (Full Screen)
     commands
         .spawn((
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 position_type: PositionType::Absolute,
-                display: Display::Flex, // Changed from None to Flex as we spawn on enter
+                display: Display::Flex,
                 flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::FlexStart, // Align to top
+                justify_content: JustifyContent::FlexStart,
                 align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(20.0)),
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 1.0)),
+            BackgroundColor(Color::srgba(0.04, 0.04, 0.06, 1.0)),
             WeaponMenuUI,
         ))
         .with_children(|parent| {
-            // Status Panel (Top)
+            // --- FIXED HEADER ---
             parent
                 .spawn((
                     Node {
                         width: Val::Percent(100.0),
-                        height: Val::Px(60.0),
-                        justify_content: JustifyContent::SpaceEvenly,
+                        height: Val::Px(120.0),
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        margin: UiRect::bottom(Val::Px(20.0)),
+                        padding: UiRect::horizontal(Val::Px(20.0)),
+                        border: UiRect::bottom(Val::Px(1.0)),
                         ..default()
                     },
-                    BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)), // Status bar background
+                    BackgroundColor(Color::srgba(0.08, 0.08, 0.1, 0.95)),
+                    BorderColor::all(Color::srgba(0.2, 0.2, 0.25, 0.5)),
                 ))
-                .with_children(|status_bar| {
-                    // Health
-                    status_bar.spawn((
-                        Text::new("HP: 100/100"),
+                .with_children(|header| {
+                    // Status Bar
+                    header.spawn(Node {
+                        width: Val::Percent(100.0),
+                        justify_content: JustifyContent::SpaceEvenly,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::bottom(Val::Px(10.0)),
+                        ..default()
+                    }).with_children(|status_bar| {
+                        // Health
+                        status_bar.spawn((
+                            Text::new("HP: 100/100"),
+                            TextFont { font_size: 20.0, ..default() },
+                            TextColor(Color::srgb(0.2, 1.0, 0.4)),
+                            MenuHealthText,
+                        ));
+                        // Gold
+                        status_bar.spawn((
+                            Text::new("Gold: 0"),
+                            TextFont { font_size: 20.0, ..default() },
+                            TextColor(Color::srgb(1.0, 0.8, 0.0)),
+                            MenuGoldText,
+                        ));
+                        // Stats Group
+                        let stat_font = TextFont { font_size: 16.0, ..default() };
+                        status_bar.spawn((Text::new("Dmg: +0%"), stat_font.clone(), TextColor(Color::srgb(1.0, 0.4, 0.1)), MenuDamageText));
+                        status_bar.spawn((Text::new("Crit: 0%"), stat_font.clone(), TextColor(Color::srgb(1.0, 0.2, 0.2)), MenuCritText));
+                        status_bar.spawn((Text::new("Life: 0%"), stat_font.clone(), TextColor(Color::srgb(1.0, 0.2, 1.0)), MenuLifestealText));
+                        status_bar.spawn((Text::new("CDR: 0%"), stat_font, TextColor(Color::srgb(0.2, 0.8, 1.0)), MenuCDRText));
+                    });
+
+                    // Title
+                    header.spawn((
+                        Text::new("ARSENAL & UPGRADES"),
                         TextFont {
-                            font_size: 24.0,
+                            font_size: 32.0,
                             ..default()
                         },
-                        TextColor(Color::srgb(0.0, 1.0, 0.0)),
-                        MenuHealthText,
-                    ));
-                    // Gold
-                    status_bar.spawn((
-                        Text::new("Gold: 0"),
-                        TextFont {
-                            font_size: 24.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
-                        MenuGoldText,
-                    ));
-                    // Damage Bonus
-                    status_bar.spawn((
-                        Text::new("Dmg: +0%"),
-                        TextFont {
-                            font_size: 20.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(1.0, 0.5, 0.0)),
-                        MenuDamageText,
-                    ));
-                    // Crit
-                    status_bar.spawn((
-                        Text::new("Crit: 0% (x2.0)"),
-                        TextFont {
-                            font_size: 20.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(1.0, 0.2, 0.2)),
-                        MenuCritText,
-                    ));
-                    // Lifesteal
-                    status_bar.spawn((
-                        Text::new("Life: 0%"),
-                        TextFont {
-                            font_size: 20.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(1.0, 0.0, 1.0)),
-                        MenuLifestealText,
-                    ));
-                    // CDR
-                    status_bar.spawn((
-                        Text::new("CDR: 0%"),
-                        TextFont {
-                            font_size: 20.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.0, 1.0, 1.0)),
-                        MenuCDRText,
+                        TextColor(Color::WHITE),
                     ));
                 });
 
-            // Title
-            parent.spawn((
-                Text::new("WEAPON SELECTION"),
-                TextFont {
-                    font_size: 40.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                Node {
-                    margin: UiRect::bottom(Val::Px(10.0)),
-                    ..default()
-                },
-            ));
-
-            // Content Container (Weapons + Shop)
+            // --- SCROLLABLE CONTENT AREA ---
             parent
                 .spawn(Node {
                     width: Val::Percent(100.0),
+                    flex_grow: 1.0,
                     flex_direction: FlexDirection::Row,
                     justify_content: JustifyContent::SpaceEvenly,
                     align_items: AlignItems::FlexStart,
-                    padding: UiRect::horizontal(Val::Px(20.0)),
+                    padding: UiRect::all(Val::Px(20.0)),
+                    overflow: Overflow::clip(), // Important for containing children
                     ..default()
                 })
                 .with_children(|content| {
@@ -171,38 +140,27 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         .spawn(Node {
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
-                            width: Val::Percent(30.0),
+                            width: Val::Percent(28.0),
+                            height: Val::Percent(100.0),
                             ..default()
                         })
                         .with_children(|col| {
                             col.spawn((
                                 Text::new("LEFT HAND"),
-                                TextFont {
-                                    font_size: 24.0,
-                                    ..default()
-                                },
-                                TextColor(Color::WHITE),
+                                TextFont { font_size: 22.0, ..default() },
+                                TextColor(Color::srgb(0.7, 0.7, 1.0)),
+                                Node { margin: UiRect::bottom(Val::Px(15.0)), ..default() },
                             ));
 
-                            // Separator
-                            col.spawn(Node {
-                                height: Val::Px(10.0),
-                                ..default()
-                            });
-
-                            // Content Row (Buttons | Description)
                             col.spawn(Node {
                                 flex_direction: FlexDirection::Row,
                                 width: Val::Percent(100.0),
-                                justify_content: JustifyContent::SpaceBetween,
-                                align_items: AlignItems::FlexStart,
+                                flex_grow: 1.0,
                                 ..default()
                             }).with_children(|row| {
-                                // Column 1: Buttons
                                 row.spawn(Node {
                                     flex_direction: FlexDirection::Column,
-                                    align_items: AlignItems::Center,
-                                    width: Val::Percent(35.0),
+                                    width: Val::Percent(30.0),
                                     ..default()
                                 }).with_children(|btns| {
                                     spawn_weapon_button(btns, HandType::Left, WeaponType::Shuriken, "Shuriken");
@@ -211,105 +169,63 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                                     spawn_weapon_button(btns, HandType::Left, WeaponType::Magic, "Magic");
                                 });
 
-                                // Column 2: Details & Magic Panel
                                 row.spawn(Node {
                                     flex_direction: FlexDirection::Column,
-                                    align_items: AlignItems::Center,
-                                    width: Val::Percent(65.0),
+                                    width: Val::Percent(70.0),
+                                    padding: UiRect::left(Val::Px(10.0)),
                                     ..default()
                                 }).with_children(|details| {
-                                    // Magic Panel (Initially Hidden, managed by logic)
                                     spawn_magic_panel(details, HandType::Left, &asset_server);
                                     spawn_weapon_detail_panel(details, HandType::Left, &asset_server);
                                 });
                             });
                         });
 
-                    // --- CENTER SHOP SECTION ---
+                    // --- CENTER SHOP SECTION (Scrollable) ---
                     content
                         .spawn((
                             Node {
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
-                                justify_content: JustifyContent::FlexStart,
                                 width: Val::Percent(40.0),
-                                min_width: Val::Px(420.0),
-                                height: Val::Auto,
+                                height: Val::Percent(100.0),
                                 flex_grow: 1.0,
-                                padding: UiRect::all(Val::Px(16.0)),
-                                border: UiRect::all(Val::Px(2.0)),
+                                padding: UiRect::horizontal(Val::Px(10.0)),
+                                border: UiRect::horizontal(Val::Px(1.0)),
                                 overflow: Overflow::scroll_y(),
                                 ..default()
                             },
-                            BorderColor::all(Color::srgba(0.4, 0.4, 0.5, 0.8)),
-                            BorderRadius::all(Val::Px(16.0)),
-                            BackgroundColor(Color::srgba(0.08, 0.08, 0.12, 0.9)),
+                            BorderColor::all(Color::srgba(0.2, 0.2, 0.3, 0.5)),
                         ))
-                        .with_children(|shop_container| {
-                            // Shop Title with gradient-like styling
-                            shop_container.spawn((
-                                Text::new("⚒️ SHOP"),
-                                TextFont {
-                                    font_size: 28.0,
-                                    ..default()
-                                },
+                        .with_children(|shop_scroll| {
+                            shop_scroll.spawn((
+                                Text::new("SHOP UPGRADES"),
+                                TextFont { font_size: 24.0, ..default() },
                                 TextColor(Color::srgb(1.0, 0.9, 0.5)),
-                                Node {
-                                    margin: UiRect::bottom(Val::Px(16.0)),
-                                    ..default()
-                                },
+                                Node { margin: UiRect::bottom(Val::Px(15.0)), ..default() },
                             ));
 
-                            // Cards Grid Container
-                            shop_container
-                                .spawn(Node {
-                                    flex_direction: FlexDirection::Row,
-                                    flex_wrap: FlexWrap::Wrap,
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::FlexStart,
-                                    align_content: AlignContent::FlexStart,
-                                    width: Val::Percent(100.0),
-                                    row_gap: Val::Px(8.0),
-                                    column_gap: Val::Px(8.0),
-                                    ..default()
-                                })
-                                .with_children(|shop_row| {
-                                    spawn_shop_button(
-                                        shop_row,
-                                        ShopButton::Heal,
-                                        "",
-                                    );
-                                    spawn_shop_button(
-                                        shop_row,
-                                        ShopButton::DamageUp,
-                                        "",
-                                    );
-                                    spawn_shop_button(
-                                        shop_row,
-                                        ShopButton::MaxHealthUp,
-                                        "",
-                                    );
-                                    spawn_shop_button(
-                                        shop_row,
-                                        ShopButton::CritDamageUp,
-                                        "",
-                                    );
-                                    spawn_shop_button(
-                                        shop_row,
-                                        ShopButton::CritChanceUp,
-                                        "",
-                                    );
-                                    spawn_shop_button(
-                                        shop_row,
-                                        ShopButton::LifestealUp,
-                                        "",
-                                    );
-                                    spawn_shop_button(
-                                        shop_row,
-                                        ShopButton::CooldownReductionUp,
-                                        "",
-                                    );
-                                });
+                            shop_scroll.spawn(Node {
+                                flex_direction: FlexDirection::Row,
+                                flex_wrap: FlexWrap::Wrap,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::FlexStart,
+                                width: Val::Percent(100.0),
+                                row_gap: Val::Px(10.0),
+                                column_gap: Val::Px(10.0),
+                                ..default()
+                            }).with_children(|grid| {
+                                spawn_shop_button(grid, ShopButton::Heal, "");
+                                spawn_shop_button(grid, ShopButton::DamageUp, "");
+                                spawn_shop_button(grid, ShopButton::MaxHealthUp, "");
+                                spawn_shop_button(grid, ShopButton::CritDamageUp, "");
+                                spawn_shop_button(grid, ShopButton::CritChanceUp, "");
+                                spawn_shop_button(grid, ShopButton::LifestealUp, "");
+                                spawn_shop_button(grid, ShopButton::CooldownReductionUp, "");
+                            });
+                            
+                            // Bottom padding for scroll
+                            shop_scroll.spawn(Node { height: Val::Px(20.0), ..default() });
                         });
 
                     // --- RIGHT HAND SECTION ---
@@ -317,38 +233,27 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         .spawn(Node {
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
-                            width: Val::Percent(30.0),
+                            width: Val::Percent(28.0),
+                            height: Val::Percent(100.0),
                             ..default()
                         })
                         .with_children(|col| {
                             col.spawn((
                                 Text::new("RIGHT HAND"),
-                                TextFont {
-                                    font_size: 24.0,
-                                    ..default()
-                                },
-                                TextColor(Color::WHITE),
+                                TextFont { font_size: 22.0, ..default() },
+                                TextColor(Color::srgb(1.0, 0.7, 0.7)),
+                                Node { margin: UiRect::bottom(Val::Px(15.0)), ..default() },
                             ));
 
-                            // Separator
-                            col.spawn(Node {
-                                height: Val::Px(10.0),
-                                ..default()
-                            });
-
-                            // Content Row (Buttons | Description)
                             col.spawn(Node {
                                 flex_direction: FlexDirection::Row,
                                 width: Val::Percent(100.0),
-                                justify_content: JustifyContent::SpaceBetween,
-                                align_items: AlignItems::FlexStart,
+                                flex_grow: 1.0,
                                 ..default()
                             }).with_children(|row| {
-                                // Column 1: Buttons
                                 row.spawn(Node {
                                     flex_direction: FlexDirection::Column,
-                                    align_items: AlignItems::Center,
-                                    width: Val::Percent(35.0),
+                                    width: Val::Percent(30.0),
                                     ..default()
                                 }).with_children(|btns| {
                                     spawn_weapon_button(btns, HandType::Right, WeaponType::Shuriken, "Shuriken");
@@ -357,11 +262,10 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                                     spawn_weapon_button(btns, HandType::Right, WeaponType::Magic, "Magic");
                                 });
 
-                                // Column 2: Details & Magic Panel
                                 row.spawn(Node {
                                     flex_direction: FlexDirection::Column,
-                                    align_items: AlignItems::Center,
-                                    width: Val::Percent(65.0),
+                                    width: Val::Percent(70.0),
+                                    padding: UiRect::left(Val::Px(10.0)),
                                     ..default()
                                 }).with_children(|details| {
                                     spawn_magic_panel(details, HandType::Right, &asset_server);
@@ -371,86 +275,63 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         });
                 });
 
-            // Footer Container (Pushed to bottom) - Horizontal layout
+            // --- FIXED FOOTER ---
             parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    column_gap: Val::Px(20.0),
-                    width: Val::Percent(100.0),
-                    margin: UiRect::top(Val::Px(16.0)),
-                    padding: UiRect::vertical(Val::Px(16.0)),
-                    ..default()
-                })
+                .spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        height: Val::Px(80.0),
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        column_gap: Val::Px(30.0),
+                        border: UiRect::top(Val::Px(1.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.08, 0.08, 0.1, 0.95)),
+                    BorderColor::all(Color::srgba(0.2, 0.2, 0.25, 0.5)),
+                ))
                 .with_children(|footer| {
-                    // Close Button
+                    // Back to Game Button
                     footer
                         .spawn((
                             Button,
                             Node {
-                                width: Val::Px(180.0),
+                                width: Val::Px(220.0),
                                 height: Val::Px(50.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
                                 border: UiRect::all(Val::Px(2.0)),
                                 ..default()
                             },
-                            BorderColor::all(Color::srgb(0.4, 0.8, 0.4)),
-                            BorderRadius::all(Val::Px(8.0)),
-                            BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
+                            BorderColor::all(Color::srgb(0.3, 0.8, 0.3)),
+                            BorderRadius::all(Val::Px(10.0)),
+                            BackgroundColor(Color::srgba(0.15, 0.25, 0.15, 1.0)),
                         ))
-                        .observe(
-                            |_: On<Pointer<Click>>,
-                             mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>,
-                             mut round_manager: ResMut<crate::resources::round::RoundManager>| {
-                                // Nếu đang ở Shop state thì bắt đầu round mới
-                                if round_manager.round_state
-                                    == crate::resources::round::RoundState::Shop
-                                {
-                                    round_manager.current_round += 1;
-                                    round_manager.enemies_to_spawn =
-                                        crate::configs::enemy::BASE_ENEMY_COUNT
-                                            + (round_manager.current_round
-                                                * crate::configs::enemy::ENEMY_COUNT_SCALING_PER_ROUND);
-                                    #[allow(clippy::cast_precision_loss)]
-                                    let exponent = round_manager.current_round as f32;
-                                    round_manager.spawn_timer = bevy::time::Timer::from_seconds(
-                                        crate::configs::enemy::BASE_SPAWN_INTERVAL
-                                            * (crate::configs::enemy::SPAWN_INTERVAL_DECAY)
-                                                .powf(exponent),
-                                        bevy::time::TimerMode::Repeating,
-                                    );
-                                    round_manager.round_state =
-                                        crate::resources::round::RoundState::Spawning;
-                                    println!("Starting Round {}!", round_manager.current_round);
-                                }
-                                next_state.set(crate::resources::game_state::GameState::Playing);
-                            },
-                        )
-                        .observe(
-                            |trigger: On<Pointer<Over>>,
-                             mut color: Query<&mut BackgroundColor>| {
-                                if let Ok(mut color) = color.get_mut(trigger.entity) {
-                                    *color = BackgroundColor(Color::srgba(0.2, 0.6, 0.2, 1.0));
-                                }
-                            },
-                        )
-                        .observe(
-                            |trigger: On<Pointer<Out>>,
-                             mut color: Query<&mut BackgroundColor>| {
-                                if let Ok(mut color) = color.get_mut(trigger.entity) {
-                                    *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0));
-                                }
-                            },
-                        )
+                        .observe(|_: On<Pointer<Click>>, mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>, mut round_manager: ResMut<crate::resources::round::RoundManager>| {
+                            if round_manager.round_state == crate::resources::round::RoundState::Shop {
+                                round_manager.current_round += 1;
+                                round_manager.enemies_to_spawn = crate::configs::enemy::BASE_ENEMY_COUNT + (round_manager.current_round * crate::configs::enemy::ENEMY_COUNT_SCALING_PER_ROUND);
+                                #[allow(clippy::cast_precision_loss)]
+                                let exponent = round_manager.current_round as f32;
+                                round_manager.spawn_timer = bevy::time::Timer::from_seconds(
+                                    crate::configs::enemy::BASE_SPAWN_INTERVAL * (crate::configs::enemy::SPAWN_INTERVAL_DECAY).powf(exponent),
+                                    bevy::time::TimerMode::Repeating,
+                                );
+                                round_manager.round_state = crate::resources::round::RoundState::Spawning;
+                            }
+                            next_state.set(crate::resources::game_state::GameState::Playing);
+                        })
+                        .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.25, 0.45, 0.25, 1.0)); }
+                        })
+                        .observe(|trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.15, 0.25, 0.15, 1.0)); }
+                        })
                         .with_children(|btn| {
                             btn.spawn((
-                                Text::new("BACK TO GAME"),
-                                TextFont {
-                                    font_size: 24.0,
-                                    ..default()
-                                },
+                                Text::new("BACK TO BATTLE"),
+                                TextFont { font_size: 22.0, ..default() },
                                 TextColor(Color::WHITE),
                             ));
                         });
@@ -467,41 +348,24 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                                 border: UiRect::all(Val::Px(2.0)),
                                 ..default()
                             },
-                            BorderColor::all(Color::srgb(0.0, 0.8, 1.0)),
-                            BorderRadius::all(Val::Px(8.0)),
-                            BackgroundColor(Color::srgba(0.1, 0.2, 0.3, 1.0)),
+                            BorderColor::all(Color::srgb(0.2, 0.6, 1.0)),
+                            BorderRadius::all(Val::Px(10.0)),
+                            BackgroundColor(Color::srgba(0.15, 0.2, 0.3, 1.0)),
                             TutorialButton,
                         ))
-                        .observe(
-                            |_: On<Pointer<Click>>,
-                             mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
-                                next_state
-                                    .set(crate::resources::game_state::GameState::Tutorial);
-                            },
-                        )
-                        .observe(
-                            |trigger: On<Pointer<Over>>,
-                             mut color: Query<&mut BackgroundColor>| {
-                                if let Ok(mut color) = color.get_mut(trigger.entity) {
-                                    *color = BackgroundColor(Color::srgba(0.2, 0.4, 0.6, 1.0));
-                                }
-                            },
-                        )
-                        .observe(
-                            |trigger: On<Pointer<Out>>,
-                             mut color: Query<&mut BackgroundColor>| {
-                                if let Ok(mut color) = color.get_mut(trigger.entity) {
-                                    *color = BackgroundColor(Color::srgba(0.1, 0.2, 0.3, 1.0));
-                                }
-                            },
-                        )
+                        .observe(|_: On<Pointer<Click>>, mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>| {
+                            next_state.set(crate::resources::game_state::GameState::Tutorial);
+                        })
+                        .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.25, 0.4, 0.6, 1.0)); }
+                        })
+                        .observe(|trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.15, 0.2, 0.3, 1.0)); }
+                        })
                         .with_children(|btn| {
                             btn.spawn((
                                 Text::new("TUTORIAL"),
-                                TextFont {
-                                    font_size: 20.0,
-                                    ..default()
-                                },
+                                TextFont { font_size: 20.0, ..default() },
                                 TextColor(Color::WHITE),
                             ));
                         });
@@ -523,15 +387,15 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, _l
         ShopButton::CritChanceUp | ShopButton::LifestealUp | ShopButton::CooldownReductionUp
     );
 
-    // Get icon, title, description, and price for each upgrade type
-    let (icon, title, desc, price) = match btn_type {
-        ShopButton::Heal => ("❤️", "Heal", "+30 HP", "50G"),
-        ShopButton::DamageUp => ("⚔️", "Damage", "+10%", "100G"),
-        ShopButton::MaxHealthUp => ("💖", "Max HP", "+20", "150G"),
-        ShopButton::CritDamageUp => ("💥", "Crit Dmg", "+50%", "200G"),
-        ShopButton::CritChanceUp => ("🎯", "Crit Rate", "+10%", "250G"),
-        ShopButton::LifestealUp => ("🩸", "Lifesteal", "+10%", "300G"),
-        ShopButton::CooldownReductionUp => ("⏱️", "CDR", "+10%", "350G"),
+    // Get icon name, title, description, and price for each upgrade type
+    let (title, desc, price) = match btn_type {
+        ShopButton::Heal => ("Heal", "+30 HP", "50G"),
+        ShopButton::DamageUp => ("Damage", "+10%", "100G"),
+        ShopButton::MaxHealthUp => ("Max HP", "+20", "150G"),
+        ShopButton::CritDamageUp => ("Crit Dmg", "+50%", "200G"),
+        ShopButton::CritChanceUp => ("Crit Rate", "+10%", "250G"),
+        ShopButton::LifestealUp => ("Lifesteal", "+10%", "300G"),
+        ShopButton::CooldownReductionUp => ("CDR", "+10%", "350G"),
     };
 
     // Card colors based on type
@@ -599,19 +463,8 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, _l
             },
         )
         .with_children(|card| {
-            // Icon (large emoji at top)
-            card.spawn((
-                Text::new(icon),
-                TextFont {
-                    font_size: 32.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                Node {
-                    margin: UiRect::bottom(Val::Px(4.0)),
-                    ..default()
-                },
-            ));
+            // Rust-Drawn Icon
+            spawn_shop_icon(card, btn_type);
 
             // Title (upgrade name)
             card.spawn((
@@ -656,6 +509,164 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, _l
                 ));
             });
         });
+}
+
+fn spawn_shop_icon(parent: &mut ChildSpawnerCommands, btn_type: ShopButton) {
+    let container_node = Node {
+        width: Val::Px(50.0),
+        height: Val::Px(50.0),
+        margin: UiRect::bottom(Val::Px(8.0)),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        position_type: PositionType::Relative,
+        ..default()
+    };
+
+    parent.spawn(container_node).with_children(|icon| {
+        match btn_type {
+            ShopButton::Heal => {
+                // Red Cross
+                let cross_color = BackgroundColor(Color::srgb(1.0, 0.2, 0.2));
+                icon.spawn((
+                    Node {
+                        width: Val::Px(12.0),
+                        height: Val::Px(36.0),
+                        position_type: PositionType::Absolute,
+                        ..default()
+                    },
+                    cross_color,
+                ));
+                icon.spawn((
+                    Node {
+                        width: Val::Px(36.0),
+                        height: Val::Px(12.0),
+                        position_type: PositionType::Absolute,
+                        ..default()
+                    },
+                    cross_color,
+                ));
+            }
+            ShopButton::DamageUp => {
+                // Sword silhouette
+                icon.spawn((
+                    Node {
+                        width: Val::Px(8.0),
+                        height: Val::Px(35.0),
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Px(10.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(0.8, 0.1, 0.1)),
+                ));
+                icon.spawn((
+                    Node {
+                        width: Val::Px(24.0),
+                        height: Val::Px(6.0),
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Px(15.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(0.6, 0.6, 0.0)),
+                ));
+            }
+            ShopButton::MaxHealthUp => {
+                // Pink Diamond/Heart
+                icon.spawn((
+                    Node {
+                        width: Val::Px(30.0),
+                        height: Val::Px(30.0),
+                        border: UiRect::all(Val::Px(15.0)),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(15.0)),
+                    BorderColor::all(Color::srgb(1.0, 0.4, 0.6)),
+                ));
+            }
+            ShopButton::CritDamageUp => {
+                // Yellow Explosion Star
+                for i in 0..4 {
+                    #[allow(clippy::cast_precision_loss)]
+                    let angle = (i as f32 * 45.0).to_radians();
+                    icon.spawn((
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(6.0),
+                            position_type: PositionType::Absolute,
+                            ..default()
+                        },
+                        Transform::from_rotation(Quat::from_rotation_z(angle)),
+                        BackgroundColor(Color::srgb(1.0, 0.8, 0.0)),
+                    ));
+                }
+            }
+            ShopButton::CritChanceUp => {
+                // Crosshair
+                icon.spawn((
+                    Node {
+                        width: Val::Px(30.0),
+                        height: Val::Px(30.0),
+                        border: UiRect::all(Val::Px(3.0)),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(15.0)),
+                    BorderColor::all(Color::srgb(0.4, 0.9, 1.0)),
+                ));
+                icon.spawn((
+                    Node {
+                        width: Val::Px(2.0),
+                        height: Val::Px(40.0),
+                        position_type: PositionType::Absolute,
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(1.0, 1.0, 1.0)),
+                ));
+                icon.spawn((
+                    Node {
+                        width: Val::Px(40.0),
+                        height: Val::Px(2.0),
+                        position_type: PositionType::Absolute,
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(1.0, 1.0, 1.0)),
+                ));
+            }
+            ShopButton::LifestealUp => {
+                // Droplet
+                icon.spawn((
+                    Node {
+                        width: Val::Px(25.0),
+                        height: Val::Px(35.0),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(12.0)),
+                    BackgroundColor(Color::srgb(0.7, 0.1, 0.1)),
+                ));
+            }
+            ShopButton::CooldownReductionUp => {
+                // Blue Clock/Circle
+                icon.spawn((
+                    Node {
+                        width: Val::Px(30.0),
+                        height: Val::Px(30.0),
+                        border: UiRect::all(Val::Px(4.0)),
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(15.0)),
+                    BorderColor::all(Color::srgb(0.2, 0.7, 1.0)),
+                ));
+                icon.spawn((
+                    Node {
+                        width: Val::Px(2.0),
+                        height: Val::Px(12.0),
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Px(25.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::WHITE),
+                ));
+            }
+        }
+    });
 }
 
 fn spawn_weapon_button(
