@@ -13,7 +13,7 @@ pub fn update_ui_visibility(
     mut game_over_query: Query<&mut Node, (With<GameOverUI>, Without<WeaponMenuUI>)>,
     game_state: Res<State<crate::resources::game_state::GameState>>,
     round_manager: Res<crate::resources::round::RoundManager>,
-) -> Result<(), String> {
+) {
     // 1. Weapon Menu / Shop Visibility
     for mut node in &mut weapon_menu_query {
         node.display = if *game_state.get() == crate::resources::game_state::GameState::WeaponMenu
@@ -33,8 +33,6 @@ pub fn update_ui_visibility(
             Display::None
         };
     }
-
-    Ok(())
 }
 
 #[allow(

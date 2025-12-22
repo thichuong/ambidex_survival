@@ -359,9 +359,9 @@ fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, la
         .observe(
             |trigger: On<Pointer<Click>>,
              btn_query: Query<&ShopButton>,
-             mut purchase_events: MessageWriter<PurchaseEvent>| {
+             mut events: MessageWriter<PurchaseEvent>| {
                 if let Ok(btn_type) = btn_query.get(trigger.entity) {
-                    purchase_events.write(PurchaseEvent {
+                    events.write(PurchaseEvent {
                         btn_type: *btn_type,
                         entity: trigger.entity,
                     });
@@ -635,13 +635,13 @@ fn magic_button_observer(
 }
 
 #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
-pub fn update_magic_ui(
+pub fn update_menu_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
     hand_query: Query<&Hand>,
     button_node_query: Query<(&Children, &MagicCycleButton)>,
     mut text_query: Query<&mut Text>,
     loadout_query: Query<&MagicLoadout>,
-) -> Result<(), String> {
+) {
     // 1. Update Panel Visibility
     for (mut node, _) in &mut panel_query {
         node.display = Display::Flex;
@@ -675,7 +675,6 @@ pub fn update_magic_ui(
             }
         }
     }
-    Ok(())
 }
 
 #[allow(clippy::needless_pass_by_value)]

@@ -1,5 +1,6 @@
 // use bevy::prelude::*; // Was: use bevy::color::palettes::css::AQUA; - Removed unused import
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 use crate::components::physics::{Collider, Velocity};
 use crate::components::player::{Currency, GameCamera, Hand, HandType, Player, PlayerStats};
@@ -72,60 +73,47 @@ pub fn spawn_player(
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::unnecessary_wraps)]
 pub fn move_player(
-    _time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Velocity, &PlayerStats), With<Player>>,
-) -> Result<(), String> {
-    for (mut velocity, player) in &mut query {
-        let mut direction = Vec2::ZERO;
+    mut player: Single<(&mut Velocity, &PlayerStats), With<Player>>,
+) {
+    let (ref mut velocity, stats) = *player;
+    let mut direction = Vec2::ZERO;
 
-        if input.pressed(KeyCode::KeyW) {
-            direction.y += 1.0;
-        }
-        if input.pressed(KeyCode::KeyS) {
-            direction.y -= 1.0;
-        }
-        if input.pressed(KeyCode::KeyA) {
-            direction.x -= 1.0;
-        }
-        if input.pressed(KeyCode::KeyD) {
-            direction.x += 1.0;
-        }
-
-        if direction != Vec2::ZERO {
-            direction = direction.normalize();
-        }
-
-        velocity.linvel = direction * player.speed;
+    if input.pressed(KeyCode::KeyW) {
+        direction.y += 1.0;
     }
-    Ok(())
+    if input.pressed(KeyCode::KeyS) {
+        direction.y -= 1.0;
+    }
+    if input.pressed(KeyCode::KeyA) {
+        direction.x -= 1.0;
+    }
+    if input.pressed(KeyCode::KeyD) {
+        direction.x += 1.0;
+    }
+
+    if direction != Vec2::ZERO {
+        direction = direction.normalize();
+    }
+
+    velocity.linvel = direction * stats.speed;
 }
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn aim_player(
-    window_query: Query<&Window, With<bevy::window::PrimaryWindow>>,
-    camera_query: Query<(&Camera, &GlobalTransform), With<GameCamera>>,
-    mut player_query: Query<&mut Transform, With<Player>>,
-) -> Result<(), String> {
-    let (camera, camera_transform) = camera_query
-        .single()
-        .map_err(|e| format!("Camera not found: {e:?}"))?;
-
-    let window = window_query
-        .single()
-        .map_err(|e| format!("Window not found: {e:?}"))?;
+    window: Single<&Window, With<PrimaryWindow>>,
+    camera: Single<(&Camera, &GlobalTransform), With<GameCamera>>,
+    mut player: Single<&mut Transform, With<Player>>,
+) {
+    let (camera, camera_transform) = *camera;
 
     if let Some(world_position) = window
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
         .map(|ray| ray.origin.truncate())
     {
-        let mut player_transform = player_query
-            .single_mut()
-            .map_err(|e| format!("Player not found: {e:?}"))?;
-        let diff = world_position - player_transform.translation.truncate();
+        let diff = world_position - player.translation.truncate();
         let angle = diff.y.atan2(diff.x);
-        player_transform.rotation = Quat::from_rotation_z(angle);
+        player.rotation = Quat::from_rotation_z(angle);
     }
-    Ok(())
 }

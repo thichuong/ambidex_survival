@@ -9,7 +9,7 @@ use bevy::prelude::*;
 #[allow(clippy::too_many_lines)]
 pub fn shuriken_weapon_system(
     mut params: CombatInputParams,
-    mut player_query: Query<(Entity, &mut Transform, &PlayerStats), With<Player>>,
+    mut player: Single<(Entity, &mut Transform, &PlayerStats), With<Player>>,
     mut hand_query: Query<(Entity, &GlobalTransform, &Hand, &mut Weapon)>,
 ) {
     let (camera, camera_transform) = *params.camera;
@@ -24,9 +24,9 @@ pub fn shuriken_weapon_system(
         return;
     };
 
-    let Some((player_entity, mut player_transform, stats)) = player_query.iter_mut().next() else {
-        return;
-    };
+    let player_entity = player.0;
+    let stats = player.2;
+    let player_transform = &mut *player.1;
 
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
     let right_pressed = params.mouse_input.pressed(MouseButton::Right);
@@ -65,12 +65,7 @@ pub fn shuriken_weapon_system(
         // Skill logic (Teleport)
         if skill_pressed
             && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown
-            && perform_shuriken_skill(
-                &mut params,
-                cursor_pos,
-                player_entity,
-                &mut player_transform,
-            )
+            && perform_shuriken_skill(&mut params, cursor_pos, player_entity, player_transform)
         {
             weapon_data.last_skill_use = now;
         }

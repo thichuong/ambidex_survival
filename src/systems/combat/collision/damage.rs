@@ -1,7 +1,7 @@
 //! Damage processing when collisions occur
 
 use crate::components::enemy::Enemy;
-use crate::components::player::{CombatStats, Health, Player};
+use crate::components::player::{CombatStats, Health};
 use crate::components::weapon::Projectile;
 use crate::systems::combat::{CollisionEvent, DamageEvent};
 use bevy::prelude::*;
@@ -16,8 +16,9 @@ pub fn damage_processing_system(
     mut collision_events: MessageReader<CollisionEvent>,
     projectile_query: Query<&Projectile>,
     mut enemy_query: Query<&mut Enemy>,
-    mut player_query: Query<(&mut Health, &CombatStats), With<Player>>,
+    mut player: Single<(&mut Health, &CombatStats)>,
 ) {
+    let (ref mut player_health, player_stats) = *player;
     for event in collision_events.read() {
         // Retrieve projectile data
         let Ok(projectile) = projectile_query.get(event.projectile) else {
@@ -32,29 +33,21 @@ pub fn damage_processing_system(
         let mut final_damage = projectile.damage;
         let mut is_crit = false;
 
-        // Re-query for safety regarding mutable access in loop
-        // Manually iterating to find success, since we only have one player
-        if let Some((mut health, stats)) = player_query.iter_mut().next() {
-            let mut rng = rand::thread_rng();
-            if rng.gen_range(0.0..1.0) < stats.crit_chance {
-                final_damage *= stats.crit_damage;
-                is_crit = true;
-            }
-            if stats.lifesteal > 0.0 {
-                let heal_amount = final_damage * stats.lifesteal;
-                health.current = (health.current + heal_amount).min(health.max);
-            }
-        } else {
-            // Fallback if player dead/missing, just calc crit
-            // We can't access stats without query. Assume no crit/no lifesteal if player missing.
+        let mut rng = rand::thread_rng();
+        if rng.gen_range(0.0..1.0) < player_stats.crit_chance {
+            final_damage *= player_stats.crit_damage;
+            is_crit = true;
+        }
+        if player_stats.lifesteal > 0.0 {
+            let heal_amount = final_damage * player_stats.lifesteal;
+            player_health.current = (player_health.current + heal_amount).min(player_health.max);
         }
 
         enemy.health -= final_damage;
-
         commands.trigger(DamageEvent {
+            entity: event.target,
             damage: final_damage,
-            position: event.position,
-            is_crit,
+            crit: is_crit,
         });
 
         if enemy.health <= 0.0 {

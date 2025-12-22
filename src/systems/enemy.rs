@@ -16,17 +16,14 @@ pub struct SpawnWavesParams<'w, 's> {
     pub meshes: ResMut<'w, Assets<Mesh>>,
     pub materials: ResMut<'w, Assets<ColorMaterial>>,
     pub enemy_query: Query<'w, 's, &'static Enemy>,
-    pub player_query: Query<'w, 's, &'static Transform, With<Player>>,
+    pub player: Single<'w, 's, &'static Transform, With<Player>>,
     pub next_state: ResMut<'w, NextState<GameState>>,
 }
 
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::cast_possible_wrap)]
 pub fn spawn_waves(mut params: SpawnWavesParams) {
-    let Some(tf) = params.player_query.iter().next() else {
-        return;
-    };
-    let player_pos = tf.translation.truncate();
+    let player_pos = params.player.translation.truncate();
 
     match params.round_manager.round_state {
         RoundState::Spawning => {
@@ -120,12 +117,9 @@ fn spawn_random_enemy(
 #[allow(clippy::needless_pass_by_value)]
 pub fn enemy_chase_player(
     mut enemy_query: Query<(&mut Velocity, &Transform, &Enemy)>,
-    player_query: Query<&Transform, With<Player>>,
+    player: Single<&Transform, With<Player>>,
 ) {
-    let Some(player_transform) = player_query.iter().next() else {
-        return;
-    };
-    let player_pos = player_transform.translation.truncate();
+    let player_pos = player.translation.truncate();
 
     for (mut velocity, transform, enemy) in &mut enemy_query {
         let pos = transform.translation.truncate();

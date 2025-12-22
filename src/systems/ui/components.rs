@@ -80,10 +80,10 @@ pub struct NewGameButton;
 pub struct GoldText;
 
 #[derive(Component)]
-pub struct MenuGoldText;
+pub struct RoundText;
 
 #[derive(Component)]
-pub struct RoundText;
+pub struct MenuGoldText;
 
 #[derive(Component)]
 pub struct MenuHealthText;
@@ -99,3 +99,8 @@ pub struct MenuLifestealText;
 
 #[derive(Component)]
 pub struct MenuCDRText;
+
+#[derive(Component)]
+pub struct MagicSlotIndicator {
+    pub slot: crate::components::weapon::ActiveSpellSlot,
+}

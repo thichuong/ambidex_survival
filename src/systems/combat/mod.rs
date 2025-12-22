@@ -25,11 +25,11 @@ pub use shuriken::*;
 pub use sword::*;
 pub use sword_mechanics::*;
 
-#[derive(Event, Message, Debug)]
+#[derive(Event, Message, Debug, Clone, Copy)]
 pub struct DamageEvent {
+    pub entity: Entity,
     pub damage: f32,
-    pub position: Vec2,
-    pub is_crit: bool,
+    pub crit: bool,
 }
 
 /// Marker component for projectiles that have hit a target and should be despawned.

@@ -16,8 +16,9 @@ pub fn update_sword_mechanics(
     mut sword_query: Query<(Entity, &mut SwordSwing, &mut Transform)>,
     mut enemy_query: Query<(Entity, &Transform, &mut Enemy), Without<SwordSwing>>,
     hand_query: Query<&GlobalTransform, With<Hand>>,
-    mut player_query: Query<(&mut Health, &CombatStats), With<Player>>,
+    player_query: Single<(&mut Health, &CombatStats), With<Player>>,
 ) {
+    let mut player = player_query;
     for (entity, mut swing, mut transform) in &mut sword_query {
         if let Ok(hand_transform) = hand_query.get(swing.hand_entity) {
             transform.translation = hand_transform.translation().truncate().extend(0.0);
@@ -55,7 +56,8 @@ pub fn update_sword_mechanics(
                                 let mut final_damage = swing.damage;
                                 let mut is_crit = false;
 
-                                if let Some((mut health, stats)) = player_query.iter_mut().next() {
+                                {
+                                    let (ref mut health, stats) = *player;
                                     // Crit Check
                                     let mut rng = rand::thread_rng();
                                     if rng.gen_range(0.0..1.0) < stats.crit_chance {
@@ -73,9 +75,9 @@ pub fn update_sword_mechanics(
                                 enemy.health -= final_damage;
 
                                 commands.trigger(DamageEvent {
+                                    entity: enemy_entity,
                                     damage: final_damage,
-                                    position: enemy_tf.translation.truncate(),
-                                    is_crit,
+                                    crit: is_crit,
                                 });
 
                                 if enemy.health <= 0.0 {

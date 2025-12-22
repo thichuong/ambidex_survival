@@ -8,20 +8,29 @@ pub struct DamageText {
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn spawn_damage_text(trigger: On<DamageEvent>, mut commands: Commands) {
+pub fn spawn_damage_text(
+    trigger: On<DamageEvent>,
+    mut commands: Commands,
+    transform_query: Query<&Transform>,
+) {
     let event = trigger.event();
-    let size = if event.is_crit {
+    let Ok(target_transform) = transform_query.get(event.entity) else {
+        return;
+    };
+    let position = target_transform.translation.truncate();
+
+    let size = if event.crit {
         crate::configs::visuals::DAMAGE_TEXT_SIZE_CRIT
     } else {
         crate::configs::visuals::DAMAGE_TEXT_SIZE_NORMAL
     };
-    let color = if event.is_crit {
+    let color = if event.crit {
         Color::srgb(1.0, 0.0, 0.0) // Red
     } else {
         Color::srgb(1.0, 1.0, 1.0) // White
     };
 
-    if event.is_crit {
+    if event.crit {
         // Spawn white border/shadow layers
         let offsets = [
             Vec2::new(-1.0, -1.0),
@@ -39,8 +48,7 @@ pub fn spawn_damage_text(trigger: On<DamageEvent>, mut commands: Commands) {
                 },
                 TextColor(Color::srgb(1.0, 1.0, 1.0)), // White border
                 Transform::from_translation(
-                    (event.position + offset)
-                        .extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX - 1.0), // Slightly behind
+                    (position + offset).extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX - 1.0), // Slightly behind
                 ),
                 DamageText {
                     lifetime: Timer::from_seconds(
@@ -61,11 +69,7 @@ pub fn spawn_damage_text(trigger: On<DamageEvent>, mut commands: Commands) {
             ..default()
         },
         TextColor(color),
-        Transform::from_translation(
-            event
-                .position
-                .extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX),
-        ),
+        Transform::from_translation(position.extend(crate::configs::visuals::DAMAGE_TEXT_Z_INDEX)),
         DamageText {
             lifetime: Timer::from_seconds(
                 crate::configs::visuals::DAMAGE_TEXT_LIFETIME,

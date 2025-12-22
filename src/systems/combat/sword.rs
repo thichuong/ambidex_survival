@@ -8,9 +8,10 @@ use crate::systems::weapon_visuals::{spawn_sword_normal_visuals, spawn_sword_sha
 use bevy::prelude::*;
 use rand::Rng;
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn sword_weapon_system(
     mut params: CombatInputParams,
-    player_query: Query<(Entity, &PlayerStats), With<Player>>,
+    player: Single<(Entity, &PlayerStats), With<Player>>,
     mut hand_query: Query<(
         Entity,
         &GlobalTransform,
@@ -31,9 +32,7 @@ pub fn sword_weapon_system(
         return;
     };
 
-    let Some((player_entity, stats)) = player_query.iter().next() else {
-        return;
-    };
+    let (player_entity, stats) = *player;
 
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
     let right_pressed = params.mouse_input.pressed(MouseButton::Right);

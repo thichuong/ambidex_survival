@@ -11,7 +11,7 @@ pub mod nova;
 
 pub fn magic_weapon_system(
     mut params: CombatInputParams,
-    mut player_query: Query<(Entity, &mut Transform, &PlayerStats, &CombatStats), With<Player>>,
+    mut player: Single<(Entity, &mut Transform, &PlayerStats, &CombatStats), With<Player>>,
     mut hand_query: Query<(&GlobalTransform, &Hand, &mut MagicLoadout, &mut Weapon)>,
 ) {
     let (camera, camera_transform) = *params.camera;
@@ -26,11 +26,10 @@ pub fn magic_weapon_system(
         return;
     };
 
-    let Some((player_entity, mut player_transform, stats, combat_stats)) =
-        player_query.iter_mut().next()
-    else {
-        return;
-    };
+    let player_entity = player.0;
+    let stats = player.2;
+    let combat_stats = player.3;
+    let player_transform = &mut *player.1;
 
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
     let right_pressed = params.mouse_input.pressed(MouseButton::Right);
@@ -78,7 +77,7 @@ pub fn magic_weapon_system(
                 &mut params,
                 spell_to_cast,
                 player_entity,
-                &mut player_transform,
+                &mut *player_transform,
                 cursor_pos,
                 hand_pos,
                 stats.damage_multiplier,
