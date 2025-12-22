@@ -64,9 +64,12 @@ cargo test -- --nocapture
 Every weapon features a primary attack and a unique "Skill" (`Q` for Left Hand, `E` for Right Hand).
 
 ### 🗡️ Sword (Melee)
-A powerful close-quarters weapon with two distinct styles.
-- **Normal Mode**: Standard strikes with moderate range and high damage.
-- **Shattered Mode (Skill Toggle)**: The blade shatters into fragments, covering a massive area but dealing lower damage per hit.
+A powerful close-quarters weapon with advanced mechanical depth.
+- **Swing Mechanics**: Features a semi-circular damage arc (180°) that adjusts its origin point based on the equipped hand (Left/Right) for a more natural combat feel.
+- **Modes**:
+    - **Normal Mode**: Standard strikes with moderate range and high damage.
+    - **Shattered Mode (Skill Toggle)**: The blade shatters into fragments, covering a massive area but dealing lower damage per hit.
+- **AOE Property**: The sword is classified as an AOE weapon, which applies a 50% penalty to lifesteal healing.
 
 ### 🔫 Gun (Firearm)
 A versatile ranged weapon with three fire modes.
@@ -94,13 +97,14 @@ The most customizable weapon. Each Magic Hand has two spell slots: **Primary** a
 ## 💰 Economy & Progression
 
 - **Gold**: Earn **10G** for every enemy killed.
-- **Shop & Cards**: Spend your gold on upgrades that apply to **all** weapons (except CDR).
-    - **Heal**: Restore 30 HP (**50G**).
-    - **Damage Up**: Increase damage by **10%** (**100G**).
-    - **Max HP Up**: Increase Max HP by **20** (**150G**).
-    - **Crit Damage**: Increase critical strike damage by **50%** (**200G**).
+- **Shop & Cards**: Spend your gold on upgrades in the Weapon Menu.
+    - **Visual Feedback**: Cards display current purchase counts and limits (e.g., `[3 / 10]`). Basic upgrades with no limit show an infinity symbol (∞). When an upgrade is maxed, the card dims.
+    - **Heal**: Restore 30 HP (**50G**, Unlimited).
+    - **Damage Up**: Increase damage by **10%** (**100G**, Unlimited).
+    - **Max HP Up**: Increase Max HP by **20** (**150G**, Max 10).
+    - **Crit Damage**: Increase critical strike damage by **50%** (**200G**, Unlimited).
     - **Crit Chance**: Increase critical strike chance by **10%** (**250G**, Max 10).
-    - **Lifesteal**: Heal for **10%** of damage dealt (**300G**, Max 5).
+    - **Lifesteal**: Heal for **10%** of damage dealt (**300G**, Max 5). **Note**: AOE damage (Sword, Explosions, Nova) heals for only 50% of the lifesteal value.
     - **Magic CDR**: Reduce Magic weapon cooldowns by **10%** (**350G**, Max 8).
 - **Rounds**: Waves scale in size and intensity. Clear all enemies to access the shop.
 
