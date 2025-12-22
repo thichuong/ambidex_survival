@@ -740,117 +740,132 @@ fn spawn_weapon_detail_panel(
             WeaponDetailPanel { side },
         ))
         .with_children(|panel| {
-            // Sword Group
-            panel
-                .spawn((
-                    Node {
-                        flex_direction: FlexDirection::Row,
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        display: Display::None, // Hidden by default
-                        ..default()
-                    },
-                    WeaponStateGroup {
-                        side,
-                        weapon_type: WeaponType::Sword,
-                    },
-                ))
-                .with_children(|group| {
-                    // Normal
-                    group.spawn((
-                        ImageNode::new(asset_server.load("ui/icons/sword_normal.png")),
-                        Node {
-                            width: Val::Px(80.0),
-                            height: Val::Px(80.0),
-                            margin: UiRect::horizontal(Val::Px(10.0)),
-                            ..default()
-                        },
-                    ));
-                    // Shattered
-                    group.spawn((
-                        ImageNode::new(asset_server.load("ui/icons/sword_shattered.png")),
-                        Node {
-                            width: Val::Px(80.0),
-                            height: Val::Px(80.0),
-                            margin: UiRect::horizontal(Val::Px(10.0)),
-                            ..default()
-                        },
-                    ));
-                });
+            spawn_sword_group(panel, side, asset_server);
+            spawn_gun_group(panel, side, asset_server);
+            spawn_shuriken_group(panel, side, asset_server);
+        });
+}
 
-            // Gun Group
-            panel
-                .spawn((
-                    Node {
-                        flex_direction: FlexDirection::Row,
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        display: Display::None,
-                        ..default()
-                    },
-                    WeaponStateGroup {
-                        side,
-                        weapon_type: WeaponType::Gun,
-                    },
-                ))
-                .with_children(|group| {
-                    // Single
-                    group.spawn((
-                        ImageNode::new(asset_server.load("ui/icons/gun_single.png")),
-                        Node {
-                            width: Val::Px(80.0),
-                            height: Val::Px(80.0),
-                            margin: UiRect::horizontal(Val::Px(10.0)),
-                            ..default()
-                        },
-                    ));
-                    // Shotgun
-                    group.spawn((
-                        ImageNode::new(asset_server.load("ui/icons/gun_shotgun.png")),
-                        Node {
-                            width: Val::Px(80.0),
-                            height: Val::Px(80.0),
-                            margin: UiRect::horizontal(Val::Px(10.0)),
-                            ..default()
-                        },
-                    ));
-                    // Rapid
-                    group.spawn((
-                        ImageNode::new(asset_server.load("ui/icons/gun_rapid.png")),
-                        Node {
-                            width: Val::Px(80.0),
-                            height: Val::Px(80.0),
-                            margin: UiRect::horizontal(Val::Px(10.0)),
-                            ..default()
-                        },
-                    ));
-                });
+fn spawn_sword_group(
+    parent: &mut ChildSpawnerCommands,
+    side: HandType,
+    asset_server: &AssetServer,
+) {
+    parent
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                display: Display::None, // Hidden by default
+                ..default()
+            },
+            WeaponStateGroup {
+                side,
+                weapon_type: WeaponType::Sword,
+            },
+        ))
+        .with_children(|group| {
+            // Normal
+            group.spawn((
+                ImageNode::new(asset_server.load("ui/icons/sword_normal.png")),
+                Node {
+                    width: Val::Px(80.0),
+                    height: Val::Px(80.0),
+                    margin: UiRect::horizontal(Val::Px(10.0)),
+                    ..default()
+                },
+            ));
+            // Shattered
+            group.spawn((
+                ImageNode::new(asset_server.load("ui/icons/sword_shattered.png")),
+                Node {
+                    width: Val::Px(80.0),
+                    height: Val::Px(80.0),
+                    margin: UiRect::horizontal(Val::Px(10.0)),
+                    ..default()
+                },
+            ));
+        });
+}
 
-            // Shuriken Group (Just one icon)
-            panel
-                .spawn((
-                    Node {
-                        flex_direction: FlexDirection::Row,
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        display: Display::None,
-                        ..default()
-                    },
-                    WeaponStateGroup {
-                        side,
-                        weapon_type: WeaponType::Shuriken,
-                    },
-                ))
-                .with_children(|group| {
-                    group.spawn((
-                        ImageNode::new(asset_server.load("ui/icons/shuriken.png")),
-                        Node {
-                            width: Val::Px(80.0),
-                            height: Val::Px(80.0),
-                            ..default()
-                        },
-                    ));
-                });
+fn spawn_gun_group(parent: &mut ChildSpawnerCommands, side: HandType, asset_server: &AssetServer) {
+    parent
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                display: Display::None,
+                ..default()
+            },
+            WeaponStateGroup {
+                side,
+                weapon_type: WeaponType::Gun,
+            },
+        ))
+        .with_children(|group| {
+            // Single
+            group.spawn((
+                ImageNode::new(asset_server.load("ui/icons/gun_single.png")),
+                Node {
+                    width: Val::Px(80.0),
+                    height: Val::Px(80.0),
+                    margin: UiRect::horizontal(Val::Px(10.0)),
+                    ..default()
+                },
+            ));
+            // Shotgun
+            group.spawn((
+                ImageNode::new(asset_server.load("ui/icons/gun_shotgun.png")),
+                Node {
+                    width: Val::Px(80.0),
+                    height: Val::Px(80.0),
+                    margin: UiRect::horizontal(Val::Px(10.0)),
+                    ..default()
+                },
+            ));
+            // Rapid
+            group.spawn((
+                ImageNode::new(asset_server.load("ui/icons/gun_rapid.png")),
+                Node {
+                    width: Val::Px(80.0),
+                    height: Val::Px(80.0),
+                    margin: UiRect::horizontal(Val::Px(10.0)),
+                    ..default()
+                },
+            ));
+        });
+}
+
+fn spawn_shuriken_group(
+    parent: &mut ChildSpawnerCommands,
+    side: HandType,
+    asset_server: &AssetServer,
+) {
+    parent
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                display: Display::None,
+                ..default()
+            },
+            WeaponStateGroup {
+                side,
+                weapon_type: WeaponType::Shuriken,
+            },
+        ))
+        .with_children(|group| {
+            group.spawn((
+                ImageNode::new(asset_server.load("ui/icons/shuriken.png")),
+                Node {
+                    width: Val::Px(80.0),
+                    height: Val::Px(80.0),
+                    ..default()
+                },
+            ));
         });
 }
 
@@ -899,12 +914,9 @@ pub fn update_menu_magic_ui(
 ) {
     // 1. Update Panel Visibility
     for (mut node, panel) in &mut panel_query {
-        let mut show = false;
-        if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == panel.side) {
-            if weapon.kind == WeaponType::Magic {
-                show = true;
-            }
-        }
+        let show = hand_query
+            .iter()
+            .any(|(h, weapon)| h.side == panel.side && weapon.kind == WeaponType::Magic);
         node.display = if show { Display::Flex } else { Display::None };
     }
 
@@ -996,12 +1008,12 @@ pub fn update_menu_weapon_details_ui(
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
 ) {
     for (mut panel_node, panel) in &mut panel_query {
-        let mut active_weapon: Option<WeaponType> = None;
-
-        // Find active weapon for this side
-        if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == panel.side) {
-            active_weapon = Some(weapon.kind);
-        }
+        let active_weapon =
+            if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == panel.side) {
+                Some(weapon.kind)
+            } else {
+                None
+            };
 
         if let Some(weapon_kind) = active_weapon {
             if weapon_kind == WeaponType::Magic {
@@ -1099,19 +1111,15 @@ pub fn update_menu_weapon_buttons(
 ) {
     // Iterate all buttons and check if they match the equipped weapon for their side
     for (button, mut color) in &mut button_query {
-        let mut is_active = false;
-
         // Find the hand matching the button's side
-        if let Some((_, weapon)) = hand_query.iter().find(|(h, _)| h.side == button.side) {
-            if weapon.kind == button.kind {
-                is_active = true;
-            }
-        }
+        let is_active = hand_query
+            .iter()
+            .any(|(h, weapon)| h.side == button.side && weapon.kind == button.kind);
 
         if is_active {
             *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0)); // Green for active
         } else {
             *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)); // Gray for inactive
-        };
+        }
     }
 }
