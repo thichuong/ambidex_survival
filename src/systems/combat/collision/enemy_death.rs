@@ -14,6 +14,7 @@ pub fn enemy_death_system(
     trigger: On<crate::systems::combat::EnemyDeathEvent>,
     mut commands: Commands,
     mut player_query: Query<&mut Currency, With<Player>>,
+    elite_query: Query<&crate::components::enemy::EliteEnemy>,
     res: Res<crate::resources::cached_assets::CachedAssets>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
@@ -21,7 +22,12 @@ pub fn enemy_death_system(
 
     // Give Gold
     if let Some(mut currency) = player_query.iter_mut().next() {
-        currency.gold += 10;
+        let gold_reward = if elite_query.get(event.entity).is_ok() {
+            crate::configs::enemy::ELITE_GOLD_REWARD
+        } else {
+            crate::configs::enemy::GOLD_REWARD
+        };
+        currency.gold += gold_reward;
     }
 
     commands.entity(event.entity).despawn();

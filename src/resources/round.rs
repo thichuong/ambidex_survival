@@ -7,6 +7,7 @@ pub struct RoundManager {
     pub round_timer: Timer, // Không còn sử dụng sau khi đơn giản hóa logic
     pub spawn_timer: Timer,
     pub enemies_to_spawn: u32,
+    pub elites_to_spawn: u32,
 
     pub round_state: RoundState,
 }
@@ -29,6 +30,7 @@ impl Default for RoundManager {
                 TimerMode::Repeating,
             ),
             enemies_to_spawn: crate::configs::enemy::BASE_ENEMY_COUNT,
+            elites_to_spawn: 1,
 
             round_state: RoundState::Spawning,
         }

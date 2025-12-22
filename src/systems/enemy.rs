@@ -38,6 +38,15 @@ pub fn spawn_waves(mut params: SpawnWavesParams) {
                         params.round_manager.current_round,
                     );
                     params.round_manager.enemies_to_spawn -= 1;
+                } else if params.round_manager.elites_to_spawn > 0 {
+                    spawn_elite_enemy(
+                        &mut params.commands,
+                        &mut params.meshes,
+                        &mut params.materials,
+                        player_pos,
+                        params.round_manager.current_round,
+                    );
+                    params.round_manager.elites_to_spawn -= 1;
                 } else {
                     params.round_manager.round_state = RoundState::Fighting;
                     println!("Wave Spawning Finished! Fighting...");
@@ -110,6 +119,64 @@ fn spawn_random_enemy(
             speed,
             #[allow(dead_code)]
             damage,
+        },
+    ));
+}
+
+#[allow(clippy::cast_precision_loss)]
+fn spawn_elite_enemy(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    player_pos: Vec2,
+    current_round: u32,
+) {
+    let mut rng = rand::thread_rng();
+
+    let angle = rng.gen_range(0.0..std::f32::consts::TAU);
+    let radius = rng.gen_range(
+        crate::configs::enemy::SPAWN_RADIUS_MIN..crate::configs::enemy::SPAWN_RADIUS_MAX,
+    );
+    let x = angle.cos() * radius;
+    let y = angle.sin() * radius;
+    let spawn_pos = player_pos + Vec2::new(x, y);
+
+    let health = (current_round as f32).mul_add(
+        crate::configs::enemy::HEALTH_SCALING_PER_ROUND,
+        crate::configs::enemy::ELITE_BASE_HEALTH,
+    );
+    let speed = crate::configs::enemy::ELITE_BASE_SPEED;
+    let damage = (current_round as f32).mul_add(
+        crate::configs::enemy::DAMAGE_SCALING_PER_ROUND,
+        crate::configs::enemy::BASE_DAMAGE, // Elites also do normal contact damage
+    );
+
+    println!("Spawning ELITE Enemy (R{current_round}): HP={health}, Spd={speed}");
+
+    commands.spawn((
+        (
+            Mesh2d(meshes.add(Circle::new(crate::configs::enemy::ELITE_VISUAL_RADIUS))),
+            MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::PURPLE))),
+            Transform::from_translation(spawn_pos.extend(crate::configs::enemy::VISUAL_Z_INDEX)),
+        ),
+        Collider::ball(crate::configs::enemy::ELITE_COLLIDER_RADIUS),
+        Velocity::default(),
+        Enemy {
+            health,
+            speed,
+            #[allow(dead_code)]
+            damage,
+        },
+        crate::components::enemy::EliteEnemy,
+        crate::components::enemy::EliteAi {
+            shuriken_timer: Timer::from_seconds(
+                crate::configs::enemy::ELITE_SHURIKEN_COOLDOWN,
+                TimerMode::Repeating,
+            ),
+            teleport_timer: Timer::from_seconds(
+                crate::configs::enemy::ELITE_TELEPORT_COOLDOWN,
+                TimerMode::Repeating,
+            ),
         },
     ));
 }

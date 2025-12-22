@@ -17,3 +17,12 @@ impl Default for Enemy {
         }
     }
 }
+
+#[derive(Component)]
+pub struct EliteEnemy;
+
+#[derive(Component)]
+pub struct EliteAi {
+    pub shuriken_timer: Timer,
+    pub teleport_timer: Timer,
+}

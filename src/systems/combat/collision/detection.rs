@@ -51,9 +51,13 @@ pub fn collision_detection_system(
     mut commands: Commands,
     mut projectile_query: Query<ProjectileQueryItem>,
     enemy_query: Query<(Entity, &Transform, &Collider), (With<Enemy>, Without<Player>)>,
+    player_query: Single<(Entity, &Transform, &Collider), With<Player>>,
     grid: Res<UniformGrid>,
     mut collision_events: MessageWriter<CollisionEvent>,
 ) {
+    let (player_entity, player_transform, player_collider) = *player_query;
+    let player_pos = player_transform.translation.truncate();
+
     for (
         proj_entity,
         projectile,
@@ -75,7 +79,10 @@ pub fn collision_detection_system(
         }
 
         let proj_pos = projectile_transform.translation.truncate();
+
+        // 1. Check against Enemies (via Grid)
         let candidates = get_collision_candidates(proj_pos, proj_collider, ignore_grid, &grid);
+        let mut hit_anything = false;
 
         for enemy_entity in candidates {
             if let Ok((entity, enemy_transform, enemy_collider)) = enemy_query.get(enemy_entity) {
@@ -98,12 +105,40 @@ pub fn collision_detection_system(
                         direction: projectile.direction,
                     });
 
+                    hit_anything = true;
+
                     // Mark non-AoE projectiles for despawn immediately after first hit
-                    // This prevents double-damage within the same frame
                     if aoe_opt.is_none() {
                         commands.entity(proj_entity).insert(PendingDespawn);
-                        break; // No need to check more enemies for this projectile
+                        break;
                     }
+                }
+            }
+        }
+
+        if hit_anything && aoe_opt.is_none() {
+            continue;
+        }
+
+        // 2. Check against Player
+        if projectile.owner_entity != player_entity {
+            if check_collision(proj_pos, proj_collider, player_pos, player_collider) {
+                if let Some(ref mut aoe) = aoe_opt {
+                    if aoe.damaged_entities.contains(&player_entity) {
+                        continue;
+                    }
+                    aoe.damaged_entities.push(player_entity);
+                }
+
+                collision_events.write(CollisionEvent {
+                    projectile: proj_entity,
+                    target: player_entity,
+                    position: player_pos,
+                    direction: projectile.direction,
+                });
+
+                if aoe_opt.is_none() {
+                    commands.entity(proj_entity).insert(PendingDespawn);
                 }
             }
         }

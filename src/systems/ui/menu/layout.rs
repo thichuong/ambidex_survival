@@ -259,6 +259,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                                     crate::configs::enemy::BASE_SPAWN_INTERVAL * (crate::configs::enemy::SPAWN_INTERVAL_DECAY).powf(exponent),
                                     bevy::time::TimerMode::Repeating,
                                 );
+                                round_manager.elites_to_spawn = round_manager.current_round;
                                 round_manager.round_state = RoundState::Spawning;
                             }
                             next_state.set(GameState::Playing);

@@ -3,6 +3,7 @@
 use crate::components::enemy::Enemy;
 use crate::components::player::{CombatStats, Health, Player};
 use crate::components::weapon::Projectile;
+use crate::resources::game_state::GameState;
 use crate::systems::combat::{CollisionEvent, DamageEvent};
 use bevy::prelude::*;
 use rand::Rng;
@@ -16,14 +17,29 @@ pub fn damage_processing_system(
     mut collision_events: MessageReader<CollisionEvent>,
     projectile_query: Query<&Projectile>,
     mut enemy_query: Query<&mut Enemy>,
-    player: Single<(&mut Health, &CombatStats), With<Player>>,
+    player: Single<(Entity, &mut Health, &CombatStats), With<Player>>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
-    let (mut player_health, player_stats) = player.into_inner();
+    let (player_entity, mut player_health, player_stats) = player.into_inner();
     for event in collision_events.read() {
         // Retrieve projectile data
         let Ok(projectile) = projectile_query.get(event.projectile) else {
             continue; // Projectile might have been despawned
         };
+
+        if event.target == player_entity {
+            // Apply damage to player
+            if player_health.invulnerability_timer.is_finished() {
+                player_health.current -= projectile.damage;
+                player_health.invulnerability_timer.reset();
+
+                if player_health.current <= 0.0 {
+                    player_health.current = 0.0;
+                    next_state.set(GameState::GameOver);
+                }
+            }
+            continue;
+        }
 
         // Retrieve enemy data
         let Ok(mut enemy) = enemy_query.get_mut(event.target) else {

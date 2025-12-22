@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 pub mod collision;
+pub mod elite_ai;
 pub mod events;
 pub mod gun;
 pub mod magic;

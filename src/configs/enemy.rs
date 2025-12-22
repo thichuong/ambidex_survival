@@ -15,3 +15,17 @@ pub const SPAWN_RADIUS_MAX: f32 = 800.0;
 pub const COLLIDER_RADIUS: f32 = 15.0;
 pub const VISUAL_RADIUS: f32 = 15.0;
 pub const VISUAL_Z_INDEX: f32 = 0.1;
+
+// Elite Enemy Stats
+pub const ELITE_BASE_HEALTH: f32 = 200.0;
+pub const ELITE_BASE_SPEED: f32 = 180.0;
+pub const ELITE_SHURIKEN_DAMAGE: f32 = 15.0;
+pub const ELITE_SHURIKEN_COOLDOWN: f32 = 1.0;
+pub const ELITE_TELEPORT_COOLDOWN: f32 = 2.0;
+pub const ELITE_SHURIKEN_SPREAD: f32 = 0.5;
+pub const ELITE_VISUAL_RADIUS: f32 = 25.0;
+pub const ELITE_COLLIDER_RADIUS: f32 = 25.0;
+
+// Gold Rewards
+pub const GOLD_REWARD: u32 = 10;
+pub const ELITE_GOLD_REWARD: u32 = 50;
