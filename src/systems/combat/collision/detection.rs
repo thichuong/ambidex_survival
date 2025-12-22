@@ -121,8 +121,8 @@ pub fn collision_detection_system(
         }
 
         // 2. Check against Player
-        if projectile.owner_entity != player_entity {
-            if check_collision(proj_pos, proj_collider, player_pos, player_collider) {
+        if projectile.owner_entity != player_entity
+            && check_collision(proj_pos, proj_collider, player_pos, player_collider) {
                 if let Some(ref mut aoe) = aoe_opt {
                     if aoe.damaged_entities.contains(&player_entity) {
                         continue;
@@ -141,6 +141,5 @@ pub fn collision_detection_system(
                     commands.entity(proj_entity).insert(PendingDespawn);
                 }
             }
-        }
     }
 }

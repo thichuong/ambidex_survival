@@ -70,7 +70,7 @@ pub fn elite_ai_system(
         // Teleport
         if ai.teleport_timer.just_finished() {
             let mut rng = rand::thread_rng();
-            if rng.gen_bool(0.5) {
+            if rng.gen_bool(crate::configs::enemy::ELITE_TELEPORT_CHANCE.into()) {
                 // Find shuriken closest to player
                 let mut closest_shuriken: Option<(Entity, Vec3)> = None;
                 let mut min_dist_sq = f32::MAX;
