@@ -16,10 +16,10 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
         .spawn((
             Button,
             Node {
-                width: Val::Px(130.0),
-                min_width: Val::Px(100.0),
-                height: Val::Px(160.0),
-                min_height: Val::Px(140.0),
+                width: Val::Px(160.0),
+                min_width: Val::Px(140.0),
+                height: Val::Px(200.0),
+                min_height: Val::Px(180.0),
                 margin: UiRect::all(Val::Px(8.0)),
                 padding: UiRect::all(Val::Px(12.0)),
                 justify_content: JustifyContent::SpaceBetween,
@@ -244,7 +244,7 @@ pub fn get_shop_button_content(btn_type: ShopButton) -> (String, String, String)
         ShopButton::CritDamageUp => format!("+{}%", (config.value * 100.0) as u32),
         ShopButton::LifestealUp => {
             format!(
-                "+{}% |\nAOE: +{}%",
+                "+{}%|AOE:+{}%",
                 (config.value * 100.0) as u32,
                 (config.value * 50.0) as u32
             )
@@ -256,7 +256,7 @@ pub fn get_shop_button_content(btn_type: ShopButton) -> (String, String, String)
 
 pub fn spawn_shop_icon(parent: &mut ChildSpawnerCommands, btn_type: ShopButton) {
     let container_node = Node {
-        width: Val::Px(100.0),
+        width: Val::Px(50.0),
         height: Val::Px(50.0),
         margin: UiRect::bottom(Val::Px(8.0)),
         justify_content: JustifyContent::Center,
