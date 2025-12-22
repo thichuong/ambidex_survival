@@ -69,19 +69,6 @@ impl Default for MagicLoadout {
 }
 
 #[derive(Component)]
-#[require(Transform, Visibility, Velocity, Collider)]
-pub struct Projectile {
-    pub kind: WeaponType,
-    pub damage: f32,
-    pub speed: f32,
-    #[allow(dead_code)]
-    pub direction: Vec2,
-    pub owner_entity: Entity,
-    /// AOE projectiles have 50% reduced lifesteal
-    pub is_aoe: bool,
-}
-
-#[derive(Component)]
 pub struct ExplodingProjectile {
     pub radius: f32,
     pub damage: f32,
@@ -93,6 +80,26 @@ pub struct ExplodingProjectile {
 pub struct AoEProjectile {
     /// Track entities that have already been damaged by this projectile
     pub damaged_entities: Vec<Entity>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Component)]
+pub enum Faction {
+    Player,
+    Enemy,
+}
+
+#[derive(Component)]
+#[require(Transform, Visibility, Velocity, Collider)]
+pub struct Projectile {
+    pub kind: WeaponType,
+    pub damage: f32,
+    pub speed: f32,
+    #[allow(dead_code)]
+    pub direction: Vec2,
+    pub owner_entity: Entity,
+    /// AOE projectiles have 50% reduced lifesteal
+    pub is_aoe: bool,
+    pub faction: Faction,
 }
 
 #[derive(Component)]
@@ -119,6 +126,7 @@ pub struct SwordSwing {
     pub damage_dealt: bool,
     pub hand_entity: Entity,
     pub swing_direction: f32, // 1.0 for CCW, -1.0 for CW
+    pub faction: Faction,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

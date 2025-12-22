@@ -1,4 +1,4 @@
-use crate::components::weapon::{AoEProjectile, Lifetime, Projectile, WeaponType};
+use crate::components::weapon::{AoEProjectile, Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::spells::nova;
 use crate::systems::combat::CombatInputParams;
 use crate::systems::weapon_visuals::spawn_nova_visuals;
@@ -23,6 +23,7 @@ pub fn spawn_nova(
                 direction: Vec2::ZERO,
                 owner_entity: player_entity,
                 is_aoe: true,
+                faction: Faction::Player,
             },
             Lifetime {
                 timer: Timer::from_seconds(nova::LIFETIME, TimerMode::Once),

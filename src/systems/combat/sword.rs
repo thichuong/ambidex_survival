@@ -1,7 +1,7 @@
 use super::CombatInputParams;
 use crate::components::player::{Hand, HandType, Player, PlayerStats};
 use crate::components::weapon::{
-    SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
+    Faction, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
 };
 use crate::configs::weapons::sword;
 use crate::systems::weapon_visuals::{spawn_sword_normal_visuals, spawn_sword_shattered_visuals};
@@ -113,6 +113,7 @@ fn fire_sword(
                         damage_dealt: false,
                         hand_entity,
                         swing_direction: swing_dir,
+                        faction: Faction::Player,
                     },
                 ))
                 .with_children(|parent| {
@@ -135,6 +136,7 @@ fn fire_sword(
                         damage_dealt: false,
                         hand_entity,
                         swing_direction: swing_dir,
+                        faction: Faction::Player,
                     },
                 ))
                 .with_children(|parent| {

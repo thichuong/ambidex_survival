@@ -1,7 +1,7 @@
 use super::CombatInputParams;
 use crate::components::physics::{Collider, Velocity};
 use crate::components::player::{Hand, HandType, Player, PlayerStats};
-use crate::components::weapon::{Lifetime, Projectile, Weapon, WeaponType};
+use crate::components::weapon::{Faction, Lifetime, Projectile, Weapon, WeaponType};
 use crate::configs::weapons::shuriken;
 use crate::systems::weapon_visuals::spawn_shuriken_visuals;
 use bevy::prelude::*;
@@ -114,6 +114,7 @@ fn fire_shuriken(
                 direction,
                 owner_entity: owner,
                 is_aoe: false,
+                faction: Faction::Player,
             },
             Lifetime {
                 timer: Timer::from_seconds(shuriken::LIFETIME, TimerMode::Once),

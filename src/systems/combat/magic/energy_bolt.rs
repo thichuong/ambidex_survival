@@ -1,5 +1,5 @@
 use crate::components::physics::{Collider, Velocity};
-use crate::components::weapon::{ExplodingProjectile, Lifetime, Projectile, WeaponType};
+use crate::components::weapon::{ExplodingProjectile, Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::spells::energy_bolt;
 use crate::systems::combat::CombatInputParams;
 use crate::systems::weapon_visuals::spawn_energy_bolt_visuals;
@@ -31,6 +31,7 @@ pub fn spawn_energy_bolt(
                 direction,
                 owner_entity: player_entity,
                 is_aoe: false, // Initial hit is single-target, explosion is AOE
+                faction: Faction::Player,
             },
             Lifetime {
                 timer: Timer::from_seconds(energy_bolt::LIFETIME, TimerMode::Once),

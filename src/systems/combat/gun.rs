@@ -1,7 +1,9 @@
 use super::CombatInputParams;
 use crate::components::physics::{Collider, Velocity};
 use crate::components::player::{Hand, HandType, Player, PlayerStats};
-use crate::components::weapon::{GunMode, GunState, Lifetime, Projectile, Weapon, WeaponType};
+use crate::components::weapon::{
+    Faction, GunMode, GunState, Lifetime, Projectile, Weapon, WeaponType,
+};
 use crate::configs::weapons::gun;
 use crate::systems::weapon_visuals::spawn_gun_bullet_visuals;
 use bevy::prelude::*;
@@ -133,6 +135,7 @@ fn fire_gun(
                     direction: dir,
                     owner_entity: owner,
                     is_aoe: false,
+                    faction: Faction::Player,
                 },
                 Lifetime {
                     timer: Timer::from_seconds(gun::BULLET_LIFETIME, TimerMode::Once),

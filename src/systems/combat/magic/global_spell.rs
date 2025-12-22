@@ -1,5 +1,5 @@
 use crate::components::physics::{Collider, IgnoreGrid};
-use crate::components::weapon::{AoEProjectile, Lifetime, Projectile, WeaponType};
+use crate::components::weapon::{AoEProjectile, Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::spells::global;
 use crate::systems::combat::CombatInputParams;
 use crate::systems::weapon_visuals::spawn_global_visuals;
@@ -24,6 +24,7 @@ pub fn spawn_global_spell(
                 direction: Vec2::ZERO,
                 owner_entity: player_entity,
                 is_aoe: true,
+                faction: Faction::Player,
             },
             Lifetime {
                 timer: Timer::from_seconds(global::LIFETIME, TimerMode::Once),

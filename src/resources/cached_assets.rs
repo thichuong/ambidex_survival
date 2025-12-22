@@ -35,12 +35,14 @@ pub struct CachedAssets {
     // Enhanced Palette for Icon Matching
     pub mat_teal_light: Handle<ColorMaterial>, // Shuriken Light
     pub mat_teal_dark: Handle<ColorMaterial>,  // Shuriken Dark
+    pub mat_shuriken_elite_light: Handle<ColorMaterial>,
+    pub mat_shuriken_elite_dark: Handle<ColorMaterial>,
     pub mat_gold_polished: Handle<ColorMaterial>, // Sword/Gun details
-    pub mat_wood_dark: Handle<ColorMaterial>,  // Sword Handle
-    pub mat_gun_metal: Handle<ColorMaterial>,  // Gun Body
-    pub mat_gun_black: Handle<ColorMaterial>,  // Gun Dark Parts
-    pub mat_bolt_core: Handle<ColorMaterial>,  // Energy Bolt
-    pub mat_bolt_glow: Handle<ColorMaterial>,  // Energy Bolt Glow
+    pub mat_wood_dark: Handle<ColorMaterial>,     // Sword Handle
+    pub mat_gun_metal: Handle<ColorMaterial>,     // Gun Body
+    pub mat_gun_black: Handle<ColorMaterial>,     // Gun Dark Parts
+    pub mat_bolt_core: Handle<ColorMaterial>,     // Energy Bolt
+    pub mat_bolt_glow: Handle<ColorMaterial>,     // Energy Bolt Glow
 }
 
 impl CachedAssets {
@@ -74,6 +76,8 @@ impl CachedAssets {
             // Enhanced Palette
             mat_teal_light: materials.add(Color::srgba(0.0, 0.94, 0.94, 1.0)), // RGB(0, 240, 240)
             mat_teal_dark: materials.add(Color::srgba(0.0, 0.7, 0.7, 1.0)),    // RGB(0, 180, 180)
+            mat_shuriken_elite_light: materials.add(Color::srgba(1.0, 0.5, 1.0, 1.0)),
+            mat_shuriken_elite_dark: materials.add(Color::srgba(0.8, 0.2, 1.0, 1.0)),
             mat_gold_polished: materials.add(Color::srgba(0.85, 0.65, 0.12, 1.0)), // Gold
             mat_wood_dark: materials.add(Color::srgba(0.55, 0.27, 0.07, 1.0)), // Sadelebrown ish
             mat_gun_metal: materials.add(Color::srgba(0.31, 0.31, 0.35, 1.0)), // Dark Grey/Blue

@@ -3,11 +3,11 @@ use rand::Rng;
 
 use crate::components::enemy::{EliteAi, EliteEnemy};
 use crate::components::physics::{Collider, Velocity};
-use crate::components::player::Player;
-use crate::components::weapon::{Lifetime, Projectile, WeaponType};
+use crate::components::player::{Player, PlayerStats};
+use crate::components::weapon::{Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::weapons::shuriken;
 use crate::resources::cached_assets::CachedAssets;
-use crate::systems::weapon_visuals::spawn_shuriken_visuals;
+use crate::systems::weapon_visuals::spawn_elite_shuriken_visuals;
 
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::too_many_arguments)]
@@ -15,11 +15,11 @@ pub fn elite_ai_system(
     mut commands: Commands,
     time: Res<Time>,
     mut elite_query: Query<(Entity, &mut Transform, &mut EliteAi), With<EliteEnemy>>,
-    player_query: Single<&Transform, (With<Player>, Without<EliteEnemy>)>,
+    player_query: Single<(&Transform, &PlayerStats), (With<Player>, Without<EliteEnemy>)>,
     projectile_query: Query<(Entity, &GlobalTransform, &Projectile), Without<EliteEnemy>>,
     cached_assets: Res<CachedAssets>,
 ) {
-    let player_transform = *player_query;
+    let (player_transform, player_stats) = *player_query;
     let player_pos = player_transform.translation.truncate();
 
     for (elite_entity, mut elite_transform, mut ai) in &mut elite_query {
@@ -52,18 +52,19 @@ pub fn elite_ai_system(
                     },
                     Projectile {
                         kind: WeaponType::Shuriken,
-                        damage: crate::configs::enemy::ELITE_SHURIKEN_DAMAGE,
+                        damage: shuriken::DAMAGE * player_stats.damage_multiplier,
                         speed: shuriken::SPEED,
                         direction,
                         owner_entity: elite_entity,
                         is_aoe: false,
+                        faction: Faction::Enemy,
                     },
                     Lifetime {
                         timer: Timer::from_seconds(shuriken::LIFETIME, TimerMode::Once),
                     },
                 ))
                 .with_children(|parent| {
-                    spawn_shuriken_visuals(parent, &cached_assets);
+                    spawn_elite_shuriken_visuals(parent, &cached_assets);
                 });
         }
 

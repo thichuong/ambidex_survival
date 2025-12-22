@@ -321,6 +321,53 @@ pub fn spawn_shuriken_visuals(
     ));
 }
 
+/// Elite Shuriken visuals - Purple/Magenta
+pub fn spawn_elite_shuriken_visuals(
+    parent: &mut ChildSpawnerCommands,
+    cached: &crate::resources::cached_assets::CachedAssets,
+) {
+    for i in 0..4 {
+        let angle_base = (i as f32) * std::f32::consts::FRAC_PI_2;
+        let blade_len = 12.0;
+
+        // Light side of the blade
+        parent.spawn((
+            Mesh2d(cached.unit_square.clone()),
+            MeshMaterial2d(cached.mat_shuriken_elite_light.clone()),
+            Transform::from_xyz(0.0, 0.0, -0.1)
+                .with_rotation(Quat::from_rotation_z(angle_base))
+                .with_scale(Vec3::new(blade_len, 4.0, 1.0))
+                .with_translation(
+                    Quat::from_rotation_z(angle_base) * Vec3::new(blade_len * 0.4, 1.5, 0.0),
+                ),
+        ));
+        // Dark side of the blade
+        parent.spawn((
+            Mesh2d(cached.unit_square.clone()),
+            MeshMaterial2d(cached.mat_shuriken_elite_dark.clone()),
+            Transform::from_xyz(0.0, 0.0, -0.1)
+                .with_rotation(Quat::from_rotation_z(angle_base))
+                .with_scale(Vec3::new(blade_len, 4.0, 1.0))
+                .with_translation(
+                    Quat::from_rotation_z(angle_base) * Vec3::new(blade_len * 0.4, -1.5, 0.0),
+                ),
+        ));
+    }
+
+    // Outer metallic ring
+    parent.spawn((
+        Mesh2d(cached.unit_circle.clone()),
+        MeshMaterial2d(cached.mat_shuriken_elite_dark.clone()),
+        Transform::from_xyz(0.0, 0.0, 0.1).with_scale(Vec3::splat(5.0)),
+    ));
+    // Inner light
+    parent.spawn((
+        Mesh2d(cached.unit_circle.clone()),
+        MeshMaterial2d(cached.mat_white.clone()),
+        Transform::from_xyz(0.0, 0.0, 0.2).with_scale(Vec3::splat(2.5)),
+    ));
+}
+
 /// Spawn visual effects for Sword Normal attack - realistic sword shape
 pub fn spawn_sword_normal_visuals(
     parent: &mut ChildSpawnerCommands,

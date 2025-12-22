@@ -142,7 +142,7 @@ fn spawn_elite_enemy(
     let spawn_pos = player_pos + Vec2::new(x, y);
 
     let health = (current_round as f32).mul_add(
-        crate::configs::enemy::HEALTH_SCALING_PER_ROUND,
+        crate::configs::enemy::ELITE_HEALTH_SCALING_PER_ROUND,
         crate::configs::enemy::ELITE_BASE_HEALTH,
     );
     let speed = crate::configs::enemy::ELITE_BASE_SPEED;

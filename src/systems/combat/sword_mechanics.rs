@@ -1,7 +1,7 @@
 use super::DamageEvent;
 use crate::components::enemy::Enemy;
 use crate::components::player::{CombatStats, Hand, HandType, Health, Player};
-use crate::components::weapon::{SwingState, SwordSwing};
+use crate::components::weapon::{Faction, SwingState, SwordSwing};
 use crate::configs::weapons::sword::SWORD_SIDE_OFFSET;
 use bevy::prelude::*;
 use rand::Rng;
@@ -59,50 +59,53 @@ pub fn update_sword_mechanics(
                 if !swing.damage_dealt {
                     let sweep_radius = swing.range;
 
-                    for (enemy_entity, enemy_tf, mut enemy) in &mut enemy_query {
-                        let to_enemy =
-                            enemy_tf.translation.truncate() - transform.translation.truncate();
-                        let distance = to_enemy.length();
+                    if swing.faction == Faction::Player {
+                        for (enemy_entity, enemy_tf, mut enemy) in &mut enemy_query {
+                            let to_enemy =
+                                enemy_tf.translation.truncate() - transform.translation.truncate();
+                            let distance = to_enemy.length();
 
-                        if distance <= sweep_radius && distance > 0.0 {
-                            let enemy_direction = to_enemy / distance;
-                            let base_direction =
-                                Vec2::new(swing.base_angle.cos(), swing.base_angle.sin());
-                            let dot = enemy_direction.dot(base_direction);
+                            if distance <= sweep_radius && distance > 0.0 {
+                                let enemy_direction = to_enemy / distance;
+                                let base_direction =
+                                    Vec2::new(swing.base_angle.cos(), swing.base_angle.sin());
+                                let dot = enemy_direction.dot(base_direction);
 
-                            if dot > 0.0 {
-                                let mut final_damage = swing.damage;
-                                let mut is_crit = false;
+                                if dot > 0.0 {
+                                    let mut final_damage = swing.damage;
+                                    let mut is_crit = false;
 
-                                {
-                                    let (ref mut health, stats) = *player;
-                                    // Crit Check
-                                    let mut rng = rand::thread_rng();
-                                    if rng.gen_range(0.0..1.0) < stats.crit_chance {
-                                        final_damage *= stats.crit_damage;
-                                        is_crit = true;
+                                    {
+                                        let (ref mut health, stats) = *player;
+                                        // Crit Check
+                                        let mut rng = rand::thread_rng();
+                                        if rng.gen_range(0.0..1.0) < stats.crit_chance {
+                                            final_damage *= stats.crit_damage;
+                                            is_crit = true;
+                                        }
+
+                                        // Lifesteal (Sword is AOE, 50% penalty)
+                                        if stats.lifesteal > 0.0 {
+                                            let heal = final_damage * stats.lifesteal * 0.5;
+                                            health.current =
+                                                (health.current + heal).min(health.max);
+                                        }
                                     }
 
-                                    // Lifesteal (Sword is AOE, 50% penalty)
-                                    if stats.lifesteal > 0.0 {
-                                        let heal = final_damage * stats.lifesteal * 0.5;
-                                        health.current = (health.current + heal).min(health.max);
-                                    }
-                                }
+                                    enemy.health -= final_damage;
 
-                                enemy.health -= final_damage;
-
-                                commands.trigger(DamageEvent {
-                                    entity: enemy_entity,
-                                    damage: final_damage,
-                                    crit: is_crit,
-                                });
-
-                                if enemy.health <= 0.0 {
-                                    commands.trigger(crate::systems::combat::EnemyDeathEvent {
+                                    commands.trigger(DamageEvent {
                                         entity: enemy_entity,
-                                        position: enemy_tf.translation.truncate(),
+                                        damage: final_damage,
+                                        crit: is_crit,
                                     });
+
+                                    if enemy.health <= 0.0 {
+                                        commands.trigger(crate::systems::combat::EnemyDeathEvent {
+                                            entity: enemy_entity,
+                                            position: enemy_tf.translation.truncate(),
+                                        });
+                                    }
                                 }
                             }
                         }
