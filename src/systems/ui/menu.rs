@@ -45,7 +45,7 @@ pub fn get_weapon_description(weapon_type: WeaponType, loadout: Option<&MagicLoa
     }
 }
 
-#[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
 pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Weapon Selection Menu (Full Screen)
     commands
