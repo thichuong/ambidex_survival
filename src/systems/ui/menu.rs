@@ -231,9 +231,11 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                             Node {
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
-                                width: Val::Percent(38.0),
-                                min_width: Val::Px(400.0),
-                                max_height: Val::Percent(85.0),
+                                justify_content: JustifyContent::FlexStart,
+                                width: Val::Percent(40.0),
+                                min_width: Val::Px(420.0),
+                                height: Val::Auto,
+                                flex_grow: 1.0,
                                 padding: UiRect::all(Val::Px(16.0)),
                                 border: UiRect::all(Val::Px(2.0)),
                                 overflow: Overflow::scroll_y(),
@@ -369,15 +371,16 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         });
                 });
 
-            // Footer Container (Pushed to bottom)
+            // Footer Container (Pushed to bottom) - Horizontal layout
             parent
                 .spawn(Node {
-                    flex_direction: FlexDirection::Column,
+                    flex_direction: FlexDirection::Row,
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
+                    column_gap: Val::Px(20.0),
                     width: Val::Percent(100.0),
-                    margin: UiRect::top(Val::Auto), // Push to bottom
-                    padding: UiRect::bottom(Val::Px(20.0)),
+                    margin: UiRect::top(Val::Px(16.0)),
+                    padding: UiRect::vertical(Val::Px(16.0)),
                     ..default()
                 })
                 .with_children(|footer| {
@@ -386,13 +389,15 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         .spawn((
                             Button,
                             Node {
-                                width: Val::Px(200.0),
-                                height: Val::Px(60.0),
-                                margin: UiRect::bottom(Val::Px(20.0)),
+                                width: Val::Px(180.0),
+                                height: Val::Px(50.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(2.0)),
                                 ..default()
                             },
+                            BorderColor::all(Color::srgb(0.4, 0.8, 0.4)),
+                            BorderRadius::all(Val::Px(8.0)),
                             BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
                         ))
                         .observe(
@@ -447,6 +452,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                                 ..default()
                             },
                             BorderColor::all(Color::srgb(0.0, 0.8, 1.0)),
+                            BorderRadius::all(Val::Px(8.0)),
                             BackgroundColor(Color::srgba(0.1, 0.2, 0.3, 1.0)),
                             TutorialButton,
                         ))
