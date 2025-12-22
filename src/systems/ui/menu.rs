@@ -169,7 +169,7 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                         .spawn(Node {
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
-                            width: Val::Percent(25.0),
+                            width: Val::Percent(30.0),
                             ..default()
                         })
                         .with_children(|col| {
@@ -188,15 +188,39 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                                 ..default()
                             });
 
-                            spawn_weapon_button(col, HandType::Left, WeaponType::Shuriken, "Shuriken ❄");
-                            spawn_weapon_button(col, HandType::Left, WeaponType::Sword, "Sword 🗡");
-                            spawn_weapon_button(col, HandType::Left, WeaponType::Gun, "Gun 🔫");
-                            spawn_weapon_button(col, HandType::Left, WeaponType::Magic, "Magic 🔮");
+                            // Content Row (Buttons | Description)
+                            col.spawn(Node {
+                                flex_direction: FlexDirection::Row,
+                                width: Val::Percent(100.0),
+                                justify_content: JustifyContent::SpaceBetween,
+                                align_items: AlignItems::FlexStart,
+                                ..default()
+                            }).with_children(|row| {
+                                // Column 1: Buttons
+                                row.spawn(Node {
+                                    flex_direction: FlexDirection::Column,
+                                    align_items: AlignItems::Center,
+                                    width: Val::Percent(35.0),
+                                    ..default()
+                                }).with_children(|btns| {
+                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Shuriken, "Shuriken ❄");
+                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Sword, "Sword 🗡");
+                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Gun, "Gun 🔫");
+                                    spawn_weapon_button(btns, HandType::Left, WeaponType::Magic, "Magic 🔮");
+                                });
 
-                            // Magic Panel (Initially Hidden, managed by logic)
-                            // We place it here so it appears under the left column when active
-                            spawn_magic_panel(col, HandType::Left, asset_server);
-                            spawn_weapon_detail_panel(col, HandType::Left, asset_server);
+                                // Column 2: Details & Magic Panel
+                                row.spawn(Node {
+                                    flex_direction: FlexDirection::Column,
+                                    align_items: AlignItems::Center,
+                                    width: Val::Percent(65.0),
+                                    ..default()
+                                }).with_children(|details| {
+                                    // Magic Panel (Initially Hidden, managed by logic)
+                                    spawn_magic_panel(details, HandType::Left, asset_server);
+                                    spawn_weapon_detail_panel(details, HandType::Left, asset_server);
+                                });
+                            });
                         });
 
                     // --- CENTER SHOP SECTION ---
@@ -205,7 +229,7 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                             Node {
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
-                                width: Val::Percent(40.0),
+                                width: Val::Percent(30.0),
                                 height: Val::Percent(100.0), // Fill height
                                 padding: UiRect::all(Val::Px(20.0)),
                                 border: UiRect::all(Val::Px(2.0)),
@@ -281,7 +305,7 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                         .spawn(Node {
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
-                            width: Val::Percent(25.0),
+                            width: Val::Percent(30.0),
                             ..default()
                         })
                         .with_children(|col| {
@@ -300,19 +324,38 @@ pub fn spawn_weapon_menu(commands: &mut Commands, asset_server: &AssetServer) {
                                 ..default()
                             });
 
-                            spawn_weapon_button(col, HandType::Right, WeaponType::Shuriken, "Shuriken ❄");
-                            spawn_weapon_button(col, HandType::Right, WeaponType::Sword, "Sword 🗡");
-                            spawn_weapon_button(col, HandType::Right, WeaponType::Gun, "Gun 🔫");
-                            spawn_weapon_button(
-                                col,
-                                HandType::Right,
-                                WeaponType::Magic,
-                                "Magic 🔮",
-                            );
+                            // Content Row (Buttons | Description)
+                            col.spawn(Node {
+                                flex_direction: FlexDirection::Row,
+                                width: Val::Percent(100.0),
+                                justify_content: JustifyContent::SpaceBetween,
+                                align_items: AlignItems::FlexStart,
+                                ..default()
+                            }).with_children(|row| {
+                                // Column 1: Buttons
+                                row.spawn(Node {
+                                    flex_direction: FlexDirection::Column,
+                                    align_items: AlignItems::Center,
+                                    width: Val::Percent(35.0),
+                                    ..default()
+                                }).with_children(|btns| {
+                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Shuriken, "Shuriken ❄");
+                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Sword, "Sword 🗡");
+                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Gun, "Gun 🔫");
+                                    spawn_weapon_button(btns, HandType::Right, WeaponType::Magic, "Magic 🔮");
+                                });
 
-                            // Magic Panel
-                            spawn_magic_panel(col, HandType::Right, asset_server);
-                            spawn_weapon_detail_panel(col, HandType::Right, asset_server);
+                                // Column 2: Details & Magic Panel
+                                row.spawn(Node {
+                                    flex_direction: FlexDirection::Column,
+                                    align_items: AlignItems::Center,
+                                    width: Val::Percent(65.0),
+                                    ..default()
+                                }).with_children(|details| {
+                                    spawn_magic_panel(details, HandType::Right, asset_server);
+                                    spawn_weapon_detail_panel(details, HandType::Right, asset_server);
+                                });
+                            });
                         });
                 });
 
