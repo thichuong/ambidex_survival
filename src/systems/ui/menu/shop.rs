@@ -97,7 +97,7 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
             ))
             .with_children(|price_box| {
                 price_box.spawn((
-                    Text::new(price.to_string()),
+                    Text::new(price.clone()),
                     TextFont {
                         font_size: 14.0,
                         ..default()
@@ -235,6 +235,7 @@ pub fn get_shop_button_content(btn_type: ShopButton) -> (String, String, String)
     let title = config.name.to_string();
     let price = format!("{}G", config.price);
 
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     let desc = match btn_type {
         ShopButton::Heal => format!("+{} HP", config.value),
         ShopButton::DamageUp | ShopButton::CritChanceUp | ShopButton::CooldownReductionUp => {
