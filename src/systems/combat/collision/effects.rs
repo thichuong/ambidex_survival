@@ -17,6 +17,7 @@ type ProjectileEffectQuery<'w, 's> = Query<
     ),
 >;
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn projectile_effect_system(
     mut commands: Commands,
     mut collision_events: MessageReader<CollisionEvent>,
