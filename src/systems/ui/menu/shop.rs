@@ -1,7 +1,10 @@
-use super::super::components::{PurchaseEvent, ShopButton, ShopCardCount};
+use super::super::components::{
+    InfinitySymbol, PurchaseEvent, ShopButton, ShopCardCount, ShopCardCurrentCount, ShopCardLimit,
+};
 use crate::components::player::Progression;
 use bevy::prelude::*;
 
+#[allow(clippy::too_many_lines)]
 pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, _label: &str) {
     // Determine card type: BLUE (Advanced) or WHITE (Basic)
     let (border_color, bg_color, bg_hover, text_accent) = get_shop_button_colors(btn_type);
@@ -94,7 +97,7 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
             ))
             .with_children(|price_box| {
                 price_box.spawn((
-                    Text::new(format!("{price}")),
+                    Text::new(price.to_string()),
                     TextFont {
                         font_size: 14.0,
                         ..default()
@@ -102,20 +105,81 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
                     TextColor(Color::srgb(1.0, 0.85, 0.0)), // Gold color
                 ));
             });
-            // Shop Card Count
+            // Shop Card Count Container - holds "[count / limit]" or "[count / ∞]"
             card.spawn((
                 Node {
                     margin: UiRect::top(Val::Px(4.0)),
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    column_gap: Val::Px(2.0),
                     ..default()
                 },
-                Text::new("[0 / oo]"),
-                TextFont {
-                    font_size: 11.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.6, 0.6, 0.6)),
                 ShopCardCount,
-            ));
+            ))
+            .with_children(|count_container| {
+                // "[" bracket
+                count_container.spawn((
+                    Text::new("["),
+                    TextFont {
+                        font_size: 11.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                ));
+                // Count number (will be updated dynamically)
+                count_container.spawn((
+                    Text::new("0"),
+                    TextFont {
+                        font_size: 11.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                    ShopCardCurrentCount,
+                ));
+                // "/" separator
+                count_container.spawn((
+                    Text::new(" / "),
+                    TextFont {
+                        font_size: 11.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                ));
+                // Limit text (shown when has limit)
+                count_container.spawn((
+                    Text::new("0"),
+                    TextFont {
+                        font_size: 11.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                    super::super::components::ShopCardLimit,
+                ));
+                // Infinity symbol container (shown when no limit)
+                count_container
+                    .spawn((
+                        Node {
+                            width: Val::Px(14.0),
+                            height: Val::Px(8.0),
+                            position_type: PositionType::Relative,
+                            display: Display::None, // Hidden by default
+                            ..default()
+                        },
+                        super::super::components::InfinitySymbol,
+                    ))
+                    .with_children(|infinity| {
+                        spawn_infinity_symbol(infinity);
+                    });
+                // "]" bracket
+                count_container.spawn((
+                    Text::new("]"),
+                    TextFont {
+                        font_size: 11.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                ));
+            });
         });
 }
 
@@ -443,13 +507,55 @@ fn spawn_cdr_icon(parent: &mut ChildSpawnerCommands) {
     ));
 }
 
+/// Draws an infinity symbol (∞) using two overlapping circles
+fn spawn_infinity_symbol(parent: &mut ChildSpawnerCommands) {
+    let circle_size = Val::Px(7.0);
+    let border_width = Val::Px(1.5);
+    let border_color = BorderColor::all(Color::srgb(0.6, 0.6, 0.6));
+
+    // Left circle
+    parent.spawn((
+        Node {
+            width: circle_size,
+            height: circle_size,
+            position_type: PositionType::Absolute,
+            left: Val::Px(0.0),
+            top: Val::Px(0.0),
+            border: UiRect::all(border_width),
+            ..default()
+        },
+        border_color,
+        BorderRadius::all(Val::Px(4.0)),
+        BackgroundColor(Color::NONE),
+    ));
+
+    // Right circle
+    parent.spawn((
+        Node {
+            width: circle_size,
+            height: circle_size,
+            position_type: PositionType::Absolute,
+            left: Val::Px(6.0), // Overlap with left circle
+            top: Val::Px(0.0),
+            border: UiRect::all(border_width),
+            ..default()
+        },
+        border_color,
+        BorderRadius::all(Val::Px(4.0)),
+        BackgroundColor(Color::NONE),
+    ));
+}
+
 #[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
 pub fn update_shop_cards_ui(
     progression: Single<&Progression, With<crate::components::player::Player>>,
     mut card_query: Query<(&ShopButton, &mut BackgroundColor, &Children)>,
-    mut count_text_query: Query<&mut Text, With<ShopCardCount>>,
+    count_container_query: Query<&Children, With<ShopCardCount>>,
+    mut current_count_query: Query<&mut Text, With<ShopCardCurrentCount>>,
+    mut limit_text_query: Query<&mut Text, (With<ShopCardLimit>, Without<ShopCardCurrentCount>)>,
+    mut infinity_query: Query<&mut Node, With<InfinitySymbol>>,
 ) {
-    for (btn_type, mut bg_color, children) in &mut card_query {
+    for (btn_type, mut bg_color, card_children) in &mut card_query {
         let config = crate::configs::shop::get_card_config(*btn_type);
         let count = match btn_type {
             ShopButton::Heal => progression.heal_count,
@@ -461,22 +567,41 @@ pub fn update_shop_cards_ui(
             ShopButton::CooldownReductionUp => progression.cdr_upgrades,
         };
 
-        // Update count text
-        for &child in children {
-            if let Ok(mut text) = count_text_query.get_mut(child) {
-                if let Some(limit) = config.limit {
-                    text.0 = format!("[{count} / {limit}]");
-                } else {
-                    text.0 = format!("[{count} / oo]");
+        // Find the ShopCardCount container among card's children
+        for &child in card_children {
+            if let Ok(count_children) = count_container_query.get(child) {
+                for &count_child in count_children {
+                    // Update current count
+                    if let Ok(mut text) = current_count_query.get_mut(count_child) {
+                        text.0 = count.to_string();
+                    }
+
+                    // Update limit or infinity
+                    if let Ok(mut text) = limit_text_query.get_mut(count_child) {
+                        if let Some(limit) = config.limit {
+                            text.0 = limit.to_string();
+                        } else {
+                            text.0 = String::new();
+                        }
+                    }
+
+                    // Toggle infinity symbol visibility
+                    if let Ok(mut node) = infinity_query.get_mut(count_child) {
+                        node.display = if config.limit.is_some() {
+                            Display::None
+                        } else {
+                            Display::Flex
+                        };
+                    }
                 }
             }
         }
 
         // Dim if maxed
-        if let Some(limit) = config.limit {
-            if count >= limit {
-                bg_color.0 = bg_color.0.with_alpha(0.3);
-            }
+        if let Some(limit) = config.limit
+            && count >= limit
+        {
+            bg_color.0 = bg_color.0.with_alpha(0.3);
         }
     }
 }

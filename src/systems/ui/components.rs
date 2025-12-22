@@ -127,3 +127,12 @@ pub struct HUDRoot;
 
 #[derive(Component)]
 pub struct ShopCardCount;
+
+#[derive(Component)]
+pub struct ShopCardCurrentCount;
+
+#[derive(Component)]
+pub struct ShopCardLimit;
+
+#[derive(Component)]
+pub struct InfinitySymbol;
