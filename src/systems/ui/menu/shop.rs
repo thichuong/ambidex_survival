@@ -94,7 +94,7 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
             ))
             .with_children(|price_box| {
                 price_box.spawn((
-                    Text::new(format!("💰 {price}")),
+                    Text::new(format!("{price}")),
                     TextFont {
                         font_size: 14.0,
                         ..default()
@@ -108,7 +108,7 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
                     margin: UiRect::top(Val::Px(4.0)),
                     ..default()
                 },
-                Text::new("[0 / ∞]"),
+                Text::new("[0 / Infinity]"),
                 TextFont {
                     font_size: 11.0,
                     ..default()
@@ -451,7 +451,7 @@ pub fn update_shop_cards_ui(
                 if let Some(limit) = config.limit {
                     text.0 = format!("[{count} / {limit}]");
                 } else {
-                    text.0 = format!("[{count} / ∞]");
+                    text.0 = format!("[{count} / Infinity]");
                 }
             }
         }
