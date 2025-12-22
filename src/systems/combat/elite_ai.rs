@@ -11,6 +11,7 @@ use crate::systems::weapon_visuals::spawn_elite_shuriken_visuals;
 
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::too_many_arguments)]
+#[allow(clippy::type_complexity)]
 pub fn elite_ai_system(
     mut commands: Commands,
     time: Res<Time>,
