@@ -1,0 +1,35 @@
+    Checking ambidex_survival v0.1.0 (/home/tchuong/Màn hình nền/ambidex_survival)
+error[E0609]: no field `projectile_query` on type `&EliteCombatContext`
+  --> src/systems/combat/elite_ai.rs:97:10
+   |
+97 |         .projectile_query
+   |          ^^^^^^^^^^^^^^^^ unknown field
+   |
+   = note: available fields are: `elite_entity`, `elite_pos`, `player_pos`, `damage_multiplier`, `player_crit_chance`, `player_crit_damage`
+
+error[E0609]: no field `commands` on type `&EliteCombatContext`
+   --> src/systems/combat/elite_ai.rs:106:17
+    |
+106 |             ctx.commands.entity(*oldest_entity).despawn();
+    |                 ^^^^^^^^ unknown field
+    |
+    = note: available fields are: `elite_entity`, `elite_pos`, `player_pos`, `damage_multiplier`, `player_crit_chance`, `player_crit_damage`
+
+error[E0609]: no field `commands` on type `&EliteCombatContext`
+   --> src/systems/combat/elite_ai.rs:110:9
+    |
+110 |     ctx.commands
+    |         ^^^^^^^^ unknown field
+    |
+    = note: available fields are: `elite_entity`, `elite_pos`, `player_pos`, `damage_multiplier`, `player_crit_chance`, `player_crit_damage`
+
+error[E0609]: no field `cached_assets` on type `&EliteCombatContext`
+   --> src/systems/combat/elite_ai.rs:135:54
+    |
+135 |             spawn_elite_shuriken_visuals(parent, ctx.cached_assets);
+    |                                                      ^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `elite_entity`, `elite_pos`, `player_pos`, `damage_multiplier`, `player_crit_chance`, `player_crit_damage`
+
+For more information about this error, try `rustc --explain E0609`.
+error: could not compile `ambidex_survival` (bin "ambidex_survival") due to 4 previous errors

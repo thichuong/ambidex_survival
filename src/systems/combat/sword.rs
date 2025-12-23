@@ -74,14 +74,14 @@ pub fn sword_weapon_system(
             fire_sword(
                 &mut params,
                 hand_entity,
-                CombatContext {
+                &CombatContext {
                     owner_entity: player_entity,
                     transform: &mut *player_transform,
                     cursor_pos,
                     spawn_pos: hand_pos,
                     damage_multiplier: stats.damage_multiplier,
-                    combat_stats,
-                    progression,
+                    combat_stats: &combat_stats,
+                    progression: &progression,
                 },
                 sword_state.mode,
             );
@@ -102,7 +102,7 @@ pub fn sword_weapon_system(
 fn fire_sword(
     params: &mut CombatInputParams,
     hand_entity: Entity,
-    ctx: CombatContext,
+    ctx: &CombatContext,
     sword_mode: SwordMode,
 ) {
     let direction = (ctx.cursor_pos - ctx.spawn_pos).normalize_or_zero();

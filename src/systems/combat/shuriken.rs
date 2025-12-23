@@ -65,14 +65,14 @@ pub fn shuriken_weapon_system(
         if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
             fire_shuriken(
                 &mut params,
-                CombatContext {
+                &CombatContext {
                     owner_entity: player_entity,
                     transform: &mut *player_transform,
                     cursor_pos,
                     spawn_pos: hand_pos,
                     damage_multiplier: stats.damage_multiplier,
-                    combat_stats,
-                    progression,
+                    combat_stats: combat_stats,
+                    progression: progression,
                 },
                 shuriken::MAX_COUNT,
                 Faction::Player,
@@ -85,7 +85,7 @@ pub fn shuriken_weapon_system(
             && now - weapon_data.last_skill_use >= weapon_data.skill_cooldown
             && perform_shuriken_skill(
                 &mut params,
-                CombatContext {
+                &mut CombatContext {
                     owner_entity: player_entity,
                     transform: &mut *player_transform,
                     cursor_pos,
@@ -103,7 +103,7 @@ pub fn shuriken_weapon_system(
 
 pub fn fire_shuriken(
     params: &mut CombatInputParams,
-    ctx: CombatContext,
+    ctx: &CombatContext,
     max_count: usize,
     faction: Faction,
 ) {
@@ -155,7 +155,7 @@ pub fn fire_shuriken(
         });
 }
 
-fn perform_shuriken_skill(params: &mut CombatInputParams, ctx: CombatContext) -> bool {
+fn perform_shuriken_skill(params: &mut CombatInputParams, ctx: &mut CombatContext) -> bool {
     let mut closest_proj: Option<(Entity, Vec3)> = None;
     let mut min_dist_sq = f32::MAX;
 
@@ -171,6 +171,7 @@ fn perform_shuriken_skill(params: &mut CombatInputParams, ctx: CombatContext) ->
     }
 
     if let Some((entity, location)) = closest_proj {
+        let shuriken_location = location.truncate();
         params.commands.spawn((
             Mesh2d(params.cached_assets.unit_circle.clone()),
             MeshMaterial2d(params.cached_assets.mat_cyan_50.clone()),
@@ -180,7 +181,7 @@ fn perform_shuriken_skill(params: &mut CombatInputParams, ctx: CombatContext) ->
                 timer: Timer::from_seconds(shuriken::TELEPORT_VISUAL_LIFETIME, TimerMode::Once),
             },
         ));
-        ctx.transform.translation = location;
+        ctx.transform.translation = shuriken_location.extend(0.0);
         params.commands.spawn((
             Mesh2d(params.cached_assets.unit_circle.clone()),
             MeshMaterial2d(params.cached_assets.mat_cyan_50.clone()),

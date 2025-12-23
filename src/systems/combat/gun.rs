@@ -80,7 +80,7 @@ pub fn gun_weapon_system(
             fire_gun(
                 &mut params,
                 gun_state.mode,
-                CombatContext {
+                &CombatContext {
                     owner_entity: player_entity,
                     transform: &mut *player_transform,
                     cursor_pos,
@@ -105,7 +105,7 @@ pub fn gun_weapon_system(
     }
 }
 
-fn fire_gun(params: &mut CombatInputParams, gun_mode: GunMode, ctx: CombatContext) {
+fn fire_gun(params: &mut CombatInputParams, gun_mode: GunMode, ctx: &CombatContext) {
     let direction = (ctx.cursor_pos - ctx.spawn_pos).normalize_or_zero();
     let base_angle = direction.y.atan2(direction.x);
     let mut projectiles = Vec::new();

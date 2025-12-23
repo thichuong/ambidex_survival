@@ -39,12 +39,14 @@ pub fn elite_ai_system(
         if ai.shuriken_timer.just_finished() {
             elite_fire_shuriken(
                 &mut commands,
-                elite_entity,
-                elite_pos,
-                player_pos,
-                player_stats.damage_multiplier,
-                player_combat_stats.crit_chance,
-                player_combat_stats.crit_damage,
+                &EliteCombatContext {
+                    elite_entity,
+                    elite_pos,
+                    player_pos,
+                    damage_multiplier: player_stats.damage_multiplier,
+                    player_crit_chance: player_combat_stats.crit_chance,
+                    player_crit_damage: player_combat_stats.crit_damage,
+                },
                 &projectile_query,
                 &cached_assets,
             );
@@ -64,14 +66,18 @@ pub fn elite_ai_system(
     }
 }
 
+pub struct EliteCombatContext {
+    pub elite_entity: Entity,
+    pub elite_pos: Vec2,
+    pub player_pos: Vec2,
+    pub damage_multiplier: f32,
+    pub player_crit_chance: f32,
+    pub player_crit_damage: f32,
+}
+
 fn elite_fire_shuriken(
     commands: &mut Commands,
-    elite_entity: Entity,
-    elite_pos: Vec2,
-    player_pos: Vec2,
-    damage_multiplier: f32,
-    player_crit_chance: f32,
-    player_crit_damage: f32,
+    ctx: &EliteCombatContext,
     projectile_query: &Query<
         (Entity, &GlobalTransform, &Projectile, &Lifetime),
         Without<EliteEnemy>,
@@ -79,7 +85,7 @@ fn elite_fire_shuriken(
     cached_assets: &CachedAssets,
 ) {
     let mut rng = rand::thread_rng();
-    let base_dir = (player_pos - elite_pos).normalize_or_zero();
+    let base_dir = (ctx.player_pos - ctx.elite_pos).normalize_or_zero();
 
     let spread = rng.gen_range(
         -crate::configs::enemy::ELITE_SHURIKEN_SPREAD..crate::configs::enemy::ELITE_SHURIKEN_SPREAD,
@@ -89,7 +95,7 @@ fn elite_fire_shuriken(
 
     let mut elite_shurikens: Vec<(Entity, f32)> = projectile_query
         .iter()
-        .filter(|(_, _, p, _)| p.kind == WeaponType::Shuriken && p.owner_entity == elite_entity)
+        .filter(|(_, _, p, _)| p.kind == WeaponType::Shuriken && p.owner_entity == ctx.elite_entity)
         .map(|(e, _, _, l)| (e, l.timer.remaining_secs()))
         .collect();
 
@@ -102,7 +108,7 @@ fn elite_fire_shuriken(
 
     commands
         .spawn((
-            Transform::from_translation(elite_pos.extend(0.0)),
+            Transform::from_translation(ctx.elite_pos.extend(0.0)),
             Visibility::Visible,
             Collider::ball(shuriken::COLLIDER_RADIUS),
             Velocity {
@@ -111,14 +117,14 @@ fn elite_fire_shuriken(
             },
             Projectile {
                 kind: WeaponType::Shuriken,
-                damage: shuriken::DAMAGE * damage_multiplier,
+                damage: shuriken::DAMAGE * ctx.damage_multiplier,
                 speed: shuriken::SPEED,
                 direction,
-                owner_entity: elite_entity,
+                owner_entity: ctx.elite_entity,
                 is_aoe: false,
                 faction: Faction::Enemy,
-                crit_chance: player_crit_chance * crate::configs::enemy::ELITE_CRIT_CHANCE,
-                crit_damage: player_crit_damage * crate::configs::enemy::ELITE_CRIT_DAMAGE,
+                crit_chance: ctx.player_crit_chance * crate::configs::enemy::ELITE_CRIT_CHANCE,
+                crit_damage: ctx.player_crit_damage * crate::configs::enemy::ELITE_CRIT_DAMAGE,
             },
             Lifetime {
                 timer: Timer::from_seconds(shuriken::LIFETIME, TimerMode::Once),
