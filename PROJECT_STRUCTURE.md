@@ -66,8 +66,12 @@ ambidex_survival/
 │   │   ├── enemy.rs
 │   │   ├── physics.rs
 │   │   ├── player.rs
-│   │   └── weapon_visuals.rs
+│   │   └── damage_text.rs
 │   ├── utils/          # Generic utility functions
+│   ├── visuals/        # Visual effects and UI drawing
+│   │   ├── mod.rs
+│   │   ├── ui_icons.rs # Procedural UI icons (Shop, HUD)
+│   │   └── world.rs    # Game world effects (Projectiles, Spells, Weapons)
 │   └── main.rs         # Game entry point and plugin registration
 ├── index.html          # Web entry point
 ├── Trunk.toml          # Build configuration for Trunk (Wasm)
@@ -154,5 +158,10 @@ Collision detection and damage processing pipeline:
 - `player.rs`: Player spawning and movement using `Single<Window>`.
 - `enemy.rs`: Enemy AI, movement, and wave spawning logic.
 - `physics.rs`: Decoupled movement and velocity integration systems.
-- `weapon_visuals.rs`: Visual effects for projectiles and swing animations.
 - `damage_text.rs`: Reactive floating numbers triggered by `On<DamageEvent>`.
+
+### `src/visuals/`
+Centralized visuals module for rendering game effects and UI elements.
+- `world.rs`: Spawning visual meshes for weapons, projectiles, and magic spells (previously `weapon_visuals.rs`).
+- `ui_icons.rs`: Procedural drawing of UI icons (Heal, Sword, Shield, etc.) to avoid reliance on external assets.
+

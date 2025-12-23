@@ -7,7 +7,7 @@ use crate::components::player::{CombatStats, Player, PlayerStats};
 use crate::components::weapon::{Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::weapons::shuriken;
 use crate::resources::cached_assets::CachedAssets;
-use crate::systems::weapon_visuals::spawn_elite_shuriken_visuals;
+use crate::visuals::world::spawn_elite_shuriken_visuals;
 
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::too_many_arguments)]

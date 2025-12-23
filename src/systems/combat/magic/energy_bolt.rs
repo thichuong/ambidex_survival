@@ -2,7 +2,7 @@ use crate::components::physics::{Collider, Velocity};
 use crate::components::weapon::{ExplodingProjectile, Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::spells::energy_bolt;
 use crate::systems::combat::{CombatContext, CombatInputParams};
-use crate::systems::weapon_visuals::spawn_energy_bolt_visuals;
+use crate::visuals::world::spawn_energy_bolt_visuals;
 use bevy::prelude::*;
 
 pub fn spawn_energy_bolt(

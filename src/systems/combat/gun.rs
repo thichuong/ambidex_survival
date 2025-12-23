@@ -5,7 +5,7 @@ use crate::components::weapon::{
     Faction, GunMode, GunState, Lifetime, Projectile, Weapon, WeaponType,
 };
 use crate::configs::weapons::gun;
-use crate::systems::weapon_visuals::spawn_gun_bullet_visuals;
+use crate::visuals::world::spawn_gun_bullet_visuals;
 use bevy::prelude::*;
 use rand::Rng;
 

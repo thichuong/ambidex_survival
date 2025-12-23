@@ -2,7 +2,7 @@ use crate::components::physics::{Collider, IgnoreGrid};
 use crate::components::weapon::{AoEProjectile, Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::spells::global;
 use crate::systems::combat::{CombatContext, CombatInputParams};
-use crate::systems::weapon_visuals::spawn_global_visuals;
+use crate::visuals::world::spawn_global_visuals;
 use bevy::prelude::*;
 
 pub fn spawn_global_spell(params: &mut CombatInputParams, ctx: &CombatContext) {

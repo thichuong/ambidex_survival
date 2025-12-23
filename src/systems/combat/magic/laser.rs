@@ -2,7 +2,7 @@ use crate::components::physics::{Collider, IgnoreGrid};
 use crate::components::weapon::{AoEProjectile, Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::spells::laser;
 use crate::systems::combat::{CombatContext, CombatInputParams};
-use crate::systems::weapon_visuals::spawn_laser_visuals;
+use crate::visuals::world::spawn_laser_visuals;
 use bevy::prelude::*;
 
 pub fn spawn_laser(

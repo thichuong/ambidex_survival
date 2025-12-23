@@ -3,7 +3,7 @@ use crate::components::physics::{Collider, Velocity};
 use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats, Progression};
 use crate::components::weapon::{Faction, Lifetime, Projectile, Weapon, WeaponType};
 use crate::configs::weapons::shuriken;
-use crate::systems::weapon_visuals::spawn_shuriken_visuals;
+use crate::visuals::world::spawn_shuriken_visuals;
 use bevy::prelude::*;
 
 #[allow(clippy::too_many_lines)]

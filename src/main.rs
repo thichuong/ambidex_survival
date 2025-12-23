@@ -11,6 +11,7 @@ mod plugins;
 mod resources;
 mod systems;
 mod utils;
+mod visuals;
 
 use bevy::window::PrimaryWindow;
 use components::player::GameCamera;

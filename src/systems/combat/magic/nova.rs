@@ -1,7 +1,7 @@
 use crate::components::weapon::{AoEProjectile, Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::spells::nova;
 use crate::systems::combat::{CombatContext, CombatInputParams};
-use crate::systems::weapon_visuals::spawn_nova_visuals;
+use crate::visuals::world::spawn_nova_visuals;
 use bevy::prelude::*;
 
 pub fn spawn_nova(params: &mut CombatInputParams, ctx: &CombatContext, explosion_pos: Vec3) {

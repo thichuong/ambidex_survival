@@ -1,7 +1,7 @@
 use crate::components::physics::{Collider, IgnoreGrid, Velocity};
 use crate::components::weapon::{AoEProjectile, ExplodingProjectile, Lifetime, Projectile};
 use crate::systems::combat::{CollisionEvent, PendingDespawn};
-use crate::systems::weapon_visuals::spawn_bolt_explosion_visuals;
+use crate::visuals::world::spawn_bolt_explosion_visuals;
 use bevy::prelude::*;
 use rand::Rng;
 

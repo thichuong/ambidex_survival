@@ -4,7 +4,7 @@ use crate::components::weapon::{
     Faction, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
 };
 use crate::configs::weapons::sword;
-use crate::systems::weapon_visuals::{spawn_sword_normal_visuals, spawn_sword_shattered_visuals};
+use crate::visuals::world::{spawn_sword_normal_visuals, spawn_sword_shattered_visuals};
 use bevy::prelude::*;
 use rand::Rng;
 
