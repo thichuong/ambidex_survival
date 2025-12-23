@@ -65,13 +65,16 @@ ambidex_survival/
 │   │   ├── damage_text.rs
 │   │   ├── enemy.rs
 │   │   ├── physics.rs
-│   │   ├── player.rs
-│   │   └── damage_text.rs
+│   │   └── player.rs
 │   ├── utils/          # Generic utility functions
 │   ├── visuals/        # Visual effects and UI drawing
 │   │   ├── mod.rs
 │   │   ├── ui_icons.rs # Procedural UI icons (Shop, HUD)
-│   │   └── world.rs    # Game world effects (Projectiles, Spells, Weapons)
+│   │   └── world/      # Game world effects (Projectiles, Spells, Weapons)
+│   │       ├── mod.rs
+│   │       ├── melee.rs
+│   │       ├── projectiles.rs
+│   │       └── spells.rs
 │   └── main.rs         # Game entry point and plugin registration
 ├── index.html          # Web entry point
 ├── Trunk.toml          # Build configuration for Trunk (Wasm)
@@ -83,11 +86,10 @@ ambidex_survival/
 ### `src/components/`
 Components are pure data structs that attach to entities.
 - `player.rs`: Player marker and stat components (Health, Currency, CombatStats).
-- `weapon.rs`: Weapon-specific components (MagicLoadout, SwordState, GunState).
+- `weapon.rs`: Weapon-specific components (MagicLoadout, SwordState, GunState) and the unified `Faction` enum.
 - `enemy.rs`: Enemy marker and stat components.
 - `physics.rs`: Velocity, Collider labels, sensor markers.
 - `attack_effects.rs`: Components for projectiles and damage effects.
-- `faction.rs`: Unified `Faction` enum for targeting logic (Player vs Enemy).
 
 ### `src/configs/`
 Configuration modules for gameplay balancing. All constants in one place.
@@ -162,6 +164,8 @@ Collision detection and damage processing pipeline:
 
 ### `src/visuals/`
 Centralized visuals module for rendering game effects and UI elements.
-- `world.rs`: Spawning visual meshes for weapons, projectiles, and magic spells (previously `weapon_visuals.rs`).
 - `ui_icons.rs`: Procedural drawing of UI icons (Heal, Sword, Shield, etc.) to avoid reliance on external assets.
-
+- `world/`: Sub-module for spawning visual meshes for weapons, projectiles, and magic spells.
+    - `melee.rs`: Sword and physical weapon animations.
+    - `projectiles.rs`: Gun bullets and shuriken visuals.
+    - `spells.rs`: Energy bolt, laser, and nova visual effects.
