@@ -168,6 +168,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                             spawn_shop_button(grid, ShopButton::CritChanceUp, "");
                             spawn_shop_button(grid, ShopButton::LifestealUp, "");
                             spawn_shop_button(grid, ShopButton::CooldownReductionUp, "");
+                            spawn_shop_button(grid, ShopButton::NovaCore, "");
                         });
                         shop_scroll.spawn(Node { height: Val::Px(20.0), ..default() });
                     });

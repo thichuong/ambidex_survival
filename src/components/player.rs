@@ -75,6 +75,7 @@ pub struct Progression {
     pub crit_chance_upgrades: u32,
     pub lifesteal_upgrades: u32,
     pub cdr_upgrades: u32,
+    pub nova_core: u32,
 }
 
 #[derive(Component, Default)]

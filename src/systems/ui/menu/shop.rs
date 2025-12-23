@@ -227,6 +227,12 @@ const fn get_shop_button_colors(btn_type: ShopButton) -> (Color, Color, Color, C
             Color::srgba(0.05, 0.25, 0.3, 1.0), // Hover cyan
             Color::srgb(0.4, 0.9, 1.0),         // Cyan accent text
         ),
+        ShopButton::NovaCore => (
+            Color::srgb(0.9, 0.4, 1.0),          // Magenta border
+            Color::srgba(0.15, 0.05, 0.2, 0.95), // Dark purple background
+            Color::srgba(0.25, 0.1, 0.3, 1.0),   // Hover purple
+            Color::srgb(0.9, 0.7, 1.0),          // Light purple accent
+        ),
     }
 }
 
@@ -250,6 +256,7 @@ pub fn get_shop_button_content(btn_type: ShopButton) -> (String, String, String)
                 (config.value * 50.0) as u32
             )
         }
+        ShopButton::NovaCore => config.description.to_string(),
     };
 
     (title, desc, price)
@@ -276,6 +283,7 @@ pub fn spawn_shop_icon(parent: &mut ChildSpawnerCommands, btn_type: ShopButton) 
             ShopButton::CritChanceUp => spawn_crit_chance_icon(icon),
             ShopButton::LifestealUp => spawn_lifesteal_icon(icon),
             ShopButton::CooldownReductionUp => spawn_cdr_icon(icon),
+            ShopButton::NovaCore => spawn_nova_core_icon(icon),
         });
 }
 
@@ -518,6 +526,42 @@ fn spawn_cdr_icon(parent: &mut ChildSpawnerCommands) {
     ));
 }
 
+fn spawn_nova_core_icon(parent: &mut ChildSpawnerCommands) {
+    // Glowing orb
+    parent.spawn((
+        Node {
+            width: Val::Px(30.0),
+            height: Val::Px(30.0),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.3, 0.8, 1.0, 0.8)),
+        BorderRadius::all(Val::Px(15.0)),
+    ));
+    // Core
+    parent.spawn((
+        Node {
+            width: Val::Px(12.0),
+            height: Val::Px(12.0),
+            position_type: PositionType::Absolute,
+            ..default()
+        },
+        BackgroundColor(Color::WHITE),
+        BorderRadius::all(Val::Px(6.0)),
+    ));
+    // Ring
+    parent.spawn((
+        Node {
+            width: Val::Px(42.0),
+            height: Val::Px(42.0),
+            position_type: PositionType::Absolute,
+            border: UiRect::all(Val::Px(2.0)),
+            ..default()
+        },
+        BorderColor::all(Color::srgba(0.9, 0.5, 1.0, 1.0)),
+        BorderRadius::all(Val::Px(21.0)),
+    ));
+}
+
 /// Draws an infinity symbol (∞) using two overlapping circles
 fn spawn_infinity_symbol(parent: &mut ChildSpawnerCommands) {
     let circle_size = Val::Px(7.0);
@@ -576,6 +620,7 @@ pub fn update_shop_cards_ui(
             ShopButton::CritChanceUp => progression.crit_chance_upgrades,
             ShopButton::LifestealUp => progression.lifesteal_upgrades,
             ShopButton::CooldownReductionUp => progression.cdr_upgrades,
+            ShopButton::NovaCore => progression.nova_core,
         };
 
         // Find the ShopCardCount container among card's children

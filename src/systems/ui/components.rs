@@ -17,6 +17,7 @@ pub enum ShopButton {
     CritChanceUp,        // Blue
     LifestealUp,         // Blue
     CooldownReductionUp, // Blue
+    NovaCore,            // Upgrade
 }
 
 #[derive(Event, Message, Debug)]

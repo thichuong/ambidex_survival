@@ -39,6 +39,7 @@ pub fn handle_purchases(
             ShopButton::CritChanceUp => Some(progression.crit_chance_upgrades),
             ShopButton::LifestealUp => Some(progression.lifesteal_upgrades),
             ShopButton::CooldownReductionUp => Some(progression.cdr_upgrades),
+            ShopButton::NovaCore => Some(progression.nova_core),
         };
 
         let is_maxed = if let (Some(limit), Some(c)) = (config.limit, count) {
@@ -92,6 +93,11 @@ pub fn handle_purchases(
                     currency.gold -= config.price;
                     combat.cooldown_reduction = (combat.cooldown_reduction + config.value).min(0.8);
                     progression.cdr_upgrades += 1;
+                    success = true;
+                }
+                ShopButton::NovaCore => {
+                    currency.gold -= config.price;
+                    progression.nova_core += 1;
                     success = true;
                 }
             }

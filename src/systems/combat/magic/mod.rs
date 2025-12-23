@@ -1,4 +1,4 @@
-use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats};
+use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats, Progression};
 use crate::components::weapon::{ActiveSpellSlot, MagicLoadout, SpellType, Weapon, WeaponType};
 use crate::systems::combat::CombatInputParams;
 use bevy::prelude::*;
@@ -11,7 +11,16 @@ pub mod nova;
 
 pub fn magic_weapon_system(
     mut params: CombatInputParams,
-    mut player: Single<(Entity, &mut Transform, &PlayerStats, &CombatStats), With<Player>>,
+    mut player: Single<
+        (
+            Entity,
+            &mut Transform,
+            &PlayerStats,
+            &CombatStats,
+            &Progression,
+        ),
+        With<Player>,
+    >,
     mut hand_query: Query<(&GlobalTransform, &Hand, &mut MagicLoadout, &mut Weapon)>,
 ) {
     let (camera, camera_transform) = *params.camera;
@@ -29,6 +38,7 @@ pub fn magic_weapon_system(
     let player_entity = player.0;
     let stats = player.2;
     let combat_stats = player.3;
+    let progression = player.4;
     let player_transform = &mut *player.1;
 
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
@@ -81,6 +91,7 @@ pub fn magic_weapon_system(
                 cursor_pos,
                 hand_pos,
                 stats.damage_multiplier,
+                progression,
             );
             weapon_data.last_shot = now;
         }
@@ -95,6 +106,7 @@ fn cast_spell(
     cursor_pos: Vec2,
     spawn_pos: Vec2,
     damage_multiplier: f32,
+    progression: &Progression,
 ) {
     let direction = (cursor_pos - spawn_pos).normalize_or_zero();
     let angle = direction.y.atan2(direction.x);
@@ -121,12 +133,12 @@ fn cast_spell(
             );
         }
         SpellType::Nova => {
-            nova::spawn_nova(
-                params,
-                player_entity,
-                player_transform.translation,
-                damage_multiplier,
-            );
+            let explosion_pos = if progression.nova_core > 0 {
+                cursor_pos.extend(player_transform.translation.z)
+            } else {
+                player_transform.translation
+            };
+            nova::spawn_nova(params, player_entity, explosion_pos, damage_multiplier);
         }
         SpellType::Blink => {
             blink::perform_blink(player_transform, cursor_pos);

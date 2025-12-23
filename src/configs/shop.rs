@@ -60,5 +60,12 @@ pub const fn get_card_config(btn_type: ShopButton) -> CardConfig {
             value: 0.1,
             description: "+10% CDR",
         },
+        ShopButton::NovaCore => CardConfig {
+            name: "Nova Core",
+            price: 500,
+            limit: Some(1),
+            value: 1.0,
+            description: "Nova explodes at cursor",
+        },
     }
 }
