@@ -137,3 +137,21 @@ pub struct ShopCardLimit;
 
 #[derive(Component)]
 pub struct InfinitySymbol;
+
+/// Resource to track which shop card is currently selected
+#[derive(Resource, Default)]
+pub struct SelectedShopCard(pub Option<ShopButton>);
+
+/// Marker for the main buy button in shop
+#[derive(Component)]
+pub struct ShopBuyButton;
+
+/// Marker for buy button text (shows card name and price)
+#[derive(Component)]
+pub struct ShopBuyButtonText;
+
+/// Event fired when a shop card is clicked (selection, not purchase)
+#[derive(Event, Message, Debug)]
+pub struct SelectCardEvent {
+    pub btn_type: ShopButton,
+}

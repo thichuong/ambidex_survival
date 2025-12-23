@@ -1,5 +1,5 @@
 use super::super::components::{
-    InfinitySymbol, PurchaseEvent, ShopButton, ShopCardCount, ShopCardCurrentCount, ShopCardLimit,
+    InfinitySymbol, SelectCardEvent, ShopButton, ShopCardCount, ShopCardCurrentCount, ShopCardLimit,
 };
 use crate::components::player::Progression;
 use bevy::prelude::*;
@@ -36,11 +36,10 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
         .observe(
             |trigger: On<Pointer<Click>>,
              btn_query: Query<&ShopButton>,
-             mut events: MessageWriter<PurchaseEvent>| {
+             mut events: MessageWriter<SelectCardEvent>| {
                 if let Ok(btn_type) = btn_query.get(trigger.entity) {
-                    events.write(PurchaseEvent {
+                    events.write(SelectCardEvent {
                         btn_type: *btn_type,
-                        entity: trigger.entity,
                     });
                 }
             },
@@ -183,7 +182,7 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
         });
 }
 
-const fn get_shop_button_colors(btn_type: ShopButton) -> (Color, Color, Color, Color) {
+pub const fn get_shop_button_colors(btn_type: ShopButton) -> (Color, Color, Color, Color) {
     match btn_type {
         ShopButton::Heal => (
             Color::srgb(0.9, 0.9, 0.95),         // Soft white border

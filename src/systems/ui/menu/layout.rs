@@ -1,6 +1,6 @@
 use super::super::components::{
     MenuCDRText, MenuCritText, MenuDamageText, MenuGoldText, MenuHealthText, MenuLifestealText,
-    ShopButton, TutorialButton, WeaponMenuUI,
+    ShopButton, ShopBuyButton, ShopBuyButtonText, TutorialButton, WeaponMenuUI,
 };
 use super::arsenal::{spawn_magic_panel, spawn_weapon_button, spawn_weapon_detail_panel};
 use super::shop::spawn_shop_button;
@@ -170,6 +170,44 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                             spawn_shop_button(grid, ShopButton::CooldownReductionUp, "");
                             spawn_shop_button(grid, ShopButton::NovaCore, "");
                         });
+
+                        // === SHOP BUY BUTTON (Large, below cards) ===
+                        shop_scroll.spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(280.0),
+                                height: Val::Px(60.0),
+                                margin: UiRect::vertical(Val::Px(15.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(3.0)),
+                                display: Display::None, // Hidden by default
+                                ..default()
+                            },
+                            BorderColor::all(Color::srgb(1.0, 0.85, 0.0)), // Gold border
+                            BorderRadius::all(Val::Px(12.0)),
+                            BackgroundColor(Color::srgba(0.2, 0.15, 0.0, 0.95)),
+                            ShopBuyButton,
+                        ))
+                        .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) {
+                                *color = BackgroundColor(Color::srgba(0.35, 0.28, 0.0, 1.0));
+                            }
+                        })
+                        .observe(|trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) {
+                                *color = BackgroundColor(Color::srgba(0.2, 0.15, 0.0, 0.95));
+                            }
+                        })
+                        .with_children(|buy_btn| {
+                            buy_btn.spawn((
+                                Text::new("Chọn một upgrade"),
+                                TextFont { font_size: 22.0, ..default() },
+                                TextColor(Color::srgb(1.0, 0.9, 0.4)),
+                                ShopBuyButtonText,
+                            ));
+                        });
+
                         shop_scroll.spawn(Node { height: Val::Px(20.0), ..default() });
                     });
 

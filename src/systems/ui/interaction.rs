@@ -1,8 +1,73 @@
-use super::components::{PurchaseEvent, ShopButton};
+use super::components::{
+    PurchaseEvent, SelectCardEvent, SelectedShopCard, ShopButton, ShopBuyButton, ShopBuyButtonText,
+};
 use crate::components::player::{CombatStats, Currency, Health, Player, PlayerStats, Progression};
 use crate::configs::shop::get_card_config;
 use crate::resources::game_state::GameState;
+use crate::systems::ui::menu::shop::get_shop_button_content;
 use bevy::prelude::*;
+
+/// Handle card selection when clicking on shop cards
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
+pub fn handle_card_selection(
+    mut events: MessageReader<SelectCardEvent>,
+    mut selected: ResMut<SelectedShopCard>,
+    mut buy_btn_query: Query<(&mut Node, &Children), With<ShopBuyButton>>,
+    mut buy_text_query: Query<&mut Text, With<ShopBuyButtonText>>,
+    mut card_query: Query<(&ShopButton, &mut BorderColor)>,
+) {
+    for event in events.read() {
+        // Update selected card
+        selected.0 = Some(event.btn_type);
+
+        // Update buy button visibility and text
+        for (mut node, children) in &mut buy_btn_query {
+            node.display = Display::Flex;
+
+            // Update button text
+            for child in children {
+                if let Ok(mut text) = buy_text_query.get_mut(*child) {
+                    let (title, _desc, price) = get_shop_button_content(event.btn_type);
+                    text.0 = format!("BUY {} - {}", title, price);
+                }
+            }
+        }
+
+        // Highlight selected card, reset others
+        for (btn_type, mut border) in &mut card_query {
+            if *btn_type == event.btn_type {
+                // Highlight selected with bright gold border
+                *border = BorderColor::all(Color::srgb(1.0, 0.9, 0.3));
+            } else {
+                // Reset to original color
+                let (original_border, _, _, _) =
+                    crate::systems::ui::menu::shop::get_shop_button_colors(*btn_type);
+                *border = BorderColor::all(original_border);
+            }
+        }
+    }
+}
+
+/// Observer for buy button click - sends PurchaseEvent
+pub fn setup_buy_button_observer(
+    mut commands: Commands,
+    buy_btn_query: Query<Entity, Added<ShopBuyButton>>,
+) {
+    for entity in &buy_btn_query {
+        commands.entity(entity).observe(
+            |trigger: On<Pointer<Click>>,
+             selected: Res<SelectedShopCard>,
+             mut events: MessageWriter<PurchaseEvent>| {
+                if let Some(btn_type) = selected.0 {
+                    events.write(PurchaseEvent {
+                        btn_type,
+                        entity: trigger.entity,
+                    });
+                }
+            },
+        );
+    }
+}
 
 #[allow(
     clippy::too_many_arguments,
@@ -23,6 +88,9 @@ pub fn handle_purchases(
         With<Player>,
     >,
     mut color_query: Query<&mut BackgroundColor>,
+    mut selected: ResMut<SelectedShopCard>,
+    mut buy_btn_query: Query<&mut Node, With<ShopBuyButton>>,
+    mut card_border_query: Query<(&ShopButton, &mut BorderColor)>,
 ) {
     let (mut health, mut currency, mut stats, mut combat, mut progression) =
         player_query.into_inner();
@@ -103,12 +171,26 @@ pub fn handle_purchases(
             }
         }
 
-        // Visual feedback
+        // Visual feedback on buy button
         if let Ok(mut color) = color_query.get_mut(event.entity) {
             if success {
                 *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
             } else if is_maxed || currency.gold < config.price {
                 *color = BackgroundColor(Color::srgba(0.8, 0.2, 0.2, 1.0));
+            }
+        }
+
+        // Reset selection and hide buy button after successful purchase
+        if success {
+            selected.0 = None;
+            for mut node in &mut buy_btn_query {
+                node.display = Display::None;
+            }
+            // Reset all card borders
+            for (btn_type, mut border) in &mut card_border_query {
+                let (original, _, _, _) =
+                    crate::systems::ui::menu::shop::get_shop_button_colors(*btn_type);
+                *border = BorderColor::all(original);
             }
         }
     }
