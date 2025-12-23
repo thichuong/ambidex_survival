@@ -102,34 +102,16 @@ pub fn magic_weapon_system(
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CombatContext) {
+fn cast_spell(params: &mut CombatInputParams, spell: SpellType, mut ctx: CombatContext) {
     let direction = (ctx.cursor_pos - ctx.spawn_pos).normalize_or_zero();
     let angle = direction.y.atan2(direction.x);
 
     match spell {
         SpellType::EnergyBolt => {
-            energy_bolt::spawn_energy_bolt(
-                params,
-                ctx.owner_entity,
-                ctx.spawn_pos,
-                direction,
-                angle,
-                ctx.damage_multiplier,
-                ctx.combat_stats.crit_chance,
-                ctx.combat_stats.crit_damage,
-            );
+            energy_bolt::spawn_energy_bolt(params, &ctx, direction, angle);
         }
         SpellType::Laser => {
-            laser::spawn_laser(
-                params,
-                ctx.owner_entity,
-                ctx.spawn_pos,
-                direction,
-                angle,
-                ctx.damage_multiplier,
-                ctx.combat_stats.crit_chance,
-                ctx.combat_stats.crit_damage,
-            );
+            laser::spawn_laser(params, &ctx, direction, angle);
         }
         SpellType::Nova => {
             let explosion_pos = if ctx.progression.nova_core > 0 {
@@ -137,27 +119,13 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CombatConte
             } else {
                 ctx.transform.translation
             };
-            nova::spawn_nova(
-                params,
-                ctx.owner_entity,
-                explosion_pos,
-                ctx.damage_multiplier,
-                ctx.combat_stats.crit_chance,
-                ctx.combat_stats.crit_damage,
-            );
+            nova::spawn_nova(params, &ctx, explosion_pos);
         }
         SpellType::Blink => {
-            blink::perform_blink(ctx.transform, ctx.cursor_pos);
+            blink::perform_blink(&mut ctx);
         }
         SpellType::Global => {
-            global_spell::spawn_global_spell(
-                params,
-                ctx.owner_entity,
-                ctx.transform.translation,
-                ctx.damage_multiplier,
-                ctx.combat_stats.crit_chance,
-                ctx.combat_stats.crit_damage,
-            );
+            global_spell::spawn_global_spell(params, &ctx);
         }
     }
 }
