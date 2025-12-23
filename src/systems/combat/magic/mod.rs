@@ -86,69 +86,77 @@ pub fn magic_weapon_system(
             cast_spell(
                 &mut params,
                 spell_to_cast,
-                player_entity,
-                &mut *player_transform,
-                cursor_pos,
-                hand_pos,
-                stats.damage_multiplier,
-                progression,
+                CastSpellContext {
+                    player_entity,
+                    player_transform: &mut *player_transform,
+                    cursor_pos,
+                    spawn_pos: hand_pos,
+                    damage_multiplier: stats.damage_multiplier,
+                    progression,
+                },
             );
             weapon_data.last_shot = now;
         }
     }
 }
 
-fn cast_spell(
-    params: &mut CombatInputParams,
-    spell: SpellType,
+struct CastSpellContext<'a> {
     player_entity: Entity,
-    player_transform: &mut Transform,
+    player_transform: &'a mut Transform,
     cursor_pos: Vec2,
     spawn_pos: Vec2,
     damage_multiplier: f32,
-    progression: &Progression,
-) {
-    let direction = (cursor_pos - spawn_pos).normalize_or_zero();
+    progression: &'a Progression,
+}
+
+#[allow(clippy::needless_pass_by_value)]
+fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellContext) {
+    let direction = (ctx.cursor_pos - ctx.spawn_pos).normalize_or_zero();
     let angle = direction.y.atan2(direction.x);
 
     match spell {
         SpellType::EnergyBolt => {
             energy_bolt::spawn_energy_bolt(
                 params,
-                player_entity,
-                spawn_pos,
+                ctx.player_entity,
+                ctx.spawn_pos,
                 direction,
                 angle,
-                damage_multiplier,
+                ctx.damage_multiplier,
             );
         }
         SpellType::Laser => {
             laser::spawn_laser(
                 params,
-                player_entity,
-                spawn_pos,
+                ctx.player_entity,
+                ctx.spawn_pos,
                 direction,
                 angle,
-                damage_multiplier,
+                ctx.damage_multiplier,
             );
         }
         SpellType::Nova => {
-            let explosion_pos = if progression.nova_core > 0 {
-                cursor_pos.extend(player_transform.translation.z)
+            let explosion_pos = if ctx.progression.nova_core > 0 {
+                ctx.cursor_pos.extend(ctx.player_transform.translation.z)
             } else {
-                player_transform.translation
+                ctx.player_transform.translation
             };
-            nova::spawn_nova(params, player_entity, explosion_pos, damage_multiplier);
+            nova::spawn_nova(
+                params,
+                ctx.player_entity,
+                explosion_pos,
+                ctx.damage_multiplier,
+            );
         }
         SpellType::Blink => {
-            blink::perform_blink(player_transform, cursor_pos);
+            blink::perform_blink(ctx.player_transform, ctx.cursor_pos);
         }
         SpellType::Global => {
             global_spell::spawn_global_spell(
                 params,
-                player_entity,
-                player_transform.translation,
-                damage_multiplier,
+                ctx.player_entity,
+                ctx.player_transform.translation,
+                ctx.damage_multiplier,
             );
         }
     }

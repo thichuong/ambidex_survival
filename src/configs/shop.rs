@@ -56,13 +56,13 @@ pub const fn get_card_config(btn_type: ShopButton) -> CardConfig {
         ShopButton::CooldownReductionUp => CardConfig {
             name: "Magic CDR",
             price: 350,
-            limit: Some(8),
+            limit: Some(5),
             value: 0.1,
             description: "+10% CDR",
         },
         ShopButton::NovaCore => CardConfig {
             name: "Nova Core",
-            price: 500,
+            price: 1000,
             limit: Some(1),
             value: 1.0,
             description: "Nova explodes at cursor",

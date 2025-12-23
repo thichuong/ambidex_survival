@@ -123,7 +123,8 @@ Advanced variants that appear in later rounds with unique combat logic.
     - **Crit Damage**: Increase critical strike damage by **50%** (**200G**, Unlimited).
     - **Crit Chance**: Increase critical strike chance by **10%** (**250G**, Max 10).
     - **Lifesteal**: Heal for **10%** of damage dealt (**300G**, Max 5). **Note**: AOE damage (Sword, Explosions, Nova) heals for only 50% of the lifesteal value.
-    - **Magic CDR**: Reduce Magic weapon cooldowns by **10%** (**350G**, Max 8).
+    - **Magic CDR**: Reduce Magic weapon cooldowns by **10%** (**350G**, Max 5).
+    - **Nova Core**: Allow the Nova spell to explode at the mouse cursor position instead of the player (**1000G**, Max 1).
 - **Rounds**: Waves scale in size and intensity. Clear all enemies to access the shop.
 
 ## 🕹️ Controls
