@@ -29,6 +29,16 @@ pub const ELITE_COLLIDER_RADIUS: f32 = 25.0;
 pub const ELITE_CRIT_CHANCE: f32 = 1.0;
 pub const ELITE_CRIT_DAMAGE: f32 = 1.0;
 
+// Yellow Enemy Stats (Mirror Mage)
+pub const YELLOW_BASE_HEALTH: f32 = 100.0;
+pub const YELLOW_HEALTH_SCALING_PER_ROUND: f32 = 40.0;
+pub const YELLOW_BASE_SPEED: f32 = 200.0;
+pub const YELLOW_BLINK_COOLDOWN: f32 = 3.0;
+pub const YELLOW_GLOBAL_COOLDOWN: f32 = 5.0;
+pub const YELLOW_BLINK_RANGE: f32 = 800.0;
+pub const YELLOW_VISUAL_RADIUS: f32 = 20.0;
+pub const YELLOW_COLLIDER_RADIUS: f32 = 20.0;
+
 // Gold Rewards
 pub const GOLD_REWARD: u32 = 10;
 pub const ELITE_GOLD_REWARD: u32 = 100;

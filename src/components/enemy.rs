@@ -26,3 +26,12 @@ pub struct EliteAi {
     pub shuriken_timer: Timer,
     pub teleport_timer: Timer,
 }
+
+#[derive(Component)]
+pub struct YellowEnemy;
+
+#[derive(Component)]
+pub struct YellowAi {
+    pub blink_timer: Timer,
+    pub global_timer: Timer,
+}

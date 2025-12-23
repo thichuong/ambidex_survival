@@ -15,6 +15,7 @@ pub mod player_collision;
 pub mod shuriken;
 pub mod sword;
 pub mod sword_mechanics;
+pub mod yellow_ai;
 
 pub use collision::*;
 pub use events::*;

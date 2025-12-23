@@ -1,5 +1,7 @@
 use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats, Progression};
-use crate::components::weapon::{ActiveSpellSlot, MagicLoadout, SpellType, Weapon, WeaponType};
+use crate::components::weapon::{
+    ActiveSpellSlot, Faction, MagicLoadout, SpellType, Weapon, WeaponType,
+};
 use crate::systems::combat::{CombatContext, CombatInputParams};
 use bevy::prelude::*;
 
@@ -125,7 +127,7 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, mut ctx: CombatC
             blink::perform_blink(&mut ctx);
         }
         SpellType::Global => {
-            global_spell::spawn_global_spell(params, &ctx);
+            global_spell::spawn_global_spell(params, &ctx, Faction::Player);
         }
     }
 }

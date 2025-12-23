@@ -5,7 +5,7 @@ use crate::systems::combat::{CombatContext, CombatInputParams};
 use crate::visuals::world::spawn_global_visuals;
 use bevy::prelude::*;
 
-pub fn spawn_global_spell(params: &mut CombatInputParams, ctx: &CombatContext) {
+pub fn spawn_global_spell(params: &mut CombatInputParams, ctx: &CombatContext, faction: Faction) {
     params
         .commands
         .spawn((
@@ -19,7 +19,7 @@ pub fn spawn_global_spell(params: &mut CombatInputParams, ctx: &CombatContext) {
                 direction: Vec2::ZERO,
                 owner_entity: ctx.owner_entity,
                 is_aoe: true,
-                faction: Faction::Player,
+                faction,
                 crit_chance: ctx.combat_stats.crit_chance,
                 crit_damage: ctx.combat_stats.crit_damage,
             },

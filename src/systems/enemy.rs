@@ -47,6 +47,15 @@ pub fn spawn_waves(mut params: SpawnWavesParams) {
                         params.round_manager.current_round,
                     );
                     params.round_manager.elites_to_spawn -= 1;
+                } else if params.round_manager.yellow_enemies_to_spawn > 0 {
+                    spawn_yellow_enemy(
+                        &mut params.commands,
+                        &mut params.meshes,
+                        &mut params.materials,
+                        player_pos,
+                        params.round_manager.current_round,
+                    );
+                    params.round_manager.yellow_enemies_to_spawn -= 1;
                 } else {
                     params.round_manager.round_state = RoundState::Fighting;
                     println!("Wave Spawning Finished! Fighting...");
@@ -177,6 +186,77 @@ fn spawn_elite_enemy(
                 crate::configs::enemy::ELITE_TELEPORT_COOLDOWN,
                 TimerMode::Repeating,
             ),
+        },
+    ));
+}
+
+#[allow(clippy::cast_precision_loss)]
+fn spawn_yellow_enemy(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    player_pos: Vec2,
+    current_round: u32,
+) {
+    let mut rng = rand::thread_rng();
+
+    let angle = rng.gen_range(0.0..std::f32::consts::TAU);
+    let radius = rng.gen_range(
+        crate::configs::enemy::SPAWN_RADIUS_MIN..crate::configs::enemy::SPAWN_RADIUS_MAX,
+    );
+    let x = angle.cos() * radius;
+    let y = angle.sin() * radius;
+    let spawn_pos = player_pos + Vec2::new(x, y);
+
+    let health = (current_round as f32).mul_add(
+        crate::configs::enemy::YELLOW_HEALTH_SCALING_PER_ROUND,
+        crate::configs::enemy::YELLOW_BASE_HEALTH,
+    );
+    let speed = crate::configs::enemy::YELLOW_BASE_SPEED;
+
+    // Damage mul: +0.1 * round
+    let damage_multiplier = 1.0 + (0.1 * current_round as f32);
+    // Crit chance: 10% mỗi round = 0.1 * round
+    let crit_chance = 0.1 * current_round as f32;
+    // Crit damage: 2 + 0.5 * round
+    let crit_damage = 2.0 + (0.5 * current_round as f32);
+
+    println!(
+        "Spawning YELLOW Enemy (R{current_round}): HP={health}, Spd={speed}, DmgMul={damage_multiplier}, Crit={crit_chance}/{crit_damage}"
+    );
+
+    commands.spawn((
+        (
+            Mesh2d(meshes.add(Circle::new(crate::configs::enemy::YELLOW_VISUAL_RADIUS))),
+            MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::YELLOW))),
+            Transform::from_translation(spawn_pos.extend(crate::configs::enemy::VISUAL_Z_INDEX)),
+        ),
+        Collider::ball(crate::configs::enemy::YELLOW_COLLIDER_RADIUS),
+        Velocity::default(),
+        Enemy {
+            health,
+            speed,
+            damage: crate::configs::enemy::BASE_DAMAGE * damage_multiplier,
+        },
+        crate::components::enemy::YellowEnemy,
+        crate::components::enemy::YellowAi {
+            blink_timer: Timer::from_seconds(
+                crate::configs::enemy::YELLOW_BLINK_COOLDOWN,
+                TimerMode::Repeating,
+            ),
+            global_timer: Timer::from_seconds(
+                crate::configs::enemy::YELLOW_GLOBAL_COOLDOWN,
+                TimerMode::Repeating,
+            ),
+        },
+        crate::components::player::PlayerStats {
+            damage_multiplier,
+            ..default()
+        },
+        crate::components::player::CombatStats {
+            crit_chance,
+            crit_damage,
+            ..default()
         },
     ));
 }

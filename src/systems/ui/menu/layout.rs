@@ -309,6 +309,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                                     bevy::time::TimerMode::Repeating,
                                 );
                                 round_manager.elites_to_spawn = round_manager.current_round;
+                                round_manager.yellow_enemies_to_spawn = if round_manager.current_round >= 5 { 1 } else { 0 };
                                 round_manager.round_state = RoundState::Spawning;
                             }
                             next_state.set(GameState::Playing);
