@@ -21,6 +21,7 @@ The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17, organized int
 - **Plugin Organization**: Structured into independent plugins (`CombatPlugin`, `UIPlugin`, `PhysicsPlugin`, `VisualsPlugin`, `PlayerPlugin`) for clean separation of concerns.
 - **Modular Weapon Systems**: Every weapon (Sword, Gun, Shuriken, Magic) is an independent system using optimized ECS filters and trait-like component patterns.
 - **Bevy 0.17 Ergonomics**: Leverages `Single<T>` for singleton access, `Mut<T>` for efficient change detection, and `()` system return types for standard compliance.
+- **Unified Combat Context**: All weapon and spell logic shares a `CombatContext` struct, streamlining parameter passing and simplifying function signatures.
 - **Event-Driven Communication**: Unified event handling using Bevy's native `Event` system enhanced with `Message` derive, providing typesafe `MessageReader` and `MessageWriter` for inter-plugin communication.
 - **Reactive Observers**: High-performance reactive logic triggered by `On<E>` observers (e.g., spawn damage text on hit, trigger effects on death), reducing per-frame overhead.
 - **Collision Pipeline**: Dedicated `collision/` sub-module handles detection, damage processing, and visual effects in separate, focused systems.
@@ -108,7 +109,7 @@ Swarm-type enemies that chase the player and deal contact damage.
 Advanced variants that appear in later rounds with unique combat logic.
 - **Teleportation**: Randomly teleports near the player to maintain pressure.
 - **Spread Shot**: Fires purple high-velocity shurikens in a wide arc.
-- **Damage Scaling**: Elite shuriken damage scales with the player's own damage upgrades, making them a constant threat.
+- **Damage Scaling**: Elite shuriken damage scales with the player's own damage and critical hit stats, making them a constant threat.
 - **HP Scaling**: Gains **20 Max HP** per round for increased tankiness.
 - **Reward**: **100G** per kill.
 

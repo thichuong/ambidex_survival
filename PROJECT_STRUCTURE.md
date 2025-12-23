@@ -46,7 +46,7 @@ ambidex_survival/
 │   │   │   │   ├── global_spell.rs
 │   │   │   │   ├── laser.rs
 │   │   │   │   └── nova.rs
-│   │   │   ├── mod.rs          # CombatInputParams, shared types, events
+│   │   │   ├── mod.rs          # CombatContext, CombatInputParams, shared types
 │   │   │   ├── events.rs
 │   │   │   ├── elite_ai.rs     # AI for Elite enemies (Teleport + Spread fire)
 │   │   │   ├── gun.rs
@@ -123,23 +123,22 @@ Modularized UI systems:
 
 #### `combat/`
 Modularized combat systems following Bevy 0.17 ECS best practices:
-- `mod.rs`: `CombatInputParams` SystemParam bundle using `Single<T>` for Camera/Window access.
+- `mod.rs`: Defines `CombatContext` for unified parameter passing and `CombatInputParams`.
 - `sword.rs` & `sword_mechanics.rs`: Advanced sword logic, swing states, and frame-accurate hit detection.
 - `gun.rs`: Multi-mode firearm systems (Single, Shotgun, Rapid) with automatic fire logic.
 - `shuriken.rs`: Velocity-based shuriken projectiles and teleportation skill.
 - `events.rs`: Unified combat events using `Message` derive for `MessageReader` compatibility.
 - `player_collision.rs`: Player-enemy overlap handling and reactive damage reception.
-- **Architectural Note**: All systems use `()` return types and communicate via `MessageWriter`/`MessageReader` or reactive `On<E>` observers.
+- **Architectural Note**: Usage of `CombatContext` struct simplifies function signatures across all weapon types.
 
 #### `combat/magic/`
 Magic spell sub-system:
-- `mod.rs`: Spell slot management and input dispatching.
+- `mod.rs`: Spell slot management and input dispatching using `CombatContext`.
 - `energy_bolt.rs`: Projectile spell with explosion on impact.
 - `laser.rs`: Instant-hit beam spell.
-- `nova.rs`: Radial burst centered on player.
+- `nova.rs`: Radial burst centered on player (or cursor with Nova Core).
 - `blink.rs`: Short-range teleport to cursor.
 - `global_spell.rs`: Screen-wide damage.
-
 #### `combat/collision/`
 Collision detection and damage processing pipeline:
 - `mod.rs`: Shared types (`ProjectileQueryItem`) and re-exports.
