@@ -11,6 +11,7 @@ pub struct CachedAssets {
     // Unit meshes for scaling
     pub unit_circle: Handle<Mesh>,
     pub unit_square: Handle<Mesh>,
+    pub unit_triangle: Handle<Mesh>,
 
     // Common materials by color category
     pub mat_white: Handle<ColorMaterial>,
@@ -52,6 +53,7 @@ impl CachedAssets {
             // Unit meshes
             unit_circle: meshes.add(Circle::new(1.0)),
             unit_square: meshes.add(Rectangle::new(1.0, 1.0)),
+            unit_triangle: meshes.add(RegularPolygon::new(1.0, 3)),
 
             // Materials - common colors
             mat_white: materials.add(Color::srgba(1.0, 1.0, 1.0, 1.0)),
