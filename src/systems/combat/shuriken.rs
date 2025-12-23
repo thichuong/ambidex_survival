@@ -58,6 +58,8 @@ pub fn shuriken_weapon_system(
                 cursor_pos,
                 player_entity,
                 stats.damage_multiplier,
+                Faction::Player,
+                shuriken::MAX_COUNT,
             );
             weapon_data.last_shot = now;
         }
@@ -72,12 +74,14 @@ pub fn shuriken_weapon_system(
     }
 }
 
-fn fire_shuriken(
+pub fn fire_shuriken(
     params: &mut CombatInputParams,
     spawn_pos: Vec2,
     target_pos: Vec2,
     owner: Entity,
     damage_multiplier: f32,
+    faction: Faction,
+    max_count: usize,
 ) {
     let direction = (target_pos - spawn_pos).normalize_or_zero();
 
@@ -88,7 +92,7 @@ fn fire_shuriken(
         .map(|(e, _, _, l)| (e, l.timer.remaining_secs()))
         .collect();
 
-    if shurikens.len() >= shuriken::MAX_COUNT {
+    if shurikens.len() >= max_count {
         shurikens.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
         if let Some((oldest_entity, _)) = shurikens.first()
             && let Ok(mut e) = params.commands.get_entity(*oldest_entity)
@@ -114,7 +118,7 @@ fn fire_shuriken(
                 direction,
                 owner_entity: owner,
                 is_aoe: false,
-                faction: Faction::Player,
+                faction,
             },
             Lifetime {
                 timer: Timer::from_seconds(shuriken::LIFETIME, TimerMode::Once),

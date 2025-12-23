@@ -448,7 +448,10 @@ pub fn update_shuriken_count_ui(
             if hand.equipped_weapon == Some(WeaponType::Shuriken) {
                 let count = projectile_query
                     .iter()
-                    .filter(|p| p.kind == WeaponType::Shuriken)
+                    .filter(|p| {
+                        p.kind == WeaponType::Shuriken
+                            && p.faction == crate::components::weapon::Faction::Player
+                    })
                     .count();
 
                 if count > 0 {
