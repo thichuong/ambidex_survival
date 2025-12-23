@@ -1,6 +1,6 @@
 use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats, Progression};
 use crate::components::weapon::{ActiveSpellSlot, MagicLoadout, SpellType, Weapon, WeaponType};
-use crate::systems::combat::CombatInputParams;
+use crate::systems::combat::{CombatContext, CombatInputParams};
 use bevy::prelude::*;
 
 pub mod blink;
@@ -86,9 +86,9 @@ pub fn magic_weapon_system(
             cast_spell(
                 &mut params,
                 spell_to_cast,
-                CastSpellContext {
-                    player_entity,
-                    player_transform: &mut *player_transform,
+                CombatContext {
+                    owner_entity: player_entity,
+                    transform: &mut *player_transform,
                     cursor_pos,
                     spawn_pos: hand_pos,
                     damage_multiplier: stats.damage_multiplier,
@@ -101,18 +101,8 @@ pub fn magic_weapon_system(
     }
 }
 
-struct CastSpellContext<'a> {
-    player_entity: Entity,
-    player_transform: &'a mut Transform,
-    cursor_pos: Vec2,
-    spawn_pos: Vec2,
-    damage_multiplier: f32,
-    combat_stats: &'a CombatStats,
-    progression: &'a Progression,
-}
-
 #[allow(clippy::needless_pass_by_value)]
-fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellContext) {
+fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CombatContext) {
     let direction = (ctx.cursor_pos - ctx.spawn_pos).normalize_or_zero();
     let angle = direction.y.atan2(direction.x);
 
@@ -120,7 +110,7 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellCo
         SpellType::EnergyBolt => {
             energy_bolt::spawn_energy_bolt(
                 params,
-                ctx.player_entity,
+                ctx.owner_entity,
                 ctx.spawn_pos,
                 direction,
                 angle,
@@ -132,7 +122,7 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellCo
         SpellType::Laser => {
             laser::spawn_laser(
                 params,
-                ctx.player_entity,
+                ctx.owner_entity,
                 ctx.spawn_pos,
                 direction,
                 angle,
@@ -143,13 +133,13 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellCo
         }
         SpellType::Nova => {
             let explosion_pos = if ctx.progression.nova_core > 0 {
-                ctx.cursor_pos.extend(ctx.player_transform.translation.z)
+                ctx.cursor_pos.extend(ctx.transform.translation.z)
             } else {
-                ctx.player_transform.translation
+                ctx.transform.translation
             };
             nova::spawn_nova(
                 params,
-                ctx.player_entity,
+                ctx.owner_entity,
                 explosion_pos,
                 ctx.damage_multiplier,
                 ctx.combat_stats.crit_chance,
@@ -157,13 +147,13 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellCo
             );
         }
         SpellType::Blink => {
-            blink::perform_blink(ctx.player_transform, ctx.cursor_pos);
+            blink::perform_blink(ctx.transform, ctx.cursor_pos);
         }
         SpellType::Global => {
             global_spell::spawn_global_spell(
                 params,
-                ctx.player_entity,
-                ctx.player_transform.translation,
+                ctx.owner_entity,
+                ctx.transform.translation,
                 ctx.damage_multiplier,
                 ctx.combat_stats.crit_chance,
                 ctx.combat_stats.crit_damage,

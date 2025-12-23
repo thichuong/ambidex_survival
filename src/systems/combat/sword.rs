@@ -1,5 +1,5 @@
-use super::CombatInputParams;
-use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats};
+use super::{CombatContext, CombatInputParams};
+use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats, Progression};
 use crate::components::weapon::{
     Faction, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
 };
@@ -11,7 +11,16 @@ use rand::Rng;
 #[allow(clippy::needless_pass_by_value)]
 pub fn sword_weapon_system(
     mut params: CombatInputParams,
-    player: Single<(Entity, &PlayerStats, &CombatStats), With<Player>>,
+    mut player: Single<
+        (
+            Entity,
+            &mut Transform,
+            &PlayerStats,
+            &CombatStats,
+            &Progression,
+        ),
+        With<Player>,
+    >,
     mut hand_query: Query<(
         Entity,
         &GlobalTransform,
@@ -32,7 +41,11 @@ pub fn sword_weapon_system(
         return;
     };
 
-    let (player_entity, stats, combat_stats) = *player;
+    let player_entity = player.0;
+    let stats = player.2;
+    let combat_stats = player.3;
+    let progression = player.4;
+    let player_transform = &mut *player.1;
 
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
     let right_pressed = params.mouse_input.pressed(MouseButton::Right);
@@ -60,14 +73,17 @@ pub fn sword_weapon_system(
         if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
             fire_sword(
                 &mut params,
-                hand_pos,
-                cursor_pos,
-                player_entity,
-                sword_state.mode,
                 hand_entity,
-                stats.damage_multiplier,
-                combat_stats.crit_chance,
-                combat_stats.crit_damage,
+                CombatContext {
+                    owner_entity: player_entity,
+                    transform: &mut *player_transform,
+                    cursor_pos,
+                    spawn_pos: hand_pos,
+                    damage_multiplier: stats.damage_multiplier,
+                    combat_stats,
+                    progression,
+                },
+                sword_state.mode,
             );
             weapon_data.last_shot = now;
         }
@@ -85,16 +101,11 @@ pub fn sword_weapon_system(
 
 fn fire_sword(
     params: &mut CombatInputParams,
-    spawn_pos: Vec2,
-    target_pos: Vec2,
-    owner: Entity,
-    sword_mode: SwordMode,
     hand_entity: Entity,
-    damage_multiplier: f32,
-    crit_chance: f32,
-    crit_damage: f32,
+    ctx: CombatContext,
+    sword_mode: SwordMode,
 ) {
-    let direction = (target_pos - spawn_pos).normalize_or_zero();
+    let direction = (ctx.cursor_pos - ctx.spawn_pos).normalize_or_zero();
     let start_angle = direction.y.atan2(direction.x);
     let mut rng = rand::thread_rng();
     // 50% chance for clockwise vs counter-clockwise
@@ -105,21 +116,21 @@ fn fire_sword(
             params
                 .commands
                 .spawn((
-                    Transform::from_translation(spawn_pos.extend(0.0)),
+                    Transform::from_translation(ctx.spawn_pos.extend(0.0)),
                     Visibility::Visible,
                     SwordSwing {
                         state: SwingState::Swinging,
                         timer: Timer::from_seconds(sword::NORMAL_TIMER, TimerMode::Once),
                         base_angle: start_angle,
-                        owner_entity: owner,
-                        damage: sword::NORMAL_DAMAGE * damage_multiplier,
+                        owner_entity: ctx.owner_entity,
+                        damage: sword::NORMAL_DAMAGE * ctx.damage_multiplier,
                         range: sword::NORMAL_RANGE,
                         damage_dealt: false,
                         hand_entity,
                         swing_direction: swing_dir,
                         faction: Faction::Player,
-                        crit_chance,
-                        crit_damage,
+                        crit_chance: ctx.combat_stats.crit_chance,
+                        crit_damage: ctx.combat_stats.crit_damage,
                     },
                 ))
                 .with_children(|parent| {
@@ -130,21 +141,21 @@ fn fire_sword(
             params
                 .commands
                 .spawn((
-                    Transform::from_translation(spawn_pos.extend(0.0)),
+                    Transform::from_translation(ctx.spawn_pos.extend(0.0)),
                     Visibility::Visible,
                     SwordSwing {
                         state: SwingState::Swinging,
                         timer: Timer::from_seconds(sword::SHATTERED_TIMER, TimerMode::Once),
                         base_angle: start_angle,
-                        owner_entity: owner,
-                        damage: sword::SHATTERED_DAMAGE * damage_multiplier,
+                        owner_entity: ctx.owner_entity,
+                        damage: sword::SHATTERED_DAMAGE * ctx.damage_multiplier,
                         range: sword::SHATTERED_RANGE,
                         damage_dealt: false,
                         hand_entity,
                         swing_direction: swing_dir,
                         faction: Faction::Player,
-                        crit_chance,
-                        crit_damage,
+                        crit_chance: ctx.combat_stats.crit_chance,
+                        crit_damage: ctx.combat_stats.crit_damage,
                     },
                 ))
                 .with_children(|parent| {

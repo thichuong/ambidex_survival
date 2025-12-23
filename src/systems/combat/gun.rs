@@ -1,6 +1,6 @@
-use super::CombatInputParams;
+use super::{CombatContext, CombatInputParams};
 use crate::components::physics::{Collider, Velocity};
-use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats};
+use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats, Progression};
 use crate::components::weapon::{
     Faction, GunMode, GunState, Lifetime, Projectile, Weapon, WeaponType,
 };
@@ -12,7 +12,16 @@ use rand::Rng;
 #[allow(clippy::needless_pass_by_value)]
 pub fn gun_weapon_system(
     mut params: CombatInputParams,
-    player: Single<(Entity, &PlayerStats, &CombatStats), With<Player>>,
+    mut player: Single<
+        (
+            Entity,
+            &mut Transform,
+            &PlayerStats,
+            &CombatStats,
+            &Progression,
+        ),
+        With<Player>,
+    >,
     mut hand_query: Query<(Entity, &GlobalTransform, &Hand, &mut GunState, &mut Weapon)>,
 ) {
     let (camera, camera_transform) = *params.camera;
@@ -27,7 +36,11 @@ pub fn gun_weapon_system(
         return;
     };
 
-    let (player_entity, stats, combat_stats) = *player;
+    let player_entity = player.0;
+    let stats = player.2;
+    let combat_stats = player.3;
+    let progression = player.4;
+    let player_transform = &mut *player.1;
 
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
     let right_pressed = params.mouse_input.pressed(MouseButton::Right);
@@ -66,13 +79,16 @@ pub fn gun_weapon_system(
         if should_fire {
             fire_gun(
                 &mut params,
-                hand_pos,
-                cursor_pos,
-                player_entity,
                 gun_state.mode,
-                stats.damage_multiplier,
-                combat_stats.crit_chance,
-                combat_stats.crit_damage,
+                CombatContext {
+                    owner_entity: player_entity,
+                    transform: &mut *player_transform,
+                    cursor_pos,
+                    spawn_pos: hand_pos,
+                    damage_multiplier: stats.damage_multiplier,
+                    combat_stats,
+                    progression,
+                },
             );
             weapon_data.last_shot = now;
         }
@@ -89,17 +105,8 @@ pub fn gun_weapon_system(
     }
 }
 
-fn fire_gun(
-    params: &mut CombatInputParams,
-    spawn_pos: Vec2,
-    target_pos: Vec2,
-    owner: Entity,
-    gun_mode: GunMode,
-    damage_multiplier: f32,
-    crit_chance: f32,
-    crit_damage: f32,
-) {
-    let direction = (target_pos - spawn_pos).normalize_or_zero();
+fn fire_gun(params: &mut CombatInputParams, gun_mode: GunMode, ctx: CombatContext) {
+    let direction = (ctx.cursor_pos - ctx.spawn_pos).normalize_or_zero();
     let base_angle = direction.y.atan2(direction.x);
     let mut projectiles = Vec::new();
 
@@ -124,7 +131,7 @@ fn fire_gun(
         params
             .commands
             .spawn((
-                Transform::from_translation(spawn_pos.extend(0.0))
+                Transform::from_translation(ctx.spawn_pos.extend(0.0))
                     .with_rotation(Quat::from_rotation_z(angle)),
                 Visibility::Visible,
                 Collider::cuboid(gun::BULLET_SIZE.0, gun::BULLET_SIZE.1),
@@ -134,14 +141,14 @@ fn fire_gun(
                 },
                 Projectile {
                     kind: WeaponType::Gun,
-                    damage: damage * damage_multiplier,
+                    damage: damage * ctx.damage_multiplier,
                     speed,
                     direction: dir,
-                    owner_entity: owner,
+                    owner_entity: ctx.owner_entity,
                     is_aoe: false,
                     faction: Faction::Player,
-                    crit_chance,
-                    crit_damage,
+                    crit_chance: ctx.combat_stats.crit_chance,
+                    crit_damage: ctx.combat_stats.crit_damage,
                 },
                 Lifetime {
                     timer: Timer::from_seconds(gun::BULLET_LIFETIME, TimerMode::Once),

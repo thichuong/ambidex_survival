@@ -1,6 +1,6 @@
 use crate::components::enemy::Enemy;
 use crate::components::physics::UniformGrid;
-use crate::components::player::{GameCamera, Player};
+use crate::components::player::{CombatStats, GameCamera, Player, Progression};
 use crate::components::weapon::{Lifetime, Projectile};
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
@@ -57,6 +57,16 @@ pub struct CombatInputParams<'w, 's> {
         ),
         Without<Player>,
     >,
+}
+
+pub struct CombatContext<'a> {
+    pub owner_entity: Entity,
+    pub transform: &'a mut Transform,
+    pub cursor_pos: Vec2,
+    pub spawn_pos: Vec2,
+    pub damage_multiplier: f32,
+    pub combat_stats: &'a CombatStats,
+    pub progression: &'a Progression,
 }
 
 /// Update enemy grid for spatial partitioning - rebuilds grid each frame
