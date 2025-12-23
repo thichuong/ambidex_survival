@@ -49,6 +49,7 @@ ambidex_survival/
 │   │   │   ├── mod.rs          # CombatContext, CombatInputParams, shared types
 │   │   │   ├── events.rs
 │   │   │   ├── elite_ai.rs     # AI for Elite enemies (Teleport + Spread fire)
+│   │   │   ├── yellow_ai.rs    # AI for Mirror Mage (Yellow enemy)
 │   │   │   ├── gun.rs
 │   │   │   ├── player_collision.rs
 │   │   │   ├── shuriken.rs
@@ -155,6 +156,7 @@ Collision detection and damage processing pipeline:
 
 #### `systems/` (Combat Root Extensions)
 - `elite_ai.rs`: State-machine based AI for elite enemies featuring teleportation, predictive targeting, and damage scaling.
+- `yellow_ai.rs`: AI for tactical yellow enemies (Mirror Mages) featuring blink mobility and screen-wide global attacks.
 
 ### `src/systems/` (Root Level)
 - `player.rs`: Player spawning and movement using `Single<Window>`.

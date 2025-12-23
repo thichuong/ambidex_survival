@@ -112,6 +112,15 @@ Advanced variants that appear in later rounds with unique combat logic.
 - **Damage Scaling**: Elite shuriken damage scales with the player's own damage and critical hit stats, making them a constant threat.
 - **HP Scaling**: Gains **20 Max HP** per round for increased tankiness.
 - **Reward**: **100G** per kill.
+### 🧙‍♂️ Mirror Mage (Yellow Enemies)
+A tactical spellcaster that appears after Round 5.
+- **Tactical Blink**: Periodically teleports to random locations around the player to keep them off-balance.
+- **Global Strike**: Casts screen-wide global spells that damage the player if not careful.
+- **Scaling**: 
+    - **Damage**: +10% damage multiplier per round.
+    - **Critical Strike**: Starts with 0% chance and 2.0x damage, gaining +10% chance and +0.5x damage every round.
+- **Color**: Yellow.
+- **Reward**: High prestige and tactical challenge.
 
 ## 💰 Economy & Progression
 

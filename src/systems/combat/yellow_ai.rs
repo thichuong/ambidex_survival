@@ -7,20 +7,24 @@ use crate::systems::combat::{CombatContext, CombatInputParams};
 use bevy::prelude::*;
 use rand::Rng;
 
+type YellowEnemyQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        Entity,
+        &'static mut Transform,
+        &'static mut YellowAi,
+        &'static CombatStats,
+        &'static PlayerStats,
+    ),
+    (With<YellowEnemy>, Without<Player>),
+>;
+
 #[allow(clippy::needless_pass_by_value)]
 pub fn yellow_ai_system(
     mut params: CombatInputParams,
     player: Single<(&Transform, &PlayerStats, &Progression), With<Player>>,
-    mut yellow_query: Query<
-        (
-            Entity,
-            &mut Transform,
-            &mut YellowAi,
-            &CombatStats,
-            &PlayerStats,
-        ),
-        (With<YellowEnemy>, Without<Player>),
-    >,
+    mut yellow_query: YellowEnemyQuery,
 ) {
     let (player_transform, _player_stats, progression) = *player;
     let player_pos = player_transform.translation.truncate();
@@ -42,7 +46,7 @@ pub fn yellow_ai_system(
 
             let mut ctx = CombatContext {
                 owner_entity: enemy_entity,
-                transform: &mut *enemy_transform,
+                transform: &mut enemy_transform,
                 cursor_pos: target_pos,
                 spawn_pos: enemy_pos,
                 damage_multiplier: enemy_stats.damage_multiplier,
@@ -56,7 +60,7 @@ pub fn yellow_ai_system(
         if ai.global_timer.just_finished() {
             let ctx = CombatContext {
                 owner_entity: enemy_entity,
-                transform: &mut *enemy_transform,
+                transform: &mut enemy_transform,
                 cursor_pos: player_pos,
                 spawn_pos: enemy_pos,
                 damage_multiplier: enemy_stats.damage_multiplier,

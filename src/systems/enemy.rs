@@ -215,11 +215,11 @@ fn spawn_yellow_enemy(
     let speed = crate::configs::enemy::YELLOW_BASE_SPEED;
 
     // Damage mul: +0.1 * round
-    let damage_multiplier = 1.0 + (0.1 * current_round as f32);
+    let damage_multiplier = 0.1f32.mul_add(current_round as f32, 1.0);
     // Crit chance: 10% mỗi round = 0.1 * round
     let crit_chance = 0.1 * current_round as f32;
     // Crit damage: 2 + 0.5 * round
-    let crit_damage = 2.0 + (0.5 * current_round as f32);
+    let crit_damage = 0.5f32.mul_add(current_round as f32, 2.0);
 
     println!(
         "Spawning YELLOW Enemy (R{current_round}): HP={health}, Spd={speed}, DmgMul={damage_multiplier}, Crit={crit_chance}/{crit_damage}"
