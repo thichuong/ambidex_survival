@@ -92,6 +92,7 @@ pub fn magic_weapon_system(
                     cursor_pos,
                     spawn_pos: hand_pos,
                     damage_multiplier: stats.damage_multiplier,
+                    combat_stats,
                     progression,
                 },
             );
@@ -106,6 +107,7 @@ struct CastSpellContext<'a> {
     cursor_pos: Vec2,
     spawn_pos: Vec2,
     damage_multiplier: f32,
+    combat_stats: &'a CombatStats,
     progression: &'a Progression,
 }
 
@@ -123,6 +125,8 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellCo
                 direction,
                 angle,
                 ctx.damage_multiplier,
+                ctx.combat_stats.crit_chance,
+                ctx.combat_stats.crit_damage,
             );
         }
         SpellType::Laser => {
@@ -133,6 +137,8 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellCo
                 direction,
                 angle,
                 ctx.damage_multiplier,
+                ctx.combat_stats.crit_chance,
+                ctx.combat_stats.crit_damage,
             );
         }
         SpellType::Nova => {
@@ -146,6 +152,8 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellCo
                 ctx.player_entity,
                 explosion_pos,
                 ctx.damage_multiplier,
+                ctx.combat_stats.crit_chance,
+                ctx.combat_stats.crit_damage,
             );
         }
         SpellType::Blink => {
@@ -157,6 +165,8 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, ctx: CastSpellCo
                 ctx.player_entity,
                 ctx.player_transform.translation,
                 ctx.damage_multiplier,
+                ctx.combat_stats.crit_chance,
+                ctx.combat_stats.crit_damage,
             );
         }
     }

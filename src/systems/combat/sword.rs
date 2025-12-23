@@ -1,5 +1,5 @@
 use super::CombatInputParams;
-use crate::components::player::{Hand, HandType, Player, PlayerStats};
+use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats};
 use crate::components::weapon::{
     Faction, SwingState, SwordMode, SwordState, SwordSwing, Weapon, WeaponType,
 };
@@ -11,7 +11,7 @@ use rand::Rng;
 #[allow(clippy::needless_pass_by_value)]
 pub fn sword_weapon_system(
     mut params: CombatInputParams,
-    player: Single<(Entity, &PlayerStats), With<Player>>,
+    player: Single<(Entity, &PlayerStats, &CombatStats), With<Player>>,
     mut hand_query: Query<(
         Entity,
         &GlobalTransform,
@@ -32,7 +32,7 @@ pub fn sword_weapon_system(
         return;
     };
 
-    let (player_entity, stats) = *player;
+    let (player_entity, stats, combat_stats) = *player;
 
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
     let right_pressed = params.mouse_input.pressed(MouseButton::Right);
@@ -66,6 +66,8 @@ pub fn sword_weapon_system(
                 sword_state.mode,
                 hand_entity,
                 stats.damage_multiplier,
+                combat_stats.crit_chance,
+                combat_stats.crit_damage,
             );
             weapon_data.last_shot = now;
         }
@@ -89,6 +91,8 @@ fn fire_sword(
     sword_mode: SwordMode,
     hand_entity: Entity,
     damage_multiplier: f32,
+    crit_chance: f32,
+    crit_damage: f32,
 ) {
     let direction = (target_pos - spawn_pos).normalize_or_zero();
     let start_angle = direction.y.atan2(direction.x);
@@ -114,6 +118,8 @@ fn fire_sword(
                         hand_entity,
                         swing_direction: swing_dir,
                         faction: Faction::Player,
+                        crit_chance,
+                        crit_damage,
                     },
                 ))
                 .with_children(|parent| {
@@ -137,6 +143,8 @@ fn fire_sword(
                         hand_entity,
                         swing_direction: swing_dir,
                         faction: Faction::Player,
+                        crit_chance,
+                        crit_damage,
                     },
                 ))
                 .with_children(|parent| {

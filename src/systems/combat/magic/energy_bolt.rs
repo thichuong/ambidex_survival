@@ -12,6 +12,8 @@ pub fn spawn_energy_bolt(
     direction: Vec2,
     angle: f32,
     damage_multiplier: f32,
+    crit_chance: f32,
+    crit_damage: f32,
 ) {
     params
         .commands
@@ -32,6 +34,8 @@ pub fn spawn_energy_bolt(
                 owner_entity: player_entity,
                 is_aoe: false, // Initial hit is single-target, explosion is AOE
                 faction: Faction::Player,
+                crit_chance,
+                crit_damage,
             },
             Lifetime {
                 timer: Timer::from_seconds(energy_bolt::LIFETIME, TimerMode::Once),

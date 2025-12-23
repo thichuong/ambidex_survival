@@ -1,6 +1,6 @@
 use super::CombatInputParams;
 use crate::components::physics::{Collider, Velocity};
-use crate::components::player::{Hand, HandType, Player, PlayerStats};
+use crate::components::player::{CombatStats, Hand, HandType, Player, PlayerStats};
 use crate::components::weapon::{Faction, Lifetime, Projectile, Weapon, WeaponType};
 use crate::configs::weapons::shuriken;
 use crate::systems::weapon_visuals::spawn_shuriken_visuals;
@@ -9,7 +9,7 @@ use bevy::prelude::*;
 #[allow(clippy::too_many_lines)]
 pub fn shuriken_weapon_system(
     mut params: CombatInputParams,
-    mut player: Single<(Entity, &mut Transform, &PlayerStats), With<Player>>,
+    mut player: Single<(Entity, &mut Transform, &PlayerStats, &CombatStats), With<Player>>,
     mut hand_query: Query<(Entity, &GlobalTransform, &Hand, &mut Weapon)>,
 ) {
     let (camera, camera_transform) = *params.camera;
@@ -26,6 +26,7 @@ pub fn shuriken_weapon_system(
 
     let player_entity = player.0;
     let stats = player.2;
+    let combat_stats = player.3;
     let player_transform = &mut *player.1;
 
     let left_pressed = params.mouse_input.pressed(MouseButton::Left);
@@ -60,6 +61,8 @@ pub fn shuriken_weapon_system(
                 stats.damage_multiplier,
                 Faction::Player,
                 shuriken::MAX_COUNT,
+                combat_stats.crit_chance,
+                combat_stats.crit_damage,
             );
             weapon_data.last_shot = now;
         }
@@ -82,6 +85,8 @@ pub fn fire_shuriken(
     damage_multiplier: f32,
     faction: Faction,
     max_count: usize,
+    crit_chance: f32,
+    crit_damage: f32,
 ) {
     let direction = (target_pos - spawn_pos).normalize_or_zero();
 
@@ -119,6 +124,8 @@ pub fn fire_shuriken(
                 owner_entity: owner,
                 is_aoe: false,
                 faction,
+                crit_chance,
+                crit_damage,
             },
             Lifetime {
                 timer: Timer::from_seconds(shuriken::LIFETIME, TimerMode::Once),

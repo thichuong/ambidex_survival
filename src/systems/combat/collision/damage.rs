@@ -30,8 +30,23 @@ pub fn damage_processing_system(
         if event.target == player_entity {
             // Apply damage to player
             if player_health.invulnerability_timer.is_finished() {
-                player_health.current -= projectile.damage;
+                let mut final_damage = projectile.damage;
+                let mut is_crit = false;
+
+                let mut rng = rand::thread_rng();
+                if rng.gen_range(0.0..1.0) < projectile.crit_chance {
+                    final_damage *= projectile.crit_damage;
+                    is_crit = true;
+                }
+
+                player_health.current -= final_damage;
                 player_health.invulnerability_timer.reset();
+
+                commands.trigger(DamageEvent {
+                    entity: player_entity,
+                    damage: final_damage,
+                    crit: is_crit,
+                });
 
                 if player_health.current <= 0.0 {
                     player_health.current = 0.0;
@@ -50,8 +65,8 @@ pub fn damage_processing_system(
         let mut is_crit = false;
 
         let mut rng = rand::thread_rng();
-        if rng.gen_range(0.0..1.0) < player_stats.crit_chance {
-            final_damage *= player_stats.crit_damage;
+        if rng.gen_range(0.0..1.0) < projectile.crit_chance {
+            final_damage *= projectile.crit_damage;
             is_crit = true;
         }
         if player_stats.lifesteal > 0.0 {

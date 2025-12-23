@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::components::enemy::{EliteAi, EliteEnemy};
 use crate::components::physics::{Collider, Velocity};
-use crate::components::player::{Player, PlayerStats};
+use crate::components::player::{CombatStats, Player, PlayerStats};
 use crate::components::weapon::{Faction, Lifetime, Projectile, WeaponType};
 use crate::configs::weapons::shuriken;
 use crate::resources::cached_assets::CachedAssets;
@@ -16,14 +16,17 @@ pub fn elite_ai_system(
     mut commands: Commands,
     time: Res<Time>,
     mut elite_query: Query<(Entity, &mut Transform, &mut EliteAi), With<EliteEnemy>>,
-    player_query: Single<(&Transform, &PlayerStats), (With<Player>, Without<EliteEnemy>)>,
+    player_query: Single<
+        (&Transform, &PlayerStats, &CombatStats),
+        (With<Player>, Without<EliteEnemy>),
+    >,
     projectile_query: Query<
         (Entity, &GlobalTransform, &Projectile, &Lifetime),
         Without<EliteEnemy>,
     >,
     cached_assets: Res<CachedAssets>,
 ) {
-    let (player_transform, player_stats) = *player_query;
+    let (player_transform, player_stats, player_combat_stats) = *player_query;
     let player_pos = player_transform.translation.truncate();
 
     for (elite_entity, mut elite_transform, mut ai) in &mut elite_query {
@@ -40,6 +43,8 @@ pub fn elite_ai_system(
                 elite_pos,
                 player_pos,
                 player_stats.damage_multiplier,
+                player_combat_stats.crit_chance,
+                player_combat_stats.crit_damage,
                 &projectile_query,
                 &cached_assets,
             );
@@ -65,6 +70,8 @@ fn elite_fire_shuriken(
     elite_pos: Vec2,
     player_pos: Vec2,
     damage_multiplier: f32,
+    player_crit_chance: f32,
+    player_crit_damage: f32,
     projectile_query: &Query<
         (Entity, &GlobalTransform, &Projectile, &Lifetime),
         Without<EliteEnemy>,
@@ -110,6 +117,8 @@ fn elite_fire_shuriken(
                 owner_entity: elite_entity,
                 is_aoe: false,
                 faction: Faction::Enemy,
+                crit_chance: player_crit_chance * crate::configs::enemy::ELITE_CRIT_CHANCE,
+                crit_damage: player_crit_damage * crate::configs::enemy::ELITE_CRIT_DAMAGE,
             },
             Lifetime {
                 timer: Timer::from_seconds(shuriken::LIFETIME, TimerMode::Once),

@@ -26,6 +26,8 @@ pub const ELITE_TELEPORT_CHANCE: f32 = 0.5;
 pub const ELITE_SHURIKEN_SPREAD: f32 = 0.5;
 pub const ELITE_VISUAL_RADIUS: f32 = 25.0;
 pub const ELITE_COLLIDER_RADIUS: f32 = 25.0;
+pub const ELITE_CRIT_CHANCE: f32 = 1.0;
+pub const ELITE_CRIT_DAMAGE: f32 = 1.0;
 
 // Gold Rewards
 pub const GOLD_REWARD: u32 = 10;

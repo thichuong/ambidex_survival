@@ -9,6 +9,8 @@ pub fn spawn_nova(
     player_entity: Entity,
     player_center: Vec3,
     damage_multiplier: f32,
+    crit_chance: f32,
+    crit_damage: f32,
 ) {
     params
         .commands
@@ -24,6 +26,8 @@ pub fn spawn_nova(
                 owner_entity: player_entity,
                 is_aoe: true,
                 faction: Faction::Player,
+                crit_chance,
+                crit_damage,
             },
             Lifetime {
                 timer: Timer::from_seconds(nova::LIFETIME, TimerMode::Once),

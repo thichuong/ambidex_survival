@@ -12,6 +12,8 @@ pub fn spawn_laser(
     direction: Vec2,
     angle: f32,
     damage_multiplier: f32,
+    crit_chance: f32,
+    crit_damage: f32,
 ) {
     params
         .commands
@@ -28,6 +30,8 @@ pub fn spawn_laser(
                 owner_entity: player_entity,
                 is_aoe: true,
                 faction: Faction::Player,
+                crit_chance,
+                crit_damage,
             },
             Lifetime {
                 timer: Timer::from_seconds(laser::LIFETIME, TimerMode::Once),

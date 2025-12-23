@@ -100,6 +100,8 @@ pub struct Projectile {
     /// AOE projectiles have 50% reduced lifesteal
     pub is_aoe: bool,
     pub faction: Faction,
+    pub crit_chance: f32,
+    pub crit_damage: f32,
 }
 
 #[derive(Component)]
@@ -127,6 +129,8 @@ pub struct SwordSwing {
     pub hand_entity: Entity,
     pub swing_direction: f32, // 1.0 for CCW, -1.0 for CW
     pub faction: Faction,
+    pub crit_chance: f32,
+    pub crit_damage: f32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

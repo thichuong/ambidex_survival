@@ -79,8 +79,8 @@ pub fn update_sword_mechanics(
                                         let (ref mut health, stats) = *player;
                                         // Crit Check
                                         let mut rng = rand::thread_rng();
-                                        if rng.gen_range(0.0..1.0) < stats.crit_chance {
-                                            final_damage *= stats.crit_damage;
+                                        if rng.gen_range(0.0..1.0) < swing.crit_chance {
+                                            final_damage *= swing.crit_damage;
                                             is_crit = true;
                                         }
 

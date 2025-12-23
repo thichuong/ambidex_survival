@@ -60,6 +60,8 @@ pub fn projectile_effect_system(
                             owner_entity: projectile.owner_entity,
                             is_aoe: true, // Explosion is AOE
                             faction: projectile.faction,
+                            crit_chance: projectile.crit_chance,
+                            crit_damage: projectile.crit_damage,
                         },
                         AoEProjectile::default(),         // Reset hit list
                         Collider::ball(exploding.radius), // Set correct explosion size
