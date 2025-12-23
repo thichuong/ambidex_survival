@@ -2,7 +2,7 @@ use super::DamageEvent;
 use crate::components::enemy::Enemy;
 use crate::components::player::{CombatStats, Hand, HandType, Health, Player};
 use crate::components::weapon::{Faction, SwingState, SwordSwing};
-use crate::configs::weapons::sword::SWORD_SIDE_OFFSET;
+
 use bevy::prelude::*;
 use rand::Rng;
 
@@ -32,11 +32,8 @@ pub fn update_sword_mechanics(
                 HandType::Right => 1.0,
             };
 
-            let offset_angle =
-                std::f32::consts::FRAC_PI_2.mul_add(-side_multiplier, swing.base_angle);
-            let offset_vec = Vec2::new(offset_angle.cos(), offset_angle.sin()) * SWORD_SIDE_OFFSET;
-
-            transform.translation = (hand_pos + offset_vec).extend(0.0);
+            // Position sword directly at hand position, visuals will handle the "arc" offset
+            transform.translation = hand_pos.extend(0.0);
 
             // Set swing direction based on hand
             swing.swing_direction = side_multiplier;

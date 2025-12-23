@@ -14,22 +14,31 @@ pub fn spawn_sword_normal_visuals(
     let blade_width = 16.0;
 
     let grip_offset = 10.0;
+    let pivot_offset = 40.0; // Push sword forward to create a wide swing arc around the hand
 
     // --- Blade Logic ---
     // Blade Body (Steel)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_steel.clone()),
-        Transform::from_xyz(blade_length.mul_add(0.5, grip_offset), 0.0, 0.0)
-            .with_scale(Vec3::new(blade_length, blade_width, 1.0)),
+        Transform::from_xyz(
+            blade_length.mul_add(0.5, grip_offset) + pivot_offset,
+            0.0,
+            0.0,
+        )
+        .with_scale(Vec3::new(blade_length, blade_width, 1.0)),
     ));
 
     // Blade Ridge (Brighter center line)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_steel_bright.clone()),
-        Transform::from_xyz(blade_length.mul_add(0.5, grip_offset), 0.0, 0.1)
-            .with_scale(Vec3::new(blade_length * 0.95, blade_width * 0.4, 1.0)),
+        Transform::from_xyz(
+            blade_length.mul_add(0.5, grip_offset) + pivot_offset,
+            0.0,
+            0.1,
+        )
+        .with_scale(Vec3::new(blade_length * 0.95, blade_width * 0.4, 1.0)),
     ));
 
     // --- Hilt Logic (Standardized) ---
@@ -37,7 +46,7 @@ pub fn spawn_sword_normal_visuals(
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_gold_polished.clone()),
-        Transform::from_xyz(grip_offset, 0.0, 0.2).with_scale(Vec3::new(
+        Transform::from_xyz(grip_offset + pivot_offset, 0.0, 0.2).with_scale(Vec3::new(
             8.0,
             blade_width * 2.8,
             1.0,
@@ -48,7 +57,7 @@ pub fn spawn_sword_normal_visuals(
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_wood_dark.clone()),
-        Transform::from_xyz(-12.0 + grip_offset, 0.0, 0.1).with_scale(Vec3::new(
+        Transform::from_xyz(-12.0 + grip_offset + pivot_offset, 0.0, 0.1).with_scale(Vec3::new(
             24.0,
             blade_width * 0.6,
             1.0,
@@ -59,7 +68,7 @@ pub fn spawn_sword_normal_visuals(
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
         MeshMaterial2d(cached.mat_gold_polished.clone()),
-        Transform::from_xyz(-24.0 + grip_offset, 0.0, 0.25)
+        Transform::from_xyz(-24.0 + grip_offset + pivot_offset, 0.0, 0.25)
             .with_scale(Vec3::splat(blade_width * 0.7)),
     ));
 }
@@ -75,13 +84,14 @@ pub fn spawn_sword_shattered_visuals(
     let blade_width = 16.0;
 
     let grip_offset = 10.0;
+    let pivot_offset = 40.0;
 
     // --- Hilt Logic (Standardized) ---
     // Guard (Gold)
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_gold_polished.clone()),
-        Transform::from_xyz(grip_offset, 0.0, 0.2).with_scale(Vec3::new(
+        Transform::from_xyz(grip_offset + pivot_offset, 0.0, 0.2).with_scale(Vec3::new(
             8.0,
             blade_width * 2.8,
             1.0,
@@ -92,7 +102,7 @@ pub fn spawn_sword_shattered_visuals(
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_wood_dark.clone()),
-        Transform::from_xyz(-12.0 + grip_offset, 0.0, 0.1).with_scale(Vec3::new(
+        Transform::from_xyz(-12.0 + grip_offset + pivot_offset, 0.0, 0.1).with_scale(Vec3::new(
             24.0,
             blade_width * 0.6,
             1.0,
@@ -103,7 +113,7 @@ pub fn spawn_sword_shattered_visuals(
     parent.spawn((
         Mesh2d(cached.unit_circle.clone()),
         MeshMaterial2d(cached.mat_gold_polished.clone()),
-        Transform::from_xyz(-24.0 + grip_offset, 0.0, 0.25)
+        Transform::from_xyz(-24.0 + grip_offset + pivot_offset, 0.0, 0.25)
             .with_scale(Vec3::splat(blade_width * 0.7)),
     ));
 
@@ -112,11 +122,12 @@ pub fn spawn_sword_shattered_visuals(
     parent.spawn((
         Mesh2d(cached.unit_square.clone()),
         MeshMaterial2d(cached.mat_steel.clone()),
-        Transform::from_xyz(broken_blade_len * 0.5 + grip_offset, 0.0, 0.0).with_scale(Vec3::new(
-            broken_blade_len,
-            blade_width,
-            1.0,
-        )),
+        Transform::from_xyz(
+            broken_blade_len * 0.5 + grip_offset + pivot_offset,
+            0.0,
+            0.0,
+        )
+        .with_scale(Vec3::new(broken_blade_len, blade_width, 1.0)),
     ));
 
     // --- Fragment Logic ---
@@ -133,7 +144,7 @@ pub fn spawn_sword_shattered_visuals(
         parent.spawn((
             Mesh2d(cached.unit_square.clone()),
             MeshMaterial2d(cached.mat_steel_bright.clone()),
-            Transform::from_xyz(dist + grip_offset, y_off, 0.1)
+            Transform::from_xyz(dist + grip_offset + pivot_offset, y_off, 0.1)
                 .with_rotation(Quat::from_rotation_z(rot))
                 .with_scale(Vec3::new(size_x, size_y, 1.0)),
         ));
