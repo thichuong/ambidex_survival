@@ -2,9 +2,9 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
-use crate::components::physics::{Collider, Velocity};
-use crate::components::player::{Currency, GameCamera, Hand, HandType, Player, PlayerStats};
-use crate::components::weapon::{GunState, MagicLoadout, SwordState, Weapon, WeaponType};
+use crate::components::physics::Velocity;
+use crate::components::player::{GameCamera, Hand, HandType, Player, PlayerStats};
+use crate::components::weapon::{Weapon, WeaponType};
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -13,16 +13,8 @@ pub fn spawn_player(
 ) {
     commands
         .spawn((
-            (
-                Mesh2d(meshes.add(Circle::new(crate::configs::player::RADIUS))),
-                MeshMaterial2d(materials.add(crate::configs::player::COLOR)),
-                Transform::from_xyz(0.0, 0.0, 0.0),
-            ),
-            Collider::ball(crate::configs::player::RADIUS),
-            Velocity::zero(),
-            Currency {
-                gold: crate::configs::player::STARTING_GOLD,
-            },
+            Mesh2d(meshes.add(Circle::new(crate::configs::player::RADIUS))),
+            MeshMaterial2d(materials.add(crate::configs::player::COLOR)),
             Player,
         ))
         .with_children(|parent| {
@@ -30,7 +22,6 @@ pub fn spawn_player(
             parent.spawn((
                 Hand {
                     side: HandType::Left,
-
                     equipped_weapon: Some(WeaponType::Shuriken), // Default Left
                 },
                 Weapon {
@@ -39,33 +30,18 @@ pub fn spawn_player(
                     skill_cooldown: crate::configs::weapons::shuriken::SKILL_COOLDOWN,
                     ..default()
                 },
-                MagicLoadout::default(),
-                SwordState::default(),
-                GunState::default(),
-                Visibility::Visible,
-                InheritedVisibility::default(),
-                Transform::default(),
-                GlobalTransform::default(),
             ));
 
             // Right Hand
             parent.spawn((
                 Hand {
                     side: HandType::Right,
-
                     equipped_weapon: Some(WeaponType::Sword), // Default Right
                 },
                 Weapon {
                     kind: WeaponType::Sword,
                     ..default()
                 },
-                MagicLoadout::default(),
-                SwordState::default(),
-                GunState::default(),
-                Visibility::Visible,
-                InheritedVisibility::default(),
-                Transform::default(),
-                GlobalTransform::default(),
             ));
         });
 }

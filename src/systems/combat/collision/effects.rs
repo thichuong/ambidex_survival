@@ -19,59 +19,50 @@ type ProjectileEffectQuery<'w, 's> = Query<
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn projectile_effect_system(
+    trigger: On<CollisionEvent>,
     mut commands: Commands,
-    mut collision_events: MessageReader<CollisionEvent>,
     projectile_query: ProjectileEffectQuery,
     res: Res<crate::resources::cached_assets::CachedAssets>,
 ) {
-    let mut processed_projectiles = Vec::new(); // Still needs mut because we push to it!
+    let event = trigger.event();
 
-    for event in collision_events.read() {
-        // Skip already processed projectiles this frame
-        if processed_projectiles.contains(&event.projectile) {
-            continue;
-        }
+    if let Ok((projectile, exploding, _aoe, transform, _pending)) =
+        projectile_query.get(event.projectile)
+    {
+        // Handle Explosions
+        if let Some(exploding) = exploding {
+            let mut rng = rand::thread_rng();
+            let random_rotation = Quat::from_rotation_z(rng.gen_range(0.0..std::f32::consts::TAU));
+            let spawn_transform =
+                Transform::from_translation(transform.translation).with_rotation(random_rotation);
+            let lifetime = Lifetime {
+                timer: Timer::from_seconds(0.1, TimerMode::Once),
+            };
 
-        if let Ok((projectile, exploding, _aoe, transform, _pending)) =
-            projectile_query.get(event.projectile)
-        {
-            // Handle Explosions
-            if let Some(exploding) = exploding {
-                let mut rng = rand::thread_rng();
-                let random_rotation =
-                    Quat::from_rotation_z(rng.gen_range(0.0..std::f32::consts::TAU));
-                let spawn_transform = Transform::from_translation(transform.translation)
-                    .with_rotation(random_rotation);
-                let lifetime = Lifetime {
-                    timer: Timer::from_seconds(0.1, TimerMode::Once),
-                };
-
-                commands
-                    .spawn((
-                        Visibility::Visible,
-                        spawn_transform,
-                        lifetime,
-                        Velocity::default(),
-                        Projectile {
-                            kind: projectile.kind,
-                            damage: exploding.damage,
-                            speed: 0.0,
-                            direction: Vec2::ZERO,
-                            owner_entity: projectile.owner_entity,
-                            is_aoe: true, // Explosion is AOE
-                            faction: projectile.faction,
-                            crit_chance: projectile.crit_chance,
-                            crit_damage: projectile.crit_damage,
-                        },
-                        AoEProjectile::default(),         // Reset hit list
-                        Collider::ball(exploding.radius), // Set correct explosion size
-                        IgnoreGrid,                       // Reliable AOE coverage
-                    ))
-                    .with_children(|parent| {
-                        spawn_bolt_explosion_visuals(parent, &res, exploding.radius);
-                    });
-            }
-            processed_projectiles.push(event.projectile);
+            commands
+                .spawn((
+                    Visibility::Visible,
+                    spawn_transform,
+                    lifetime,
+                    Velocity::default(),
+                    Projectile {
+                        kind: projectile.kind,
+                        damage: exploding.damage,
+                        speed: 0.0,
+                        direction: Vec2::ZERO,
+                        owner_entity: projectile.owner_entity,
+                        is_aoe: true, // Explosion is AOE
+                        faction: projectile.faction,
+                        crit_chance: projectile.crit_chance,
+                        crit_damage: projectile.crit_damage,
+                    },
+                    AoEProjectile::default(),         // Reset hit list
+                    Collider::ball(exploding.radius), // Set correct explosion size
+                    IgnoreGrid,                       // Reliable AOE coverage
+                ))
+                .with_children(|parent| {
+                    spawn_bolt_explosion_visuals(parent, &res, exploding.radius);
+                });
         }
     }
 }

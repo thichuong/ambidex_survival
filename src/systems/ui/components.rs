@@ -20,7 +20,7 @@ pub enum ShopButton {
     NovaCore,            // Upgrade
 }
 
-#[derive(Event, Message, Debug)]
+#[derive(Event, Debug)]
 pub struct PurchaseEvent {
     pub btn_type: ShopButton,
     pub entity: Entity,
@@ -155,7 +155,7 @@ pub struct ShopBuyButtonText;
 pub struct ShopBuyButtonPrice;
 
 /// Event fired when a shop card is clicked (selection, not purchase)
-#[derive(Event, Message, Debug)]
+#[derive(Event, Debug)]
 pub struct SelectCardEvent {
     pub btn_type: ShopButton,
 }

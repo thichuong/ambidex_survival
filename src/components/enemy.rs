@@ -1,6 +1,8 @@
+use super::physics::{Collider, Velocity};
 use bevy::prelude::*;
 
 #[derive(Component)]
+#[require(Transform, Visibility, Velocity, Collider)]
 pub struct Enemy {
     pub health: f32,
     pub speed: f32,

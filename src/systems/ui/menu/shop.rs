@@ -34,11 +34,9 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
             btn_type,
         ))
         .observe(
-            |trigger: On<Pointer<Click>>,
-             btn_query: Query<&ShopButton>,
-             mut events: MessageWriter<SelectCardEvent>| {
+            |trigger: On<Pointer<Click>>, btn_query: Query<&ShopButton>, mut commands: Commands| {
                 if let Ok(btn_type) = btn_query.get(trigger.entity) {
-                    events.write(SelectCardEvent {
+                    commands.trigger(SelectCardEvent {
                         btn_type: *btn_type,
                     });
                 }

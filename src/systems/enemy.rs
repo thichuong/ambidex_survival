@@ -116,13 +116,10 @@ fn spawn_random_enemy(
     println!("Spawning Enemy (R{current_round}): HP={health}, Spd={speed}, Dmg={damage}");
 
     commands.spawn((
-        (
-            Mesh2d(meshes.add(Circle::new(crate::configs::enemy::VISUAL_RADIUS))),
-            MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::RED))),
-            Transform::from_translation(spawn_pos.extend(crate::configs::enemy::VISUAL_Z_INDEX)),
-        ),
+        Mesh2d(meshes.add(Circle::new(crate::configs::enemy::VISUAL_RADIUS))),
+        MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::RED))),
+        Transform::from_translation(spawn_pos.extend(crate::configs::enemy::VISUAL_Z_INDEX)),
         Collider::ball(crate::configs::enemy::COLLIDER_RADIUS),
-        Velocity::default(),
         Enemy {
             health,
             speed,
@@ -163,13 +160,10 @@ fn spawn_elite_enemy(
     println!("Spawning ELITE Enemy (R{current_round}): HP={health}, Spd={speed}");
 
     commands.spawn((
-        (
-            Mesh2d(meshes.add(Circle::new(crate::configs::enemy::ELITE_VISUAL_RADIUS))),
-            MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::PURPLE))),
-            Transform::from_translation(spawn_pos.extend(crate::configs::enemy::VISUAL_Z_INDEX)),
-        ),
+        Mesh2d(meshes.add(Circle::new(crate::configs::enemy::ELITE_VISUAL_RADIUS))),
+        MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::PURPLE))),
+        Transform::from_translation(spawn_pos.extend(crate::configs::enemy::VISUAL_Z_INDEX)),
         Collider::ball(crate::configs::enemy::ELITE_COLLIDER_RADIUS),
-        Velocity::default(),
         Enemy {
             health,
             speed,
@@ -226,13 +220,10 @@ fn spawn_yellow_enemy(
     );
 
     commands.spawn((
-        (
-            Mesh2d(meshes.add(Circle::new(crate::configs::enemy::YELLOW_VISUAL_RADIUS))),
-            MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::YELLOW))),
-            Transform::from_translation(spawn_pos.extend(crate::configs::enemy::VISUAL_Z_INDEX)),
-        ),
+        Mesh2d(meshes.add(Circle::new(crate::configs::enemy::YELLOW_VISUAL_RADIUS))),
+        MeshMaterial2d(materials.add(Color::from(bevy::color::palettes::css::YELLOW))),
+        Transform::from_translation(spawn_pos.extend(crate::configs::enemy::VISUAL_Z_INDEX)),
         Collider::ball(crate::configs::enemy::YELLOW_COLLIDER_RADIUS),
-        Velocity::default(),
         Enemy {
             health,
             speed,

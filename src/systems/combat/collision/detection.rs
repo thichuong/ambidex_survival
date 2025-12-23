@@ -54,7 +54,6 @@ pub fn collision_detection_system(
     enemy_query: Query<(Entity, &Transform, &Collider), (With<Enemy>, Without<Player>)>,
     player_query: Single<(Entity, &Transform, &Collider), With<Player>>,
     grid: Res<UniformGrid>,
-    mut collision_events: MessageWriter<CollisionEvent>,
 ) {
     let (player_entity, player_transform, player_collider) = *player_query;
     let player_pos = player_transform.translation.truncate();
@@ -100,11 +99,10 @@ pub fn collision_detection_system(
                             aoe.damaged_entities.push(entity);
                         }
 
-                        collision_events.write(CollisionEvent {
+                        commands.trigger(CollisionEvent {
                             projectile: proj_entity,
                             target: entity,
                             position: enemy_pos,
-                            direction: projectile.direction,
                         });
 
                         hit_anything = true;
@@ -134,11 +132,10 @@ pub fn collision_detection_system(
                 aoe.damaged_entities.push(player_entity);
             }
 
-            collision_events.write(CollisionEvent {
+            commands.trigger(CollisionEvent {
                 projectile: proj_entity,
                 target: player_entity,
                 position: player_pos,
-                direction: projectile.direction,
             });
 
             if aoe_opt.is_none() {

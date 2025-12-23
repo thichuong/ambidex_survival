@@ -13,81 +13,81 @@ use rand::Rng;
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::unnecessary_wraps)]
 pub fn damage_processing_system(
+    trigger: On<CollisionEvent>,
     mut commands: Commands,
-    mut collision_events: MessageReader<CollisionEvent>,
     projectile_query: Query<&Projectile>,
     mut enemy_query: Query<&mut Enemy>,
     player: Single<(Entity, &mut Health, &CombatStats), With<Player>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
+    let event = trigger.event();
     let (player_entity, mut player_health, player_stats) = player.into_inner();
-    for event in collision_events.read() {
-        // Retrieve projectile data
-        let Ok(projectile) = projectile_query.get(event.projectile) else {
-            continue; // Projectile might have been despawned
-        };
 
-        if event.target == player_entity {
-            // Apply damage to player
-            if player_health.invulnerability_timer.is_finished() {
-                let mut final_damage = projectile.damage;
-                let mut is_crit = false;
+    // Retrieve projectile data
+    let Ok(projectile) = projectile_query.get(event.projectile) else {
+        return; // Projectile might have been despawned
+    };
 
-                let mut rng = rand::thread_rng();
-                if rng.gen_range(0.0..1.0) < projectile.crit_chance {
-                    final_damage *= projectile.crit_damage;
-                    is_crit = true;
-                }
+    if event.target == player_entity {
+        // Apply damage to player
+        if player_health.invulnerability_timer.is_finished() {
+            let mut final_damage = projectile.damage;
+            let mut is_crit = false;
 
-                player_health.current -= final_damage;
-                player_health.invulnerability_timer.reset();
-
-                commands.trigger(DamageEvent {
-                    entity: player_entity,
-                    damage: final_damage,
-                    crit: is_crit,
-                });
-
-                if player_health.current <= 0.0 {
-                    player_health.current = 0.0;
-                    next_state.set(GameState::GameOver);
-                }
+            let mut rng = rand::thread_rng();
+            if rng.gen_range(0.0..1.0) < projectile.crit_chance {
+                final_damage *= projectile.crit_damage;
+                is_crit = true;
             }
-            continue;
-        }
 
-        // Retrieve enemy data
-        let Ok(mut enemy) = enemy_query.get_mut(event.target) else {
-            continue; // Enemy might have been despawned
-        };
+            player_health.current -= final_damage;
+            player_health.invulnerability_timer.reset();
 
-        let mut final_damage = projectile.damage;
-        let mut is_crit = false;
-
-        let mut rng = rand::thread_rng();
-        if rng.gen_range(0.0..1.0) < projectile.crit_chance {
-            final_damage *= projectile.crit_damage;
-            is_crit = true;
-        }
-        if player_stats.lifesteal > 0.0 {
-            // AOE projectiles have 50% reduced lifesteal
-            let lifesteal_multiplier = if projectile.is_aoe { 0.5 } else { 1.0 };
-            let heal_amount = final_damage * player_stats.lifesteal * lifesteal_multiplier;
-            player_health.current = (player_health.current + heal_amount).min(player_health.max);
-        }
-
-        enemy.health -= final_damage;
-        commands.trigger(DamageEvent {
-            entity: event.target,
-            damage: final_damage,
-            crit: is_crit,
-        });
-
-        if enemy.health <= 0.0 {
-            commands.trigger(crate::systems::combat::EnemyDeathEvent {
-                entity: event.target,
-                position: event.position,
+            commands.trigger(DamageEvent {
+                entity: player_entity,
+                damage: final_damage,
+                crit: is_crit,
             });
+
+            if player_health.current <= 0.0 {
+                player_health.current = 0.0;
+                next_state.set(GameState::GameOver);
+            }
         }
+        return;
+    }
+
+    // Retrieve enemy data
+    let Ok(mut enemy) = enemy_query.get_mut(event.target) else {
+        return; // Enemy might have been despawned
+    };
+
+    let mut final_damage = projectile.damage;
+    let mut is_crit = false;
+
+    let mut rng = rand::thread_rng();
+    if rng.gen_range(0.0..1.0) < projectile.crit_chance {
+        final_damage *= projectile.crit_damage;
+        is_crit = true;
+    }
+    if player_stats.lifesteal > 0.0 {
+        // AOE projectiles have 50% reduced lifesteal
+        let lifesteal_multiplier = if projectile.is_aoe { 0.5 } else { 1.0 };
+        let heal_amount = final_damage * player_stats.lifesteal * lifesteal_multiplier;
+        player_health.current = (player_health.current + heal_amount).min(player_health.max);
+    }
+
+    enemy.health -= final_damage;
+    commands.trigger(DamageEvent {
+        entity: event.target,
+        damage: final_damage,
+        crit: is_crit,
+    });
+
+    if enemy.health <= 0.0 {
+        commands.trigger(crate::systems::combat::EnemyDeathEvent {
+            entity: event.target,
+            position: event.position,
+        });
     }
 }

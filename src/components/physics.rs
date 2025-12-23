@@ -96,13 +96,10 @@ pub struct Velocity {
 }
 
 impl Velocity {
-    #[must_use]
-    pub const fn zero() -> Self {
-        Self {
-            linvel: Vec2::ZERO,
-            angvel: 0.0,
-        }
-    }
+    pub const ZERO: Self = Self {
+        linvel: Vec2::ZERO,
+        angvel: 0.0,
+    };
 }
 
 /// Custom collider for simple collision detection
