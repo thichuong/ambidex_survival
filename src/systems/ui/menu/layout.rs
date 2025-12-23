@@ -1,6 +1,6 @@
 use super::super::components::{
     MenuCDRText, MenuCritText, MenuDamageText, MenuGoldText, MenuHealthText, MenuLifestealText,
-    ShopButton, ShopBuyButton, ShopBuyButtonText, TutorialButton, WeaponMenuUI,
+    ShopButton, ShopBuyButton, ShopBuyButtonPrice, ShopBuyButtonText, TutorialButton, WeaponMenuUI,
 };
 use super::arsenal::{spawn_magic_panel, spawn_weapon_button, spawn_weapon_detail_panel};
 use super::shop::spawn_shop_button;
@@ -176,10 +176,12 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                             Button,
                             Node {
                                 width: Val::Px(280.0),
-                                height: Val::Px(60.0),
+                                height: Val::Px(80.0),
                                 margin: UiRect::vertical(Val::Px(15.0)),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
+                                flex_direction: FlexDirection::Column,
+                                row_gap: Val::Px(4.0),
                                 border: UiRect::all(Val::Px(3.0)),
                                 display: Display::None, // Hidden by default
                                 ..default()
@@ -200,11 +202,19 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                             }
                         })
                         .with_children(|buy_btn| {
+                            // Title line
                             buy_btn.spawn((
-                                Text::new("Chọn một upgrade"),
+                                Text::new("Select an upgrade"),
                                 TextFont { font_size: 22.0, ..default() },
-                                TextColor(Color::srgb(1.0, 0.9, 0.4)),
+                                TextColor(Color::srgb(1.0, 0.95, 0.7)),
                                 ShopBuyButtonText,
+                            ));
+                            // Price line
+                            buy_btn.spawn((
+                                Text::new(""),
+                                TextFont { font_size: 18.0, ..default() },
+                                TextColor(Color::srgb(1.0, 0.85, 0.0)), // Gold color
+                                ShopBuyButtonPrice,
                             ));
                         });
 

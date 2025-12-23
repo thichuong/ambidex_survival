@@ -150,6 +150,10 @@ pub struct ShopBuyButton;
 #[derive(Component)]
 pub struct ShopBuyButtonText;
 
+/// Marker for buy button price text
+#[derive(Component)]
+pub struct ShopBuyButtonPrice;
+
 /// Event fired when a shop card is clicked (selection, not purchase)
 #[derive(Event, Message, Debug)]
 pub struct SelectCardEvent {

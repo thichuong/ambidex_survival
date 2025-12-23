@@ -1,5 +1,6 @@
 use super::components::{
-    PurchaseEvent, SelectCardEvent, SelectedShopCard, ShopButton, ShopBuyButton, ShopBuyButtonText,
+    PurchaseEvent, SelectCardEvent, SelectedShopCard, ShopButton, ShopBuyButton,
+    ShopBuyButtonPrice, ShopBuyButtonText,
 };
 use crate::components::player::{CombatStats, Currency, Health, Player, PlayerStats, Progression};
 use crate::configs::shop::get_card_config;
@@ -12,25 +13,29 @@ use bevy::prelude::*;
 pub fn handle_card_selection(
     mut events: MessageReader<SelectCardEvent>,
     mut selected: ResMut<SelectedShopCard>,
-    mut buy_btn_query: Query<(&mut Node, &Children), With<ShopBuyButton>>,
+    mut buy_btn_query: Query<&mut Node, With<ShopBuyButton>>,
     mut buy_text_query: Query<&mut Text, With<ShopBuyButtonText>>,
+    mut buy_price_query: Query<&mut Text, (With<ShopBuyButtonPrice>, Without<ShopBuyButtonText>)>,
     mut card_query: Query<(&ShopButton, &mut BorderColor)>,
 ) {
     for event in events.read() {
         // Update selected card
         selected.0 = Some(event.btn_type);
 
-        // Update buy button visibility and text
-        for (mut node, children) in &mut buy_btn_query {
+        // Update buy button visibility
+        for mut node in &mut buy_btn_query {
             node.display = Display::Flex;
+        }
 
-            // Update button text
-            for child in children {
-                if let Ok(mut text) = buy_text_query.get_mut(*child) {
-                    let (title, _desc, price) = get_shop_button_content(event.btn_type);
-                    text.0 = format!("BUY {} - {}", title, price);
-                }
-            }
+        // Update title text
+        let (title, _desc, price) = get_shop_button_content(event.btn_type);
+        for mut text in &mut buy_text_query {
+            text.0 = format!("BUY {}", title);
+        }
+
+        // Update price text
+        for mut text in &mut buy_price_query {
+            text.0 = price.clone();
         }
 
         // Highlight selected card, reset others
