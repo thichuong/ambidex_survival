@@ -18,7 +18,7 @@ pub const VISUAL_Z_INDEX: f32 = 0.1;
 
 // Elite Enemy Stats
 pub const ELITE_BASE_HEALTH: f32 = 200.0;
-pub const ELITE_HEALTH_SCALING_PER_ROUND: f32 = 20.0;
+pub const ELITE_HEALTH_SCALING_PER_ROUND: f32 = 50.0;
 pub const ELITE_BASE_SPEED: f32 = 180.0;
 pub const ELITE_SHURIKEN_COOLDOWN: f32 = 1.0;
 pub const ELITE_TELEPORT_COOLDOWN: f32 = 2.0;
