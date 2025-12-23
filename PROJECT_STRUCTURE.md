@@ -123,7 +123,7 @@ Modularized UI systems:
 - `components.rs`: UI component definitions (markers, bundles).
 - `setup.rs`: Spawning the UI hierarchy.
 - `hud.rs`: Real-time updates for health, gold, and cooldowns.
-- `interaction.rs`: Click handling and shop purchases via `PurchaseEvent`.
+- `interaction.rs`: Reactive click handling and shop purchases via `Observer`.
 - `menu.rs`: Weapon selection menu and shop UI logic.
 - `game_over.rs`: Game Over screen and restart logic.
 - `tutorial.rs`: Interaction guide and skill descriptions.
@@ -134,7 +134,7 @@ Modularized combat systems following Bevy 0.17 ECS best practices:
 - `sword.rs` & `sword_mechanics.rs`: Advanced sword logic, swing states, and frame-accurate hit detection.
 - `gun.rs`: Multi-mode firearm systems (Single, Shotgun, Rapid) with automatic fire logic.
 - `shuriken.rs`: Velocity-based shuriken projectiles and teleportation skill.
-- `events.rs`: Unified combat events using `Message` derive for `MessageReader` compatibility.
+- `events.rs`: Unified combat events using Bevy's native `Event` system and reactive `Observer` patterns.
 - `player_collision.rs`: Player-enemy overlap handling and reactive damage reception.
 - **Architectural Note**: Usage of `CombatContext` struct simplifies function signatures across all weapon types.
 

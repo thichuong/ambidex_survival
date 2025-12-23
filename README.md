@@ -22,8 +22,9 @@ The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17, organized int
 - **Modular Weapon Systems**: Every weapon (Sword, Gun, Shuriken, Magic) is an independent system using optimized ECS filters and trait-like component patterns.
 - **Bevy 0.17 Ergonomics**: Leverages `Single<T>` for singleton access, `Mut<T>` for efficient change detection, and `()` system return types for standard compliance.
 - **Unified Combat Context**: All weapon and spell logic shares a `CombatContext` struct, streamlining parameter passing and simplifying function signatures.
-- **Event-Driven Communication**: Unified event handling using Bevy's native `Event` system enhanced with `Message` derive, providing typesafe `MessageReader` and `MessageWriter` for inter-plugin communication.
-- **Reactive Observers**: High-performance reactive logic triggered by `On<E>` observers (e.g., spawn damage text on hit, trigger effects on death), reducing per-frame overhead.
+- **Event-Driven Communication**: Relies on Bevy's native `Event` system for clean, decoupled communication between plugins.
+- **Reactive Observers**: High-performance reactive logic triggered by `On<E>` observers for combat (collisions, damage), UI interactions (purchases, card selection), and visual effects, significantly reducing per-frame overhead.
+- **RequiredComponents**: Leverages `#[require(...)]` to ensure entities are spawned with their full set of dependencies, reducing boilerplate in spawning systems.
 - **Collision Pipeline**: Dedicated `collision/` sub-module handles detection, damage processing, and visual effects in separate, focused systems.
 - **GameState Management**: Proper system scheduling and UI transitions via Bevy `States` (Playing, Paused, GameOver, WeaponMenu, Tutorial).
 - **Faction System**: Integrated targeting logic ensures attacks hit intended factions while preventing friendly fire among enemies.
