@@ -80,8 +80,8 @@ pub fn sword_weapon_system(
                     cursor_pos,
                     spawn_pos: hand_pos,
                     damage_multiplier: stats.damage_multiplier,
-                    combat_stats: &combat_stats,
-                    progression: &progression,
+                    combat_stats,
+                    progression,
                 },
                 sword_state.mode,
             );
