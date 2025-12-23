@@ -96,6 +96,7 @@ pub struct Velocity {
 }
 
 impl Velocity {
+    #[allow(dead_code)]
     pub const ZERO: Self = Self {
         linvel: Vec2::ZERO,
         angvel: 0.0,

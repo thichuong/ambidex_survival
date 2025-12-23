@@ -26,44 +26,41 @@ pub fn projectile_effect_system(
 ) {
     let event = trigger.event();
 
-    if let Ok((projectile, exploding, _aoe, transform, _pending)) =
+    if let Ok((projectile, Some(exploding), _aoe, transform, _pending)) =
         projectile_query.get(event.projectile)
     {
-        // Handle Explosions
-        if let Some(exploding) = exploding {
-            let mut rng = rand::thread_rng();
-            let random_rotation = Quat::from_rotation_z(rng.gen_range(0.0..std::f32::consts::TAU));
-            let spawn_transform =
-                Transform::from_translation(transform.translation).with_rotation(random_rotation);
-            let lifetime = Lifetime {
-                timer: Timer::from_seconds(0.1, TimerMode::Once),
-            };
+        let mut rng = rand::thread_rng();
+        let random_rotation = Quat::from_rotation_z(rng.gen_range(0.0..std::f32::consts::TAU));
+        let spawn_transform =
+            Transform::from_translation(transform.translation).with_rotation(random_rotation);
+        let lifetime = Lifetime {
+            timer: Timer::from_seconds(0.1, TimerMode::Once),
+        };
 
-            commands
-                .spawn((
-                    Visibility::Visible,
-                    spawn_transform,
-                    lifetime,
-                    Velocity::default(),
-                    Projectile {
-                        kind: projectile.kind,
-                        damage: exploding.damage,
-                        speed: 0.0,
-                        direction: Vec2::ZERO,
-                        owner_entity: projectile.owner_entity,
-                        is_aoe: true, // Explosion is AOE
-                        faction: projectile.faction,
-                        crit_chance: projectile.crit_chance,
-                        crit_damage: projectile.crit_damage,
-                    },
-                    AoEProjectile::default(),         // Reset hit list
-                    Collider::ball(exploding.radius), // Set correct explosion size
-                    IgnoreGrid,                       // Reliable AOE coverage
-                ))
-                .with_children(|parent| {
-                    spawn_bolt_explosion_visuals(parent, &res, exploding.radius);
-                });
-        }
+        commands
+            .spawn((
+                Visibility::Visible,
+                spawn_transform,
+                lifetime,
+                Velocity::default(),
+                Projectile {
+                    kind: projectile.kind,
+                    damage: exploding.damage,
+                    speed: 0.0,
+                    direction: Vec2::ZERO,
+                    owner_entity: projectile.owner_entity,
+                    is_aoe: true, // Explosion is AOE
+                    faction: projectile.faction,
+                    crit_chance: projectile.crit_chance,
+                    crit_damage: projectile.crit_damage,
+                },
+                AoEProjectile::default(),         // Reset hit list
+                Collider::ball(exploding.radius), // Set correct explosion size
+                IgnoreGrid,                       // Reliable AOE coverage
+            ))
+            .with_children(|parent| {
+                spawn_bolt_explosion_visuals(parent, &res, exploding.radius);
+            });
     }
 }
 
