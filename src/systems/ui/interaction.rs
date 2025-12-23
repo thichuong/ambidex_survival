@@ -13,12 +13,32 @@ use bevy::prelude::*;
 pub fn handle_card_selection(
     mut events: MessageReader<SelectCardEvent>,
     mut selected: ResMut<SelectedShopCard>,
+    progression: Single<&Progression, With<Player>>,
     mut buy_btn_query: Query<&mut Node, With<ShopBuyButton>>,
     mut buy_text_query: Query<&mut Text, With<ShopBuyButtonText>>,
     mut buy_price_query: Query<&mut Text, (With<ShopBuyButtonPrice>, Without<ShopBuyButtonText>)>,
     mut card_query: Query<(&ShopButton, &mut BorderColor)>,
 ) {
     for event in events.read() {
+        // Check if card is already maxed
+        let config = get_card_config(event.btn_type);
+        let count = match event.btn_type {
+            ShopButton::Heal => progression.heal_count,
+            ShopButton::DamageUp => progression.damage_upgrades,
+            ShopButton::MaxHealthUp => progression.max_health_upgrades,
+            ShopButton::CritDamageUp => progression.crit_damage_upgrades,
+            ShopButton::CritChanceUp => progression.crit_chance_upgrades,
+            ShopButton::LifestealUp => progression.lifesteal_upgrades,
+            ShopButton::CooldownReductionUp => progression.cdr_upgrades,
+            ShopButton::NovaCore => progression.nova_core,
+        };
+        let is_maxed = config.limit.map_or(false, |limit| count >= limit);
+
+        // If maxed, don't show buy button
+        if is_maxed {
+            continue;
+        }
+
         // Update selected card
         selected.0 = Some(event.btn_type);
 
@@ -30,7 +50,7 @@ pub fn handle_card_selection(
         // Update title text
         let (title, _desc, price) = get_shop_button_content(event.btn_type);
         for mut text in &mut buy_text_query {
-            text.0 = format!("BUY {}", title);
+            text.0 = format!("BUY {title}");
         }
 
         // Update price text
@@ -53,7 +73,7 @@ pub fn handle_card_selection(
     }
 }
 
-/// Observer for buy button click - sends PurchaseEvent
+/// Observer for buy button click - sends `PurchaseEvent`
 pub fn setup_buy_button_observer(
     mut commands: Commands,
     buy_btn_query: Query<Entity, Added<ShopBuyButton>>,
@@ -185,17 +205,34 @@ pub fn handle_purchases(
             }
         }
 
-        // Reset selection and hide buy button after successful purchase
+        // Check if card is now maxed after purchase - only then hide buy button
         if success {
-            selected.0 = None;
-            for mut node in &mut buy_btn_query {
-                node.display = Display::None;
-            }
-            // Reset all card borders
-            for (btn_type, mut border) in &mut card_border_query {
-                let (original, _, _, _) =
-                    crate::systems::ui::menu::shop::get_shop_button_colors(*btn_type);
-                *border = BorderColor::all(original);
+            // Get updated count after purchase
+            let new_count = match event.btn_type {
+                ShopButton::Heal => progression.heal_count,
+                ShopButton::DamageUp => progression.damage_upgrades,
+                ShopButton::MaxHealthUp => progression.max_health_upgrades,
+                ShopButton::CritDamageUp => progression.crit_damage_upgrades,
+                ShopButton::CritChanceUp => progression.crit_chance_upgrades,
+                ShopButton::LifestealUp => progression.lifesteal_upgrades,
+                ShopButton::CooldownReductionUp => progression.cdr_upgrades,
+                ShopButton::NovaCore => progression.nova_core,
+            };
+
+            let now_maxed = config.limit.map_or(false, |limit| new_count >= limit);
+
+            // Only hide buy button if card is now maxed
+            if now_maxed {
+                selected.0 = None;
+                for mut node in &mut buy_btn_query {
+                    node.display = Display::None;
+                }
+                // Reset all card borders
+                for (btn_type, mut border) in &mut card_border_query {
+                    let (original, _, _, _) =
+                        crate::systems::ui::menu::shop::get_shop_button_colors(*btn_type);
+                    *border = BorderColor::all(original);
+                }
             }
         }
     }
