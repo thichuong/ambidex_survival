@@ -32,7 +32,7 @@ pub fn handle_card_selection(
             ShopButton::CooldownReductionUp => progression.cdr_upgrades,
             ShopButton::NovaCore => progression.nova_core,
         };
-        let is_maxed = config.limit.map_or(false, |limit| count >= limit);
+        let is_maxed = config.limit.is_some_and(|limit| count >= limit);
 
         // If maxed, don't show buy button
         if is_maxed {
@@ -55,7 +55,7 @@ pub fn handle_card_selection(
 
         // Update price text
         for mut text in &mut buy_price_query {
-            text.0 = price.clone();
+            text.0.clone_from(&price);
         }
 
         // Highlight selected card, reset others
@@ -219,7 +219,7 @@ pub fn handle_purchases(
                 ShopButton::NovaCore => progression.nova_core,
             };
 
-            let now_maxed = config.limit.map_or(false, |limit| new_count >= limit);
+            let now_maxed = config.limit.is_some_and(|limit| new_count >= limit);
 
             // Only hide buy button if card is now maxed
             if now_maxed {
