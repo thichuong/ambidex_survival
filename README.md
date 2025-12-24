@@ -32,6 +32,7 @@ The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17, organized int
 - **Customizable Input**: A flexible input system that allows rebinding keyboard and mouse controls for movement, firing, and skills.
 - **Contextual Navigation**: Tracks previous menu states to ensure the "Back" button always returns you where you came from.
 - **Faction System**: Integrated targeting logic ensures attacks hit intended factions while preventing friendly fire among enemies.
+- **Responsive UI**: Dynamic global UI scaling based on window height (`scaling.rs`), supporting various resolutions and aspect ratios, with scrollable menus for smaller screens.
 
 ## 📁 Project Structure
 For a detailed breakdown of the codebase organization, see [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md).

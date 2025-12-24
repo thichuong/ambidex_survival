@@ -95,6 +95,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         align_items: AlignItems::Center,
                         width: Val::Percent(28.0),
                         height: Val::Percent(100.0),
+                        overflow: Overflow::scroll_y(),
                         ..default()
                     }).with_children(|col| {
                         col.spawn((
@@ -228,6 +229,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         align_items: AlignItems::Center,
                         width: Val::Percent(28.0),
                         height: Val::Percent(100.0),
+                        overflow: Overflow::scroll_y(),
                         ..default()
                     }).with_children(|col| {
                         col.spawn((
