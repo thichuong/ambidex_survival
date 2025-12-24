@@ -99,8 +99,10 @@ pub fn spawn_tutorial_ui(mut commands: Commands) {
                     BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
                 ))
                 .observe(
-                    |_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>| {
-                        next_state.set(GameState::WeaponMenu);
+                    |_: On<Pointer<Click>>,
+                     mut next_state: ResMut<NextState<GameState>>,
+                     prev_state: Res<crate::resources::game_state::PreviousMenuState>| {
+                        next_state.set(prev_state.0);
                     },
                 )
                 .observe(

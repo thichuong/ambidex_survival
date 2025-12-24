@@ -1,8 +1,8 @@
 use crate::resources::game_state::GameState;
 use crate::systems::ui::{
-    SelectedShopCard, despawn_game_over_menu, despawn_hud, despawn_tutorial_ui,
+    SelectedShopCard, despawn_game_over_menu, despawn_hud, despawn_main_menu, despawn_tutorial_ui,
     despawn_weapon_menu, handle_card_selection, handle_menu_toggle, handle_purchases,
-    setup_buy_button_observer, spawn_game_over_menu, spawn_hud, spawn_tutorial_ui,
+    setup_buy_button_observer, spawn_game_over_menu, spawn_hud, spawn_main_menu, spawn_tutorial_ui,
     spawn_weapon_menu, update_cooldown_indicators, update_gold_ui, update_health_ui,
     update_hud_indicators, update_hud_magic_ui, update_menu_cdr_text, update_menu_crit_text,
     update_menu_damage_text, update_menu_gold_text, update_menu_health_text,
@@ -19,6 +19,9 @@ impl Plugin for UiPlugin {
         app.init_resource::<SelectedShopCard>()
             .add_observer(handle_card_selection)
             .add_observer(handle_purchases)
+            // Main Menu
+            .add_systems(OnEnter(GameState::MainMenu), spawn_main_menu)
+            .add_systems(OnExit(GameState::MainMenu), despawn_main_menu)
             // Main Menu / Weapon Menu
             .add_systems(OnEnter(GameState::WeaponMenu), spawn_weapon_menu)
             .add_systems(OnExit(GameState::WeaponMenu), despawn_weapon_menu)

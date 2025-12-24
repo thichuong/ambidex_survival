@@ -27,6 +27,9 @@ pub struct PurchaseEvent {
 }
 
 #[derive(Component)]
+pub struct MainMenuUI;
+
+#[derive(Component)]
 pub struct WeaponMenuUI;
 
 #[derive(Component)]

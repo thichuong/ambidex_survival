@@ -52,13 +52,17 @@ fn main() {
         .init_resource::<resources::round::RoundManager>()
         .init_resource::<resources::polish::ScreenShake>()
         .init_resource::<components::physics::UniformGrid>()
+        .init_resource::<resources::game_state::PreviousMenuState>()
         .add_systems(Startup, (setup_camera, init_cached_assets))
-        .add_systems(Update, maximize_window)
         .run();
 }
 
-fn setup_camera(mut commands: Commands) {
+fn setup_camera(mut commands: Commands, mut windows: Query<&mut Window, With<PrimaryWindow>>) {
     commands.spawn((Camera2d, GameCamera));
+
+    for mut window in &mut windows {
+        window.set_maximized(true);
+    }
 }
 
 fn init_cached_assets(
@@ -68,16 +72,4 @@ fn init_cached_assets(
 ) {
     let cached = CachedAssets::new(&mut meshes, &mut materials);
     commands.insert_resource(cached);
-}
-
-#[allow(clippy::needless_pass_by_value)]
-fn maximize_window(mut windows: Query<&mut Window, With<PrimaryWindow>>, mut frames: Local<usize>) {
-    if *frames > 100 {
-        return;
-    }
-    *frames += 1;
-
-    for mut window in &mut windows {
-        window.set_maximized(true); // Trying to see if this method works
-    }
 }

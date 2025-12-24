@@ -250,7 +250,7 @@ pub fn handle_menu_toggle(
             GameState::Playing | GameState::Tutorial => {
                 next_state.set(GameState::WeaponMenu);
             }
-            GameState::GameOver => {}
+            GameState::MainMenu | GameState::GameOver => {}
         }
     }
 }

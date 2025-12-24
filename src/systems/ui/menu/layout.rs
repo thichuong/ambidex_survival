@@ -344,7 +344,8 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                             BackgroundColor(Color::srgba(0.15, 0.2, 0.3, 1.0)),
                             TutorialButton,
                         ))
-                        .observe(|_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>| {
+                        .observe(|_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>, mut prev_state: ResMut<crate::resources::game_state::PreviousMenuState>| {
+                            prev_state.0 = GameState::WeaponMenu;
                             next_state.set(GameState::Tutorial);
                         })
                         .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
