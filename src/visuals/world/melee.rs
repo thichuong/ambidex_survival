@@ -3,17 +3,17 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::configs::weapons::sword;
-
 /// Spawn visual effects for Sword Normal attack - realistic sword shape
 pub fn spawn_sword_normal_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
+    range: f32,
 ) {
-    let blade_length = sword::NORMAL_RANGE;
-    let blade_width = 14.0;
     let grip_offset = 12.0;
     let pivot_offset = 40.0;
+    let hilt_total = grip_offset + pivot_offset;
+    let blade_length = (range - hilt_total).max(20.0);
+    let blade_width = 14.0;
 
     spawn_sword_hilt(parent, cached, blade_width, grip_offset, pivot_offset, 0.4);
 
@@ -59,12 +59,13 @@ pub fn spawn_sword_normal_visuals(
 pub fn spawn_sword_shattered_visuals(
     parent: &mut ChildSpawnerCommands,
     cached: &crate::resources::cached_assets::CachedAssets,
+    range: f32,
 ) {
-    let total_range = sword::SHATTERED_RANGE;
     let blade_width = 14.0;
     let grip_offset = 12.0;
     let pivot_offset = 40.0;
     let break_x = grip_offset + pivot_offset;
+    let total_range = range;
 
     // 1. Hilt
     spawn_sword_hilt(parent, cached, blade_width, grip_offset, pivot_offset, 0.5);

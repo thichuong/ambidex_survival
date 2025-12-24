@@ -134,7 +134,7 @@ fn fire_sword(
                     },
                 ))
                 .with_children(|parent| {
-                    spawn_sword_normal_visuals(parent, &params.cached_assets);
+                    spawn_sword_normal_visuals(parent, &params.cached_assets, sword::NORMAL_RANGE);
                 });
         }
         SwordMode::Shattered => {
@@ -159,7 +159,11 @@ fn fire_sword(
                     },
                 ))
                 .with_children(|parent| {
-                    spawn_sword_shattered_visuals(parent, &params.cached_assets);
+                    spawn_sword_shattered_visuals(
+                        parent,
+                        &params.cached_assets,
+                        sword::SHATTERED_RANGE,
+                    );
                 });
         }
     }
