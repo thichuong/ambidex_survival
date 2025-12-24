@@ -50,21 +50,22 @@ pub fn spawn_player(
 #[allow(clippy::unnecessary_wraps)]
 pub fn move_player(
     input: Res<ButtonInput<KeyCode>>,
+    input_settings: Res<crate::resources::input_settings::InputSettings>,
     mut player: Single<(&mut Velocity, &PlayerStats), With<Player>>,
 ) {
     let (ref mut velocity, stats) = *player;
     let mut direction = Vec2::ZERO;
 
-    if input.pressed(KeyCode::KeyW) {
+    if input.pressed(input_settings.move_up) {
         direction.y += 1.0;
     }
-    if input.pressed(KeyCode::KeyS) {
+    if input.pressed(input_settings.move_down) {
         direction.y -= 1.0;
     }
-    if input.pressed(KeyCode::KeyA) {
+    if input.pressed(input_settings.move_left) {
         direction.x -= 1.0;
     }
-    if input.pressed(KeyCode::KeyD) {
+    if input.pressed(input_settings.move_right) {
         direction.x += 1.0;
     }
 

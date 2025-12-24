@@ -50,6 +50,7 @@ fn main() {
         ))
         .init_state::<GameState>()
         .init_resource::<resources::round::RoundManager>()
+        .init_resource::<resources::input_settings::InputSettings>()
         .init_resource::<resources::polish::ScreenShake>()
         .init_resource::<components::physics::UniformGrid>()
         .init_resource::<resources::game_state::PreviousMenuState>()

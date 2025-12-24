@@ -11,4 +11,5 @@ pub enum GameState {
     WeaponMenu,
     Tutorial,
     GameOver,
+    Settings,
 }

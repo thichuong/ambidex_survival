@@ -44,6 +44,7 @@ pub struct CombatInputParams<'w, 's> {
     pub time: Res<'w, Time>,
     pub mouse_input: Res<'w, ButtonInput<MouseButton>>,
     pub key_input: Res<'w, ButtonInput<KeyCode>>,
+    pub input_settings: Res<'w, crate::resources::input_settings::InputSettings>,
     pub window: Single<'w, 's, &'static Window, With<PrimaryWindow>>,
     pub camera: Single<'w, 's, (&'static Camera, &'static GlobalTransform), With<GameCamera>>,
     pub cached_assets: Res<'w, crate::resources::cached_assets::CachedAssets>,

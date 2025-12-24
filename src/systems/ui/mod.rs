@@ -4,7 +4,7 @@ pub mod hud;
 pub mod interaction;
 pub mod main_menu;
 pub mod menu;
-
+pub mod settings;
 pub mod tutorial;
 
 pub use components::*;
@@ -13,4 +13,5 @@ pub use hud::*;
 pub use interaction::*;
 pub use main_menu::*;
 pub use menu::*;
+pub use settings::*;
 pub use tutorial::*;

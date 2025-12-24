@@ -244,8 +244,8 @@ pub fn handle_menu_toggle(
 ) {
     if input.just_pressed(KeyCode::Escape) {
         match state.get() {
-            GameState::WeaponMenu => {
-                next_state.set(GameState::Playing);
+            GameState::WeaponMenu | GameState::Settings => {
+                next_state.set(GameState::MainMenu);
             }
             GameState::Playing | GameState::Tutorial => {
                 next_state.set(GameState::WeaponMenu);

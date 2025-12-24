@@ -162,3 +162,29 @@ pub struct ShopBuyButtonPrice;
 pub struct SelectCardEvent {
     pub btn_type: ShopButton,
 }
+
+#[derive(Component)]
+pub struct SettingsUI;
+
+#[derive(Component)]
+pub struct SettingsBackButton;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Action {
+    MoveUp,
+    MoveDown,
+    MoveLeft,
+    MoveRight,
+    LeftFire,
+    RightFire,
+    LeftSkill,
+    RightSkill,
+}
+
+#[derive(Component)]
+pub struct RebindButton(pub Action);
+
+#[derive(Resource, Default)]
+pub struct RebindState {
+    pub active_action: Option<Action>,
+}

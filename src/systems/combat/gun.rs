@@ -42,13 +42,37 @@ pub fn gun_weapon_system(
     let progression = player.4;
     let player_transform = &mut *player.1;
 
-    let left_pressed = params.mouse_input.pressed(MouseButton::Left);
-    let right_pressed = params.mouse_input.pressed(MouseButton::Right);
-    let left_just_pressed = params.mouse_input.just_pressed(MouseButton::Left);
-    let right_just_pressed = params.mouse_input.just_pressed(MouseButton::Right);
+    let left_pressed = params.input_settings.is_pressed(
+        &params.key_input,
+        &params.mouse_input,
+        params.input_settings.left_fire,
+    );
+    let right_pressed = params.input_settings.is_pressed(
+        &params.key_input,
+        &params.mouse_input,
+        params.input_settings.right_fire,
+    );
+    let left_just_pressed = params.input_settings.is_just_pressed(
+        &params.key_input,
+        &params.mouse_input,
+        params.input_settings.left_fire,
+    );
+    let right_just_pressed = params.input_settings.is_just_pressed(
+        &params.key_input,
+        &params.mouse_input,
+        params.input_settings.right_fire,
+    );
 
-    let q_just_pressed = params.key_input.just_pressed(KeyCode::KeyQ);
-    let e_just_pressed = params.key_input.just_pressed(KeyCode::KeyE);
+    let q_just_pressed = params.input_settings.is_just_pressed(
+        &params.key_input,
+        &params.mouse_input,
+        params.input_settings.left_skill,
+    );
+    let e_just_pressed = params.input_settings.is_just_pressed(
+        &params.key_input,
+        &params.mouse_input,
+        params.input_settings.right_skill,
+    );
 
     for (_, hand_transform, hand, mut gun_state, mut weapon_data) in &mut hand_query {
         if hand.equipped_weapon != Some(WeaponType::Gun) {
