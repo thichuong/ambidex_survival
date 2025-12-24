@@ -241,16 +241,19 @@ pub fn handle_menu_toggle(
     input: Res<ButtonInput<KeyCode>>,
     state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
+    round_manager: Res<crate::resources::round::RoundManager>,
 ) {
     if input.just_pressed(KeyCode::Escape) {
         match state.get() {
             GameState::WeaponMenu | GameState::Settings => {
-                next_state.set(GameState::MainMenu);
+                if round_manager.has_started {
+                    next_state.set(GameState::Playing);
+                }
             }
             GameState::Playing | GameState::Tutorial => {
                 next_state.set(GameState::WeaponMenu);
             }
-            GameState::MainMenu | GameState::GameOver => {}
+            GameState::GameOver => {}
         }
     }
 }

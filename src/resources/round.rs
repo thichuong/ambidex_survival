@@ -9,6 +9,7 @@ pub struct RoundManager {
     pub yellow_enemies_to_spawn: u32,
 
     pub round_state: RoundState,
+    pub has_started: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
@@ -32,6 +33,7 @@ impl Default for RoundManager {
             yellow_enemies_to_spawn: 0,
 
             round_state: RoundState::Spawning,
+            has_started: false,
         }
     }
 }

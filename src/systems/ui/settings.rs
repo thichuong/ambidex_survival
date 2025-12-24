@@ -109,7 +109,7 @@ pub fn spawn_settings_menu(mut commands: Commands, input_settings: Res<InputSett
                 ))
                 .observe(
                     |_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>| {
-                        next_state.set(GameState::MainMenu);
+                        next_state.set(GameState::WeaponMenu);
                     },
                 )
                 .with_children(|btn| {
@@ -231,9 +231,10 @@ pub fn rebind_system(
         .map(|&key| ActionInput::Keyboard(key));
 
     if new_input.is_none()
-        && let Some(m_btn) = mouse.get_just_pressed().next() {
-            new_input = Some(ActionInput::Mouse(*m_btn));
-        }
+        && let Some(m_btn) = mouse.get_just_pressed().next()
+    {
+        new_input = Some(ActionInput::Mouse(*m_btn));
+    }
 
     if let Some(input) = new_input {
         match action {

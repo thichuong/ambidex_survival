@@ -10,7 +10,11 @@ use crate::components::weapon::WeaponType;
 use bevy::prelude::*;
 
 #[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
-pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn spawn_weapon_menu(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    round_manager: Res<crate::resources::round::RoundManager>,
+) {
     commands
         .spawn((
             Node {
@@ -264,7 +268,6 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         });
                     });
                 });
-
             // --- FOOTER ---
             parent
                 .spawn((
@@ -285,6 +288,8 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                     use crate::resources::game_state::GameState;
                     use crate::resources::round::{RoundManager, RoundState};
 
+                    let has_started = round_manager.has_started;
+
                     // BACK TO BATTLE
                     footer
                         .spawn((
@@ -295,6 +300,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
                                 border: UiRect::all(Val::Px(2.0)),
+                                display: if has_started { Display::Flex } else { Display::None },
                                 ..default()
                             },
                             BorderColor::all(Color::srgb(0.3, 0.8, 0.3)),
@@ -315,6 +321,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                                 round_manager.yellow_enemies_to_spawn = u32::from(round_manager.current_round >= 5);
                                 round_manager.round_state = RoundState::Spawning;
                             }
+                            round_manager.has_started = true;
                             next_state.set(GameState::Playing);
                         })
                         .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
@@ -443,6 +450,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                             for entity in &projectile_query { commands.entity(entity).despawn(); }
 
                             // Restart Game
+                            round_manager.has_started = true;
                             next_state.set(GameState::Playing);
                         })
                         .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {

@@ -1,15 +1,14 @@
 use crate::resources::game_state::GameState;
 use crate::systems::ui::{
-    RebindState, SelectedShopCard, despawn_game_over_menu, despawn_hud, despawn_main_menu,
-    despawn_settings_menu, despawn_tutorial_ui, despawn_weapon_menu, handle_card_selection,
-    handle_menu_toggle, handle_purchases, handle_rebind_clicks, rebind_system,
-    setup_buy_button_observer, spawn_game_over_menu, spawn_hud, spawn_main_menu,
-    spawn_settings_menu, spawn_tutorial_ui, spawn_weapon_menu, update_cooldown_indicators,
-    update_gold_ui, update_health_ui, update_hud_indicators, update_hud_magic_ui,
-    update_menu_cdr_text, update_menu_crit_text, update_menu_damage_text, update_menu_gold_text,
-    update_menu_health_text, update_menu_lifesteal_text, update_menu_magic_ui,
-    update_menu_weapon_buttons, update_menu_weapon_details_ui, update_rebind_ui, update_round_text,
-    update_shop_cards_ui, update_shuriken_count_ui,
+    RebindState, SelectedShopCard, despawn_game_over_menu, despawn_hud, despawn_settings_menu,
+    despawn_tutorial_ui, despawn_weapon_menu, handle_card_selection, handle_menu_toggle,
+    handle_purchases, handle_rebind_clicks, rebind_system, setup_buy_button_observer,
+    spawn_game_over_menu, spawn_hud, spawn_settings_menu, spawn_tutorial_ui, spawn_weapon_menu,
+    update_cooldown_indicators, update_gold_ui, update_health_ui, update_hud_indicators,
+    update_hud_magic_ui, update_menu_cdr_text, update_menu_crit_text, update_menu_damage_text,
+    update_menu_gold_text, update_menu_health_text, update_menu_lifesteal_text,
+    update_menu_magic_ui, update_menu_weapon_buttons, update_menu_weapon_details_ui,
+    update_rebind_ui, update_round_text, update_shop_cards_ui, update_shuriken_count_ui,
 };
 use bevy::prelude::*;
 
@@ -21,9 +20,6 @@ impl Plugin for UiPlugin {
             .init_resource::<RebindState>()
             .add_observer(handle_card_selection)
             .add_observer(handle_purchases)
-            // Main Menu
-            .add_systems(OnEnter(GameState::MainMenu), spawn_main_menu)
-            .add_systems(OnExit(GameState::MainMenu), despawn_main_menu)
             // Settings
             .add_systems(OnEnter(GameState::Settings), spawn_settings_menu)
             .add_systems(OnExit(GameState::Settings), despawn_settings_menu)

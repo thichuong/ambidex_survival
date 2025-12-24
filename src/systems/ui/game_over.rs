@@ -91,6 +91,7 @@ pub fn spawn_game_over_menu(mut commands: Commands) {
                         }
 
                         // Restart Game
+                        round_manager.has_started = true;
                         next_state.set(crate::resources::game_state::GameState::Playing);
                     },
                 )
