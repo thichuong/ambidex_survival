@@ -42,8 +42,8 @@ impl ActionInput {
         mouse: &ButtonInput<MouseButton>,
     ) -> bool {
         match self {
-            ActionInput::Keyboard(key) => input.pressed(*key),
-            ActionInput::Mouse(button) => mouse.pressed(*button),
+            Self::Keyboard(key) => input.pressed(*key),
+            Self::Mouse(button) => mouse.pressed(*button),
         }
     }
 
@@ -53,8 +53,8 @@ impl ActionInput {
         mouse: &ButtonInput<MouseButton>,
     ) -> bool {
         match self {
-            ActionInput::Keyboard(key) => input.just_pressed(*key),
-            ActionInput::Mouse(button) => mouse.just_pressed(*button),
+            Self::Keyboard(key) => input.just_pressed(*key),
+            Self::Mouse(button) => mouse.just_pressed(*button),
         }
     }
 }

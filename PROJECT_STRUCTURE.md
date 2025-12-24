@@ -30,6 +30,7 @@ ambidex_survival/
 │   ├── resources/      # ECS Resources (RoundManager, CachedAssets, etc.)
 │   │   ├── cached_assets.rs
 │   │   ├── game_state.rs    # GameState and PreviousMenuState
+│   │   ├── input_settings.rs # Customizable key/mouse bindings
 │   │   ├── polish.rs
 │   │   └── round.rs
 │   ├── systems/        # Core game logic partitioned by domain
@@ -62,7 +63,7 @@ ambidex_survival/
 │   │   │   ├── interaction.rs
 │   │   │   ├── main_menu.rs
 │   │   │   ├── menu.rs
-│   │   │   ├── setup.rs
+│   │   │   ├── settings.rs
 │   │   │   └── tutorial.rs
 │   │   ├── damage_text.rs
 │   │   ├── enemy.rs
@@ -113,7 +114,8 @@ Modular plugins that encapsulate system registration.
 ### `src/resources/`
 ECS Resources for global game state.
 - `cached_assets.rs`: Asset handles cache to avoid redundant loads.
-- `game_state.rs`: GameState enum (MainMenu, Playing, Paused, GameOver, WeaponMenu, Tutorial) and `PreviousMenuState` resource.
+- `game_state.rs`: GameState enum (MainMenu, Playing, Paused, GameOver, WeaponMenu, Tutorial, Settings) and `PreviousMenuState` resource.
+- `input_settings.rs`: Centralized resource for customizable keyboard and mouse bindings.
 - `round.rs`: Wave progression and round management.
 - `polish.rs`: Screen shake and particle trail effects.
 
@@ -126,7 +128,8 @@ Modularized UI systems:
 - `hud.rs`: Real-time updates for health, gold, and cooldowns.
 - `interaction.rs`: Reactive click handling and shop purchases via `Observer`.
 - `menu.rs`: Weapon selection menu and shop UI logic.
-- `main_menu.rs`: Main Menu screen with Start and Tutorial options.
+- `settings.rs`: Input rebinding UI and logic.
+- `main_menu.rs`: Main Menu screen with Start, Settings, and Tutorial options.
 - `game_over.rs`: Game Over screen and restart logic.
 - `tutorial.rs`: Interaction guide and skill descriptions with contextual navigation.
 

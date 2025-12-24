@@ -27,7 +27,8 @@ The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17, organized int
 - **Reactive Observers**: High-performance reactive logic triggered by `On<E>` observers for combat (collisions, damage), UI interactions (purchases, card selection), and visual effects, significantly reducing per-frame overhead.
 - **RequiredComponents**: Leverages `#[require(...)]` to ensure entities are spawned with their full set of dependencies, reducing boilerplate in spawning systems.
 - **Collision Pipeline**: Dedicated `collision/` sub-module handles detection, damage processing, and visual effects in separate, focused systems.
-- **GameState Management**: Proper system scheduling and UI transitions via Bevy `States` (MainMenu, Playing, Paused, GameOver, WeaponMenu, Tutorial).
+- **GameState Management**: Proper system scheduling and UI transitions via Bevy `States` (MainMenu, Playing, Paused, GameOver, WeaponMenu, Tutorial, Settings).
+- **Customizable Input**: A flexible input system that allows rebinding keyboard and mouse controls for movement, firing, and skills.
 - **Contextual Navigation**: Tracks previous menu states to ensure the "Back" button always returns you where you came from.
 - **Faction System**: Integrated targeting logic ensures attacks hit intended factions while preventing friendly fire among enemies.
 
@@ -140,16 +141,18 @@ A tactical spellcaster that appears after Round 5.
     - **Nova Core**: Allow the Nova spell to explode at the mouse cursor position instead of the player (**1000G**, Max 1).
 - **Rounds**: Waves scale in size and intensity. Clear all enemies to access the shop.
 
-## 🕹️ Controls
+## 🕹️ Controls (Customizable)
 
-| Action | Input | Description |
+Controls can be fully rebound in the **Settings** menu accessible from the Main Menu.
+
+| Action | Default Input | Description |
 | :--- | :--- | :--- |
 | **Move** | `W`, `A`, `S`, `D` | Character movement |
 | **Left Attack** | `Mouse Left` | Fire left-hand weapon |
 | **Right Attack** | `Mouse Right` | Fire right-hand weapon |
 | **Left Skill** | `Q` | Use left-hand unique skill |
 | **Right Skill** | `E` | Use right-hand unique skill |
-| **Menu** | `ESC` / `Menu Button` | Toggle weapon & shop menu or return from tutorial to previous menu |
+| **Menu** | `ESC` / `Menu Button` | Toggle weapon & shop menu or return from settings/tutorial |
 
 ## 🛠️ Built With
 

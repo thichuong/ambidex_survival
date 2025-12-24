@@ -230,11 +230,10 @@ pub fn rebind_system(
         .find(|&&key| key != KeyCode::Escape)
         .map(|&key| ActionInput::Keyboard(key));
 
-    if new_input.is_none() {
-        if let Some(m_btn) = mouse.get_just_pressed().next() {
+    if new_input.is_none()
+        && let Some(m_btn) = mouse.get_just_pressed().next() {
             new_input = Some(ActionInput::Mouse(*m_btn));
         }
-    }
 
     if let Some(input) = new_input {
         match action {

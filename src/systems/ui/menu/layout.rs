@@ -1,10 +1,11 @@
 use super::super::components::{
     MenuCDRText, MenuCritText, MenuDamageText, MenuGoldText, MenuHealthText, MenuLifestealText,
-    ShopButton, ShopBuyButton, ShopBuyButtonPrice, ShopBuyButtonText, TutorialButton, WeaponMenuUI,
+    ShopButton, ShopBuyButton, ShopBuyButtonPrice, ShopBuyButtonText, TutorialButton,
+    WeaponMenuRestartButton, WeaponMenuSettingsButton, WeaponMenuUI,
 };
 use super::arsenal::{spawn_magic_panel, spawn_weapon_button, spawn_weapon_detail_panel};
 use super::shop::spawn_shop_button;
-use crate::components::player::HandType;
+use crate::components::player::{Currency, HandType, Health};
 use crate::components::weapon::WeaponType;
 use bevy::prelude::*;
 
@@ -273,7 +274,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         flex_direction: FlexDirection::Row,
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        column_gap: Val::Px(30.0),
+                        column_gap: Val::Px(20.0),
                         border: UiRect::top(Val::Px(1.0)),
                         ..default()
                     },
@@ -283,11 +284,13 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                 .with_children(|footer| {
                     use crate::resources::game_state::GameState;
                     use crate::resources::round::{RoundManager, RoundState};
+
+                    // BACK TO BATTLE
                     footer
                         .spawn((
                             Button,
                             Node {
-                                width: Val::Px(220.0),
+                                width: Val::Px(200.0),
                                 height: Val::Px(50.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
@@ -323,16 +326,17 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         .with_children(|btn| {
                             btn.spawn((
                                 Text::new("BACK TO BATTLE"),
-                                TextFont { font_size: 22.0, ..default() },
+                                TextFont { font_size: 20.0, ..default() },
                                 TextColor(Color::WHITE),
                             ));
                         });
 
+                    // TUTORIAL
                     footer
                         .spawn((
                             Button,
                             Node {
-                                width: Val::Px(180.0),
+                                width: Val::Px(140.0),
                                 height: Val::Px(50.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
@@ -357,7 +361,100 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                         .with_children(|btn| {
                             btn.spawn((
                                 Text::new("TUTORIAL"),
-                                TextFont { font_size: 20.0, ..default() },
+                                TextFont { font_size: 18.0, ..default() },
+                                TextColor(Color::WHITE),
+                            ));
+                        });
+
+                    // SETTINGS
+                    footer
+                        .spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(140.0),
+                                height: Val::Px(50.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BorderColor::all(Color::srgb(0.6, 0.6, 0.6)),
+                            BorderRadius::all(Val::Px(10.0)),
+                            BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
+                            WeaponMenuSettingsButton,
+                        ))
+                        .observe(|_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>, mut prev_state: ResMut<crate::resources::game_state::PreviousMenuState>| {
+                            prev_state.0 = GameState::WeaponMenu;
+                            next_state.set(GameState::Settings);
+                        })
+                        .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)); }
+                        })
+                        .observe(|trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)); }
+                        })
+                        .with_children(|btn| {
+                            btn.spawn((
+                                Text::new("SETTINGS"),
+                                TextFont { font_size: 18.0, ..default() },
+                                TextColor(Color::WHITE),
+                            ));
+                        });
+
+                    // NEW GAME
+                    footer
+                        .spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(140.0),
+                                height: Val::Px(50.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BorderColor::all(Color::srgb(1.0, 0.3, 0.3)),
+                            BorderRadius::all(Val::Px(10.0)),
+                            BackgroundColor(Color::srgba(0.3, 0.15, 0.15, 1.0)),
+                            WeaponMenuRestartButton,
+                        ))
+                        .observe(|_: On<Pointer<Click>>,
+                                mut next_state: ResMut<NextState<GameState>>,
+                                player: Single<(&mut Health, &mut Currency, &mut crate::components::player::CombatStats, &mut crate::components::player::Progression, &mut Transform), With<crate::components::player::Player>>,
+                                mut round_manager: ResMut<RoundManager>,
+                                enemy_query: Query<Entity, With<crate::components::enemy::Enemy>>,
+                                projectile_query: Query<Entity, With<crate::components::weapon::Projectile>>,
+                                mut commands: Commands| {
+                            // Reset Player
+                            let (mut health, mut currency, mut combat, mut progression, mut transform) = player.into_inner();
+                            *health = Health::default();
+                            *currency = Currency::default();
+                            *combat = crate::components::player::CombatStats::default();
+                            *progression = crate::components::player::Progression::default();
+                            transform.translation = Vec3::ZERO;
+
+                            // Reset Round
+                            *round_manager = RoundManager::default();
+
+                            // Despawn Enemies
+                            for entity in &enemy_query { commands.entity(entity).despawn(); }
+
+                            // Despawn Projectiles
+                            for entity in &projectile_query { commands.entity(entity).despawn(); }
+
+                            // Restart Game
+                            next_state.set(GameState::Playing);
+                        })
+                        .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.45, 0.25, 0.25, 1.0)); }
+                        })
+                        .observe(|trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                            if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.3, 0.15, 0.15, 1.0)); }
+                        })
+                        .with_children(|btn| {
+                            btn.spawn((
+                                Text::new("NEW GAME"),
+                                TextFont { font_size: 18.0, ..default() },
                                 TextColor(Color::WHITE),
                             ));
                         });
