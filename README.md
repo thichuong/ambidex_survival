@@ -11,7 +11,8 @@
 The core of the game is the **Ambidex System**, which gives you independent control over your character's two hands. Each hand can be equipped with any weapon type, allowing for thousands of potential combinations.
 
 - **Independent Hands**: Each hand (Left and Right) has its own weapon, cooldown, and skill state.
-- **Weapon Selection**: Access the **Weapon Menu** between rounds to swap weapons for either hand.
+- **Weapon Selection**: Access the **Weapon Menu** (ESC or Menu button) between rounds to swap weapons for either hand.
+- **Main Menu**: Start your journey or learn the ropes and navigate back to your context seamlessly.
 
 ## 🏗️ Technical Architecture
 
@@ -26,7 +27,8 @@ The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17, organized int
 - **Reactive Observers**: High-performance reactive logic triggered by `On<E>` observers for combat (collisions, damage), UI interactions (purchases, card selection), and visual effects, significantly reducing per-frame overhead.
 - **RequiredComponents**: Leverages `#[require(...)]` to ensure entities are spawned with their full set of dependencies, reducing boilerplate in spawning systems.
 - **Collision Pipeline**: Dedicated `collision/` sub-module handles detection, damage processing, and visual effects in separate, focused systems.
-- **GameState Management**: Proper system scheduling and UI transitions via Bevy `States` (Playing, Paused, GameOver, WeaponMenu, Tutorial).
+- **GameState Management**: Proper system scheduling and UI transitions via Bevy `States` (MainMenu, Playing, Paused, GameOver, WeaponMenu, Tutorial).
+- **Contextual Navigation**: Tracks previous menu states to ensure the "Back" button always returns you where you came from.
 - **Faction System**: Integrated targeting logic ensures attacks hit intended factions while preventing friendly fire among enemies.
 
 ## 📁 Project Structure
@@ -147,7 +149,7 @@ A tactical spellcaster that appears after Round 5.
 | **Right Attack** | `Mouse Right` | Fire right-hand weapon |
 | **Left Skill** | `Q` | Use left-hand unique skill |
 | **Right Skill** | `E` | Use right-hand unique skill |
-| **Menu** | `ESC` / `Menu Button` | Toggle weapon & shop menu or back from tutorial |
+| **Menu** | `ESC` / `Menu Button` | Toggle weapon & shop menu or return from tutorial to previous menu |
 
 ## 🛠️ Built With
 
