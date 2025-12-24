@@ -39,37 +39,31 @@ pub fn shuriken_weapon_system(
     let progression = player.4;
     let player_transform = &mut *player.1;
 
-    let left_pressed = params.input_settings.is_pressed(
-        &params.key_input,
-        &params.mouse_input,
-        params.input_settings.left_fire,
-    );
-    let right_pressed = params.input_settings.is_pressed(
-        &params.key_input,
-        &params.mouse_input,
-        params.input_settings.right_fire,
-    );
-    let left_just_pressed = params.input_settings.is_just_pressed(
-        &params.key_input,
-        &params.mouse_input,
-        params.input_settings.left_fire,
-    );
-    let right_just_pressed = params.input_settings.is_just_pressed(
-        &params.key_input,
-        &params.mouse_input,
-        params.input_settings.right_fire,
-    );
+    let left_pressed = params
+        .input_settings
+        .left_fire
+        .is_pressed(&params.key_input, &params.mouse_input);
+    let right_pressed = params
+        .input_settings
+        .right_fire
+        .is_pressed(&params.key_input, &params.mouse_input);
+    let left_just_pressed = params
+        .input_settings
+        .left_fire
+        .is_just_pressed(&params.key_input, &params.mouse_input);
+    let right_just_pressed = params
+        .input_settings
+        .right_fire
+        .is_just_pressed(&params.key_input, &params.mouse_input);
 
-    let q_just_pressed = params.input_settings.is_just_pressed(
-        &params.key_input,
-        &params.mouse_input,
-        params.input_settings.left_skill,
-    );
-    let e_just_pressed = params.input_settings.is_just_pressed(
-        &params.key_input,
-        &params.mouse_input,
-        params.input_settings.right_skill,
-    );
+    let q_just_pressed = params
+        .input_settings
+        .left_skill
+        .is_just_pressed(&params.key_input, &params.mouse_input);
+    let e_just_pressed = params
+        .input_settings
+        .right_skill
+        .is_just_pressed(&params.key_input, &params.mouse_input);
 
     for (_, hand_transform, hand, mut weapon_data) in &mut hand_query {
         if hand.equipped_weapon != Some(WeaponType::Shuriken) {

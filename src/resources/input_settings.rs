@@ -35,16 +35,15 @@ impl Default for InputSettings {
     }
 }
 
-impl InputSettings {
+impl ActionInput {
     pub fn is_pressed(
         &self,
         input: &ButtonInput<KeyCode>,
         mouse: &ButtonInput<MouseButton>,
-        action: ActionInput,
     ) -> bool {
-        match action {
-            ActionInput::Keyboard(key) => input.pressed(key),
-            ActionInput::Mouse(button) => mouse.pressed(button),
+        match self {
+            ActionInput::Keyboard(key) => input.pressed(*key),
+            ActionInput::Mouse(button) => mouse.pressed(*button),
         }
     }
 
@@ -52,11 +51,10 @@ impl InputSettings {
         &self,
         input: &ButtonInput<KeyCode>,
         mouse: &ButtonInput<MouseButton>,
-        action: ActionInput,
     ) -> bool {
-        match action {
-            ActionInput::Keyboard(key) => input.just_pressed(key),
-            ActionInput::Mouse(button) => mouse.just_pressed(button),
+        match self {
+            ActionInput::Keyboard(key) => input.just_pressed(*key),
+            ActionInput::Mouse(button) => mouse.just_pressed(*button),
         }
     }
 }

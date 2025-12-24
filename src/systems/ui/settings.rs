@@ -3,6 +3,7 @@ use crate::resources::game_state::GameState;
 use crate::resources::input_settings::{ActionInput, InputSettings};
 use bevy::prelude::*;
 
+#[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
 pub fn spawn_settings_menu(mut commands: Commands, input_settings: Res<InputSettings>) {
     commands
         .spawn((
@@ -40,25 +41,25 @@ pub fn spawn_settings_menu(mut commands: Commands, input_settings: Res<InputSett
                 parent,
                 "Up",
                 Action::MoveUp,
-                format!("{:?}", input_settings.move_up),
+                format!("{0:?}", input_settings.move_up),
             );
             spawn_rebind_row(
                 parent,
                 "Down",
                 Action::MoveDown,
-                format!("{:?}", input_settings.move_down),
+                format!("{0:?}", input_settings.move_down),
             );
             spawn_rebind_row(
                 parent,
                 "Left",
                 Action::MoveLeft,
-                format!("{:?}", input_settings.move_left),
+                format!("{0:?}", input_settings.move_left),
             );
             spawn_rebind_row(
                 parent,
                 "Right",
                 Action::MoveRight,
-                format!("{:?}", input_settings.move_right),
+                format!("{0:?}", input_settings.move_right),
             );
 
             // Combat Section
@@ -187,8 +188,8 @@ fn spawn_rebind_row(parent: &mut ChildSpawnerCommands, label: &str, action: Acti
 
 fn format_action(action: ActionInput) -> String {
     match action {
-        ActionInput::Keyboard(k) => format!("{:?}", k),
-        ActionInput::Mouse(m) => format!("{:?}", m),
+        ActionInput::Keyboard(k) => format!("{k:?}"),
+        ActionInput::Mouse(m) => format!("{m:?}"),
     }
 }
 
@@ -212,6 +213,7 @@ pub fn handle_rebind_clicks(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn rebind_system(
     mut rebind_state: ResMut<RebindState>,
     mut input_settings: ResMut<InputSettings>,
@@ -223,20 +225,14 @@ pub fn rebind_system(
     };
 
     // Find the first pressed key or mouse button
-    let mut new_input = None;
-
-    for key in keys.get_just_pressed() {
-        if *key != KeyCode::Escape {
-            // Ignore escape or use it to cancel?
-            new_input = Some(ActionInput::Keyboard(*key));
-            break;
-        }
-    }
+    let mut new_input = keys
+        .get_just_pressed()
+        .find(|&&key| key != KeyCode::Escape)
+        .map(|&key| ActionInput::Keyboard(key));
 
     if new_input.is_none() {
-        for m_btn in mouse.get_just_pressed() {
+        if let Some(m_btn) = mouse.get_just_pressed().next() {
             new_input = Some(ActionInput::Mouse(*m_btn));
-            break;
         }
     }
 
@@ -271,6 +267,7 @@ pub fn rebind_system(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_rebind_ui(
     rebind_state: Res<RebindState>,
     input_settings: Res<InputSettings>,
@@ -284,10 +281,10 @@ pub fn update_rebind_ui(
             text.0 = "...".to_string();
         } else {
             text.0 = match rebind.0 {
-                Action::MoveUp => format!("{:?}", input_settings.move_up),
-                Action::MoveDown => format!("{:?}", input_settings.move_down),
-                Action::MoveLeft => format!("{:?}", input_settings.move_left),
-                Action::MoveRight => format!("{:?}", input_settings.move_right),
+                Action::MoveUp => format!("{0:?}", input_settings.move_up),
+                Action::MoveDown => format!("{0:?}", input_settings.move_down),
+                Action::MoveLeft => format!("{0:?}", input_settings.move_left),
+                Action::MoveRight => format!("{0:?}", input_settings.move_right),
                 Action::LeftFire => format_action(input_settings.left_fire),
                 Action::RightFire => format_action(input_settings.right_fire),
                 Action::LeftSkill => format_action(input_settings.left_skill),
