@@ -57,103 +57,150 @@ pub fn spawn_confirmation_dialog(commands: &mut Commands) {
                             ..default()
                         })
                         .with_children(|buttons| {
-                            // OK Button
-                            buttons
-                                .spawn((
-                                    Button,
-                                    Node {
-                                        width: Val::Px(120.0),
-                                        height: Val::Px(45.0),
-                                        justify_content: JustifyContent::Center,
-                                        align_items: AlignItems::Center,
-                                        border: UiRect::all(Val::Px(2.0)),
-                                        ..default()
-                                    },
-                                    BorderColor::all(Color::srgb(0.3, 0.8, 0.3)),
-                                    BorderRadius::all(Val::Px(8.0)),
-                                    BackgroundColor(Color::srgba(0.15, 0.25, 0.15, 1.0)),
-                                ))
-                                .observe(|_: On<Pointer<Click>>,
-                                         mut next_state: ResMut<NextState<GameState>>,
-                                         player: Single<(&mut Health, &mut Currency, &mut CombatStats, &mut Progression, &mut Transform), With<Player>>,
-                                         mut round_manager: ResMut<RoundManager>,
-                                         enemy_query: Query<Entity, With<crate::components::enemy::Enemy>>,
-                                         projectile_query: Query<Entity, With<crate::components::weapon::Projectile>>,
-                                         dialog_query: Query<Entity, With<ConfirmationDialogUI>>,
-                                         mut commands: Commands| {
-                                    // Reset Player
-                                    let (mut health, mut currency, mut combat, mut progression, mut transform) = player.into_inner();
-                                    *health = Health::default();
-                                    *currency = Currency::default();
-                                    *combat = CombatStats::default();
-                                    *progression = Progression::default();
-                                    transform.translation = Vec3::ZERO;
-
-                                    // Reset Round
-                                    *round_manager = RoundManager::default();
-                                    round_manager.has_started = false;
-
-                                    // Despawn Enemies and Projectiles
-                                    for entity in &enemy_query { commands.entity(entity).despawn(); }
-                                    for entity in &projectile_query { commands.entity(entity).despawn(); }
-
-                                    // Despawn Dialog
-                                    for entity in &dialog_query { commands.entity(entity).despawn(); }
-
-                                    // Return to Weapon Menu
-                                    next_state.set(GameState::WeaponMenu);
-                                })
-                                .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
-                                    if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.25, 0.45, 0.25, 1.0)); }
-                                })
-                                .observe(|trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
-                                    if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.15, 0.25, 0.15, 1.0)); }
-                                })
-                                .with_children(|btn| {
-                                    btn.spawn((
-                                        Text::new("OK"),
-                                        TextFont { font_size: 20.0, ..default() },
-                                        TextColor(Color::WHITE),
-                                    ));
-                                });
-
-                            // Cancel Button
-                            buttons
-                                .spawn((
-                                    Button,
-                                    Node {
-                                        width: Val::Px(120.0),
-                                        height: Val::Px(45.0),
-                                        justify_content: JustifyContent::Center,
-                                        align_items: AlignItems::Center,
-                                        border: UiRect::all(Val::Px(2.0)),
-                                        ..default()
-                                    },
-                                    BorderColor::all(Color::srgb(0.8, 0.3, 0.3)),
-                                    BorderRadius::all(Val::Px(8.0)),
-                                    BackgroundColor(Color::srgba(0.25, 0.15, 0.15, 1.0)),
-                                ))
-                                .observe(|_: On<Pointer<Click>>,
-                                         dialog_query: Query<Entity, With<ConfirmationDialogUI>>,
-                                         mut commands: Commands| {
-                                    for entity in &dialog_query {
-                                        commands.entity(entity).despawn();
-                                    }
-                                })
-                                .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
-                                    if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.4, 0.2, 0.2, 1.0)); }
-                                })
-                                .observe(|trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
-                                    if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.25, 0.15, 0.15, 1.0)); }
-                                })
-                                .with_children(|btn| {
-                                    btn.spawn((
-                                        Text::new("CANCEL"),
-                                        TextFont { font_size: 20.0, ..default() },
-                                        TextColor(Color::WHITE),
-                                    ));
-                                });
+                            spawn_ok_button(buttons);
+                            spawn_cancel_button(buttons);
                         });
                 });
+        });
+}
+
+fn spawn_ok_button(parent: &mut ChildSpawnerCommands) {
+    parent
+        .spawn((
+            Button,
+            Node {
+                width: Val::Px(120.0),
+                height: Val::Px(45.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                border: UiRect::all(Val::Px(2.0)),
+                ..default()
+            },
+            BorderColor::all(Color::srgb(0.3, 0.8, 0.3)),
+            BorderRadius::all(Val::Px(8.0)),
+            BackgroundColor(Color::srgba(0.15, 0.25, 0.15, 1.0)),
+        ))
+        .observe(
+            |_: On<Pointer<Click>>,
+             mut next_state: ResMut<NextState<GameState>>,
+             player: Single<
+                (
+                    &mut Health,
+                    &mut Currency,
+                    &mut CombatStats,
+                    &mut Progression,
+                    &mut Transform,
+                ),
+                With<Player>,
+            >,
+             mut round_manager: ResMut<RoundManager>,
+             enemy_query: Query<Entity, With<crate::components::enemy::Enemy>>,
+             projectile_query: Query<Entity, With<crate::components::weapon::Projectile>>,
+             dialog_query: Query<Entity, With<ConfirmationDialogUI>>,
+             mut commands: Commands| {
+                // Reset Player
+                let (mut health, mut currency, mut combat, mut progression, mut transform) =
+                    player.into_inner();
+                *health = Health::default();
+                *currency = Currency::default();
+                *combat = CombatStats::default();
+                *progression = Progression::default();
+                transform.translation = Vec3::ZERO;
+
+                // Reset Round
+                *round_manager = RoundManager::default();
+                round_manager.has_started = false;
+
+                // Despawn Enemies and Projectiles
+                for entity in &enemy_query {
+                    commands.entity(entity).despawn();
+                }
+                for entity in &projectile_query {
+                    commands.entity(entity).despawn();
+                }
+
+                // Despawn Dialog
+                for entity in &dialog_query {
+                    commands.entity(entity).despawn();
+                }
+
+                // Return to Weapon Menu
+                next_state.set(GameState::WeaponMenu);
+            },
+        )
+        .observe(
+            |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                    *color = BackgroundColor(Color::srgba(0.25, 0.45, 0.25, 1.0));
+                }
+            },
+        )
+        .observe(
+            |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                    *color = BackgroundColor(Color::srgba(0.15, 0.25, 0.15, 1.0));
+                }
+            },
+        )
+        .with_children(|btn| {
+            btn.spawn((
+                Text::new("OK"),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+        });
+}
+
+fn spawn_cancel_button(parent: &mut ChildSpawnerCommands) {
+    parent
+        .spawn((
+            Button,
+            Node {
+                width: Val::Px(120.0),
+                height: Val::Px(45.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                border: UiRect::all(Val::Px(2.0)),
+                ..default()
+            },
+            BorderColor::all(Color::srgb(0.8, 0.3, 0.3)),
+            BorderRadius::all(Val::Px(8.0)),
+            BackgroundColor(Color::srgba(0.25, 0.15, 0.15, 1.0)),
+        ))
+        .observe(
+            |_: On<Pointer<Click>>,
+             dialog_query: Query<Entity, With<ConfirmationDialogUI>>,
+             mut commands: Commands| {
+                for entity in &dialog_query {
+                    commands.entity(entity).despawn();
+                }
+            },
+        )
+        .observe(
+            |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                    *color = BackgroundColor(Color::srgba(0.4, 0.2, 0.2, 1.0));
+                }
+            },
+        )
+        .observe(
+            |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                if let Ok(mut color) = color.get_mut(trigger.entity) {
+                    *color = BackgroundColor(Color::srgba(0.25, 0.15, 0.15, 1.0));
+                }
+            },
+        )
+        .with_children(|btn| {
+            btn.spawn((
+                Text::new("CANCEL"),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
         });
 }
