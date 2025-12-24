@@ -5,16 +5,12 @@ use super::super::components::{
 };
 use super::arsenal::{spawn_magic_panel, spawn_weapon_button, spawn_weapon_detail_panel};
 use super::shop::spawn_shop_button;
-use crate::components::player::{Currency, HandType, Health};
+use crate::components::player::HandType;
 use crate::components::weapon::WeaponType;
 use bevy::prelude::*;
 
 #[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
-pub fn spawn_weapon_menu(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    round_manager: Res<crate::resources::round::RoundManager>,
-) {
+pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             Node {
@@ -288,7 +284,7 @@ pub fn spawn_weapon_menu(
                     use crate::resources::game_state::GameState;
                     use crate::resources::round::{RoundManager, RoundState};
 
-                    let has_started = round_manager.has_started;
+
 
                     // BACK TO BATTLE
                     footer
@@ -300,7 +296,6 @@ pub fn spawn_weapon_menu(
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
                                 border: UiRect::all(Val::Px(2.0)),
-                                display: if has_started { Display::Flex } else { Display::None },
                                 ..default()
                             },
                             BorderColor::all(Color::srgb(0.3, 0.8, 0.3)),
@@ -332,7 +327,7 @@ pub fn spawn_weapon_menu(
                         })
                         .with_children(|btn| {
                             btn.spawn((
-                                Text::new("BACK TO BATTLE"),
+                                Text::new("GO TO BATTLE"),
                                 TextFont { font_size: 20.0, ..default() },
                                 TextColor(Color::WHITE),
                             ));
@@ -425,33 +420,8 @@ pub fn spawn_weapon_menu(
                             BackgroundColor(Color::srgba(0.3, 0.15, 0.15, 1.0)),
                             WeaponMenuRestartButton,
                         ))
-                        .observe(|_: On<Pointer<Click>>,
-                                mut next_state: ResMut<NextState<GameState>>,
-                                player: Single<(&mut Health, &mut Currency, &mut crate::components::player::CombatStats, &mut crate::components::player::Progression, &mut Transform), With<crate::components::player::Player>>,
-                                mut round_manager: ResMut<RoundManager>,
-                                enemy_query: Query<Entity, With<crate::components::enemy::Enemy>>,
-                                projectile_query: Query<Entity, With<crate::components::weapon::Projectile>>,
-                                mut commands: Commands| {
-                            // Reset Player
-                            let (mut health, mut currency, mut combat, mut progression, mut transform) = player.into_inner();
-                            *health = Health::default();
-                            *currency = Currency::default();
-                            *combat = crate::components::player::CombatStats::default();
-                            *progression = crate::components::player::Progression::default();
-                            transform.translation = Vec3::ZERO;
-
-                            // Reset Round
-                            *round_manager = RoundManager::default();
-
-                            // Despawn Enemies
-                            for entity in &enemy_query { commands.entity(entity).despawn(); }
-
-                            // Despawn Projectiles
-                            for entity in &projectile_query { commands.entity(entity).despawn(); }
-
-                            // Restart Game
-                            round_manager.has_started = true;
-                            next_state.set(GameState::Playing);
+                        .observe(|_: On<Pointer<Click>>, mut commands: Commands| {
+                            super::spawn_confirmation_dialog(&mut commands);
                         })
                         .observe(|trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
                             if let Ok(mut color) = color.get_mut(trigger.entity) { *color = BackgroundColor(Color::srgba(0.45, 0.25, 0.25, 1.0)); }

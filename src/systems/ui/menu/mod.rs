@@ -1,7 +1,10 @@
 pub mod arsenal;
+pub mod confirmation;
 pub mod layout;
 pub mod shop;
 pub mod systems;
+
+pub use confirmation::spawn_confirmation_dialog;
 
 pub use layout::{despawn_weapon_menu, spawn_weapon_menu};
 pub use shop::update_shop_cards_ui;

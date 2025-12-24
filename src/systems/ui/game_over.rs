@@ -1,5 +1,4 @@
 use super::components::{GameOverUI, NewGameButton};
-use crate::components::player::{CombatStats, Currency, Health, Player, Progression};
 
 use bevy::prelude::*;
 
@@ -47,54 +46,9 @@ pub fn spawn_game_over_menu(mut commands: Commands) {
                     BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
                     NewGameButton,
                 ))
-                .observe(
-                    |_trigger: On<Pointer<Click>>,
-                     mut next_state: ResMut<NextState<crate::resources::game_state::GameState>>,
-                     player: Single<
-                        (
-                            &mut Health,
-                            &mut Currency,
-                            &mut CombatStats,
-                            &mut Progression,
-                            &mut Transform,
-                        ),
-                        With<Player>,
-                    >,
-                     mut round_manager: ResMut<crate::resources::round::RoundManager>,
-                     enemy_query: Query<Entity, With<crate::components::enemy::Enemy>>,
-                     projectile_query: Query<
-                        Entity,
-                        With<crate::components::weapon::Projectile>,
-                    >,
-                     mut commands: Commands| {
-                        // Reset Player
-                        let (mut health, mut currency, mut combat, mut progression, mut transform) =
-                            player.into_inner();
-
-                        *health = Health::default();
-                        *currency = Currency::default();
-                        *combat = CombatStats::default();
-                        *progression = Progression::default();
-                        transform.translation = Vec3::ZERO;
-
-                        // Reset Round
-                        *round_manager = crate::resources::round::RoundManager::default();
-
-                        // Despawn Enemies
-                        for entity in &enemy_query {
-                            commands.entity(entity).despawn();
-                        }
-
-                        // Despawn Projectiles
-                        for entity in &projectile_query {
-                            commands.entity(entity).despawn();
-                        }
-
-                        // Restart Game
-                        round_manager.has_started = true;
-                        next_state.set(crate::resources::game_state::GameState::Playing);
-                    },
-                )
+                .observe(|_trigger: On<Pointer<Click>>, mut commands: Commands| {
+                    crate::systems::ui::menu::spawn_confirmation_dialog(&mut commands);
+                })
                 .observe(
                     |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
                         if let Ok(mut color) = color.get_mut(trigger.entity) {

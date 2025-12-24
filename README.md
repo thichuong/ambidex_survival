@@ -12,7 +12,8 @@ The core of the game is the **Ambidex System**, which gives you independent cont
 
 - **Independent Hands**: Each hand (Left and Right) has its own weapon, cooldown, and skill state.
 - **Weapon Selection**: Access the **Weapon Menu** (ESC or Menu button) at any time to swap weapons for either hand or purchase upgrades.
-- **Immediate Start**: The game launches directly into the Weapon Menu, allowing you to customize your loadout before jumping into the fray.
+- **Immediate Start**: The game launches directly into the Weapon Menu. Click **GO TO BATTLE** to start the first round.
+- **New Game**: Reset your progress and return to the Weapon Menu to start fresh.
 
 ## 🏗️ Technical Architecture
 

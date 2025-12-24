@@ -30,6 +30,9 @@ pub struct PurchaseEvent {
 pub struct WeaponMenuUI;
 
 #[derive(Component)]
+pub struct ConfirmationDialogUI;
+
+#[derive(Component)]
 pub struct HUDHandIndicator {
     #[allow(dead_code)]
     pub side: HandType,
