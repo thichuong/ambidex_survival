@@ -325,12 +325,12 @@ function __wasm_bindgen_func_elem_97194(arg0, arg1, arg2) {
     wasm.__wasm_bindgen_func_elem_97194(arg0, arg1, addHeapObject(arg2));
 }
 
-function __wasm_bindgen_func_elem_95407(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_95407(arg0, arg1);
-}
-
 function __wasm_bindgen_func_elem_100456(arg0, arg1, arg2) {
     wasm.__wasm_bindgen_func_elem_100456(arg0, arg1, isLikeNone(arg2) ? 0 : addHeapObject(arg2));
+}
+
+function __wasm_bindgen_func_elem_95407(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_95407(arg0, arg1);
 }
 
 function __wasm_bindgen_func_elem_91243(arg0, arg1, arg2, arg3) {

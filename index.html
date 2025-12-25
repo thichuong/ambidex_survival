@@ -177,12 +177,12 @@
             if (!loadingState.wasmLoaded) {
                 // Stage 1: WASM download (0-60%)
                 totalProgress = loadingState.wasmProgress * 0.6;
-                statusText = `Downloading Game... ${Math.round(loadingState.wasmProgress)}%`;
+                statusText = 'Downloading Game...';
             } else if (loadingState.assetsLoaded < loadingState.totalAssets) {
                 // Stage 2: Asset loading (60-90%)
                 const assetProgress = (loadingState.assetsLoaded / loadingState.totalAssets) * 100;
                 totalProgress = 60 + (assetProgress * 0.3);
-                statusText = `Loading Assets... ${loadingState.assetsLoaded}/${loadingState.totalAssets}`;
+                statusText = 'Loading Assets...';
             } else if (!loadingState.initStarted) {
                 // Stage 3: Initialization (90-100%)
                 totalProgress = 90;
@@ -191,6 +191,9 @@
                 totalProgress = 100;
                 statusText = 'Starting...';
             }
+
+            // Cap progress at 100%
+            totalProgress = Math.min(totalProgress, 100);
 
             progressBar.style.width = `${totalProgress}%`;
             loadingText.innerText = statusText;
