@@ -1,0 +1,131 @@
+use crate::components::player::HandType;
+use crate::components::weapon::WeaponType;
+use bevy::prelude::*;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WeaponMenuTab {
+    Card,
+    Equip,
+}
+
+#[derive(Component)]
+pub struct TabButton {
+    pub tab: WeaponMenuTab,
+}
+
+#[derive(Component)]
+pub struct ShopContainer;
+
+#[derive(Component)]
+pub struct EquipmentContainer;
+
+#[derive(Component)]
+pub struct ArsenalButton {
+    pub side: HandType,
+    pub kind: WeaponType,
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ShopButton {
+    Heal,
+    DamageUp,
+    MaxHealthUp,
+    CritDamageUp,
+    CritChanceUp,
+    LifestealUp,
+    CooldownReductionUp,
+    NovaCore,
+}
+
+#[derive(Event, Debug)]
+pub struct PurchaseEvent {
+    pub btn_type: ShopButton,
+    pub entity: Entity,
+}
+
+#[derive(Component)]
+pub struct WeaponMenuUI;
+
+#[derive(Component)]
+pub struct MenuButton;
+
+#[derive(Component)]
+pub struct MagicPanel {
+    #[allow(dead_code)]
+    pub side: HandType,
+}
+
+#[derive(Component)]
+pub struct MagicCycleButton {
+    pub side: HandType,
+    pub is_primary: bool, // true = primary, false = secondary
+}
+
+#[derive(Component)]
+pub struct MenuGoldText;
+
+#[derive(Component)]
+pub struct MenuHealthText;
+
+#[derive(Component)]
+pub struct MenuDamageText;
+
+#[derive(Component)]
+pub struct MenuCritText;
+
+#[derive(Component)]
+pub struct MenuLifestealText;
+
+#[derive(Component)]
+pub struct MenuCDRText;
+
+#[derive(Component)]
+pub struct WeaponMenuSettingsButton;
+
+#[derive(Component)]
+pub struct WeaponMenuRestartButton;
+
+#[derive(Component)]
+pub struct WeaponDetailPanel {
+    pub side: HandType,
+}
+
+#[derive(Component)]
+pub struct WeaponStateGroup {
+    pub side: HandType,
+    pub weapon_type: WeaponType,
+}
+
+#[derive(Component)]
+pub struct ShopCardCount;
+
+#[derive(Component)]
+pub struct ShopCardCurrentCount;
+
+#[derive(Component)]
+pub struct ShopCardLimit;
+
+#[derive(Component)]
+pub struct InfinitySymbol;
+
+/// Resource to track which shop card is currently selected
+#[derive(Resource, Default)]
+pub struct SelectedShopCard(pub Option<ShopButton>);
+
+/// Marker for the main buy button in shop
+#[derive(Component)]
+pub struct ShopBuyButton;
+
+/// Marker for buy button text (shows card name and price)
+#[derive(Component)]
+pub struct ShopBuyButtonText;
+
+/// Marker for buy button price text
+#[derive(Component)]
+pub struct ShopBuyButtonPrice;
+
+/// Event fired when a shop card is clicked (selection, not purchase)
+#[derive(Event, Debug)]
+pub struct SelectCardEvent {
+    pub btn_type: ShopButton,
+}

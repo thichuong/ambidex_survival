@@ -2,7 +2,7 @@
 //! Contains functions to spawn UI nodes representing various icons (sword, shield, cross, etc.)
 //! These are procedurally drawn using Bevy UI Nodes.
 
-use crate::systems::ui::components::ShopButton;
+use crate::systems::ui::ShopButton;
 use bevy::prelude::*;
 
 /// Dispatch function to spawn the appropriate icon based on the button type

@@ -1,6 +1,6 @@
-use super::super::components::{
-    MagicCycleButton, MagicPanel, MenuCDRText, MenuCritText, MenuDamageText, MenuGoldText,
-    MenuHealthText, MenuLifestealText, WeaponButton, WeaponDetailPanel, WeaponStateGroup,
+use super::components::{
+    ArsenalButton, MagicCycleButton, MagicPanel, MenuCDRText, MenuCritText, MenuDamageText,
+    MenuGoldText, MenuHealthText, MenuLifestealText, WeaponDetailPanel, WeaponStateGroup,
 };
 use crate::components::player::{CombatStats, Currency, Hand, Health, Player, PlayerStats};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
@@ -228,7 +228,7 @@ pub fn update_menu_cdr_text(
 }
 
 pub fn update_menu_weapon_buttons(
-    mut button_query: Query<(&WeaponButton, &mut BackgroundColor)>,
+    mut button_query: Query<(&ArsenalButton, &mut BackgroundColor)>,
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
 ) {
     for (button, mut color) in &mut button_query {

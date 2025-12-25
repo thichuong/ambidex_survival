@@ -1,9 +1,10 @@
 use super::components::{
     CooldownOverlay, GoldText, HUDHandIndicator, HUDIcon, HUDRoot, HealthBar, HealthText,
-    MagicSlotIndicator, MenuButton, RoundText, ShurikenCountText,
+    MagicSlotIndicator, RoundText, ShurikenCountText,
 };
 use crate::components::player::{CombatStats, Currency, Hand, HandType, Health, Player};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
+use crate::systems::ui::MenuButton;
 
 use bevy::prelude::*;
 

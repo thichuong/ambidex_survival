@@ -236,29 +236,8 @@ pub fn handle_purchases(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
-pub fn handle_menu_toggle(
-    input: Res<ButtonInput<KeyCode>>,
-    state: Res<State<GameState>>,
-    mut next_state: ResMut<NextState<GameState>>,
-    round_manager: Res<crate::resources::round::RoundManager>,
-) {
-    if input.just_pressed(KeyCode::Escape) {
-        match state.get() {
-            GameState::WeaponMenu | GameState::Settings => {
-                if round_manager.has_started {
-                    next_state.set(GameState::Playing);
-                }
-            }
-            GameState::Playing | GameState::Tutorial => {
-                next_state.set(GameState::WeaponMenu);
-            }
-            GameState::GameOver => {}
-        }
-    }
-}
-
 /// Handle tab switching (Card <-> Equip)
+#[allow(clippy::needless_pass_by_value)]
 pub fn handle_tab_interaction(
     trigger: On<Pointer<Click>>,
     tab_query: Query<&TabButton>,
@@ -290,6 +269,28 @@ pub fn handle_tab_interaction(
                 shop_container.display = Display::None;
                 equip_container.display = Display::Flex;
             }
+        }
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
+pub fn handle_menu_toggle(
+    input: Res<ButtonInput<KeyCode>>,
+    state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    round_manager: Res<crate::resources::round::RoundManager>,
+) {
+    if input.just_pressed(KeyCode::Escape) {
+        match state.get() {
+            GameState::WeaponMenu | GameState::Settings => {
+                if round_manager.has_started {
+                    next_state.set(GameState::Playing);
+                }
+            }
+            GameState::Playing | GameState::Tutorial => {
+                next_state.set(GameState::WeaponMenu);
+            }
+            GameState::GameOver => {}
         }
     }
 }

@@ -1,8 +1,121 @@
-use super::super::components::{
-    InfinitySymbol, SelectCardEvent, ShopButton, ShopCardCount, ShopCardCurrentCount, ShopCardLimit,
+use super::components::{
+    InfinitySymbol, SelectCardEvent, ShopButton, ShopBuyButton, ShopBuyButtonPrice,
+    ShopBuyButtonText, ShopCardCount, ShopCardCurrentCount, ShopCardLimit, ShopContainer,
 };
 use crate::components::player::Progression;
 use bevy::prelude::*;
+
+#[allow(clippy::too_many_lines)]
+pub fn spawn_shop_panel(parent: &mut ChildSpawnerCommands) {
+    parent
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                display: Display::Flex,
+                overflow: Overflow::scroll_y(),
+                ..default()
+            },
+            ShopContainer,
+        ))
+        .with_children(|shop_scroll| {
+            shop_scroll.spawn((
+                Text::new("SHOP UPGRADES"),
+                TextFont {
+                    font_size: 24.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 0.9, 0.5)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(15.0)),
+                    ..default()
+                },
+            ));
+            shop_scroll
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    flex_wrap: FlexWrap::Wrap,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::FlexStart,
+                    width: Val::Percent(100.0),
+                    row_gap: Val::Px(10.0),
+                    column_gap: Val::Px(10.0),
+                    ..default()
+                })
+                .with_children(|grid| {
+                    spawn_shop_button(grid, ShopButton::Heal, "");
+                    spawn_shop_button(grid, ShopButton::DamageUp, "");
+                    spawn_shop_button(grid, ShopButton::MaxHealthUp, "");
+                    spawn_shop_button(grid, ShopButton::CritDamageUp, "");
+                    spawn_shop_button(grid, ShopButton::CritChanceUp, "");
+                    spawn_shop_button(grid, ShopButton::LifestealUp, "");
+                    spawn_shop_button(grid, ShopButton::CooldownReductionUp, "");
+                    spawn_shop_button(grid, ShopButton::NovaCore, "");
+                });
+
+            // Shop Buy Button
+            shop_scroll
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(280.0),
+                        height: Val::Px(80.0),
+                        margin: UiRect::vertical(Val::Px(15.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(4.0),
+                        border: UiRect::all(Val::Px(3.0)),
+                        display: Display::None,
+                        ..default()
+                    },
+                    BorderColor::all(Color::srgb(1.0, 0.85, 0.0)),
+                    BorderRadius::all(Val::Px(12.0)),
+                    BackgroundColor(Color::srgba(0.2, 0.15, 0.0, 0.95)),
+                    ShopBuyButton,
+                ))
+                .observe(
+                    |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
+                        if let Ok(mut color) = color.get_mut(trigger.entity) {
+                            *color = BackgroundColor(Color::srgba(0.35, 0.28, 0.0, 1.0));
+                        }
+                    },
+                )
+                .observe(
+                    |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
+                        if let Ok(mut color) = color.get_mut(trigger.entity) {
+                            *color = BackgroundColor(Color::srgba(0.2, 0.15, 0.0, 0.95));
+                        }
+                    },
+                )
+                .with_children(|buy_btn| {
+                    buy_btn.spawn((
+                        Text::new("Select an upgrade"),
+                        TextFont {
+                            font_size: 22.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.95, 0.7)),
+                        ShopBuyButtonText,
+                    ));
+                    buy_btn.spawn((
+                        Text::new(""),
+                        TextFont {
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.85, 0.0)),
+                        ShopBuyButtonPrice,
+                    ));
+                });
+            shop_scroll.spawn(Node {
+                height: Val::Px(20.0),
+                ..default()
+            });
+        });
+}
 
 #[allow(clippy::too_many_lines)]
 pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton, _label: &str) {
@@ -150,7 +263,7 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
                         ..default()
                     },
                     TextColor(Color::srgb(0.6, 0.6, 0.6)),
-                    super::super::components::ShopCardLimit,
+                    super::components::ShopCardLimit,
                 ));
                 // Infinity symbol container (shown when no limit)
                 count_container
@@ -162,7 +275,7 @@ pub fn spawn_shop_button(parent: &mut ChildSpawnerCommands, btn_type: ShopButton
                             display: Display::None, // Hidden by default
                             ..default()
                         },
-                        super::super::components::InfinitySymbol,
+                        super::components::InfinitySymbol,
                     ))
                     .with_children(|infinity| {
                         crate::visuals::ui_icons::spawn_infinity_symbol(infinity);
