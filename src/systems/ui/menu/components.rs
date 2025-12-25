@@ -86,6 +86,11 @@ pub struct WeaponMenuSettingsButton;
 pub struct WeaponMenuRestartButton;
 
 #[derive(Component)]
+pub struct DescriptionWrapper {
+    pub side: HandType,
+}
+
+#[derive(Component)]
 pub struct WeaponDetailPanel {
     pub side: HandType,
 }

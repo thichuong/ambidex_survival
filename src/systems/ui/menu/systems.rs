@@ -251,3 +251,16 @@ pub fn update_menu_weapon_buttons(
         }
     }
 }
+
+pub fn update_description_wrapper_visibility(
+    mut query: Query<(&mut Node, &super::components::DescriptionWrapper)>,
+    active_side: Res<super::resources::ActiveDescriptionSide>,
+) {
+    for (mut node, wrapper) in &mut query {
+        node.display = if wrapper.side == active_side.0 {
+            Display::Flex
+        } else {
+            Display::None
+        };
+    }
+}

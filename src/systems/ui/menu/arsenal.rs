@@ -116,7 +116,7 @@ pub fn spawn_magic_panel(
     parent
         .spawn((
             Node {
-                width: Val::Percent(100.0),
+                width: Val::Percent(50.0),
                 height: Val::Auto,
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
@@ -258,7 +258,7 @@ pub fn spawn_weapon_detail_panel(
     parent
         .spawn((
             Node {
-                width: Val::Percent(100.0),
+                width: Val::Percent(50.0),
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
                 margin: UiRect::top(Val::Px(10.0)),
@@ -484,11 +484,45 @@ pub fn spawn_equipment_panel(parent: &mut ChildSpawnerCommands, asset_server: &A
                     ));
 
                     // Spawn Panels for both sides - Visibility controlled by system
-                    spawn_magic_panel(center, HandType::Left, asset_server);
-                    spawn_weapon_detail_panel(center, HandType::Left, asset_server);
+                    use super::components::DescriptionWrapper;
 
-                    spawn_magic_panel(center, HandType::Right, asset_server);
-                    spawn_weapon_detail_panel(center, HandType::Right, asset_server);
+                    // Left Group: Magic (Selection) LEFT | Description RIGHT (Row)
+                    center
+                        .spawn((
+                            Node {
+                                flex_direction: FlexDirection::Row,
+                                width: Val::Percent(100.0),
+                                flex_grow: 1.0,
+                                display: Display::None,
+                                ..default()
+                            },
+                            DescriptionWrapper {
+                                side: HandType::Left,
+                            },
+                        ))
+                        .with_children(|row| {
+                            spawn_magic_panel(row, HandType::Left, asset_server);
+                            spawn_weapon_detail_panel(row, HandType::Left, asset_server);
+                        });
+
+                    // Right Group: Description LEFT | Magic (Selection) RIGHT (RowReverse)
+                    center
+                        .spawn((
+                            Node {
+                                flex_direction: FlexDirection::RowReverse,
+                                width: Val::Percent(100.0),
+                                flex_grow: 1.0,
+                                display: Display::None,
+                                ..default()
+                            },
+                            DescriptionWrapper {
+                                side: HandType::Right,
+                            },
+                        ))
+                        .with_children(|row| {
+                            spawn_magic_panel(row, HandType::Right, asset_server);
+                            spawn_weapon_detail_panel(row, HandType::Right, asset_server);
+                        });
                 });
 
             // === RIGHT COLUMN (Right Hand Buttons) ===

@@ -62,6 +62,7 @@ impl Plugin for UiPlugin {
                 Update,
                 (
                     update_menu_magic_ui,
+                    crate::systems::ui::menu::systems::update_description_wrapper_visibility,
                     update_menu_weapon_details_ui,
                     update_menu_weapon_buttons,
                     update_menu_gold_text,
