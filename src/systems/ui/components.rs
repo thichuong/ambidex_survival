@@ -2,6 +2,23 @@ use crate::components::player::HandType;
 use crate::components::weapon::WeaponType;
 use bevy::prelude::*;
 
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WeaponMenuTab {
+    Card,
+    Equip,
+}
+
+#[derive(Component)]
+pub struct TabButton {
+    pub tab: WeaponMenuTab,
+}
+
+#[derive(Component)]
+pub struct ShopContainer;
+
+#[derive(Component)]
+pub struct EquipmentContainer;
+
 #[derive(Component)]
 pub struct WeaponButton {
     pub side: HandType,

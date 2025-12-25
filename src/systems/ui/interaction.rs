@@ -1,6 +1,6 @@
 use super::components::{
-    PurchaseEvent, SelectCardEvent, SelectedShopCard, ShopButton, ShopBuyButton,
-    ShopBuyButtonPrice, ShopBuyButtonText,
+    EquipmentContainer, PurchaseEvent, SelectCardEvent, SelectedShopCard, ShopButton,
+    ShopBuyButton, ShopBuyButtonPrice, ShopBuyButtonText, ShopContainer, TabButton, WeaponMenuTab,
 };
 use crate::components::player::{CombatStats, Currency, Health, Player, PlayerStats, Progression};
 use crate::configs::shop::get_card_config;
@@ -254,6 +254,42 @@ pub fn handle_menu_toggle(
                 next_state.set(GameState::WeaponMenu);
             }
             GameState::GameOver => {}
+        }
+    }
+}
+
+/// Handle tab switching (Card <-> Equip)
+pub fn handle_tab_interaction(
+    trigger: On<Pointer<Click>>,
+    tab_query: Query<&TabButton>,
+    mut all_tabs: Query<(Entity, &TabButton, &mut BackgroundColor, &mut BorderColor)>,
+    mut shop_container: Single<&mut Node, (With<ShopContainer>, Without<EquipmentContainer>)>,
+    mut equip_container: Single<&mut Node, (With<EquipmentContainer>, Without<ShopContainer>)>,
+) {
+    if let Ok(clicked_tab) = tab_query.get(trigger.entity) {
+        // Update Tab Styles
+        for (entity, _tab, mut bg, mut border) in &mut all_tabs {
+            if entity == trigger.entity {
+                // Active Tab
+                *bg = BackgroundColor(Color::srgba(0.25, 0.25, 0.35, 1.0));
+                *border = BorderColor::all(Color::srgb(1.0, 0.8, 0.2));
+            } else {
+                // Inactive Tab
+                *bg = BackgroundColor(Color::srgba(0.15, 0.15, 0.2, 1.0));
+                *border = BorderColor::all(Color::NONE);
+            }
+        }
+
+        // Update Container Visibility
+        match clicked_tab.tab {
+            WeaponMenuTab::Card => {
+                shop_container.display = Display::Flex;
+                equip_container.display = Display::None;
+            }
+            WeaponMenuTab::Equip => {
+                shop_container.display = Display::None;
+                equip_container.display = Display::Flex;
+            }
         }
     }
 }
