@@ -1,6 +1,6 @@
 use super::arsenal::spawn_equipment_panel;
 use super::components::WeaponMenuUI;
-use super::layout::{spawn_footer, spawn_header, spawn_sidebar};
+use super::layout::{spawn_header, spawn_sidebar};
 use super::shop::spawn_shop_panel;
 use bevy::prelude::*;
 
@@ -57,7 +57,7 @@ pub fn spawn_weapon_menu(mut commands: Commands, asset_server: Res<AssetServer>)
                     });
 
                 // --- FOOTER ---
-                spawn_footer(main_col);
+                // --- FOOTER REMOVED ---
             });
         });
 }

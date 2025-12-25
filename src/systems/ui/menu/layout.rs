@@ -18,96 +18,134 @@ pub fn spawn_sidebar(parent: &mut ChildSpawnerCommands) {
                 padding: UiRect::vertical(Val::Px(20.0)),
                 row_gap: Val::Px(20.0),
                 border: UiRect::right(Val::Px(1.0)),
+                // Enable scrolling for overflow content
+                overflow: Overflow {
+                    x: OverflowAxis::Clip,
+                    y: OverflowAxis::Scroll,
+                },
+
                 ..default()
             },
             BackgroundColor(Color::srgba(0.06, 0.06, 0.08, 1.0)),
             BorderColor::all(Color::srgba(0.2, 0.2, 0.25, 0.5)),
         ))
         .with_children(|sidebar| {
-            // Title / Logo Area in Sidebar
-            sidebar.spawn((
-                Text::new("MENU"),
+            // Wrapper to ensure full height content and spacing
+            sidebar
+                .spawn(Node {
+                    width: Val::Percent(100.0),
+                    min_height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::FlexStart,
+                    align_items: AlignItems::Center,
+                    ..default()
+                })
+                .with_children(|content| {
+                    spawn_sidebar_title(content);
+                    spawn_upgrade_tab_button(content);
+                    spawn_equip_tab_button(content);
+
+                    // Flexible Spacer - Pushes content below to the bottom
+                    content.spawn(Node {
+                        flex_grow: 1.0,
+                        min_height: Val::Px(20.0),
+                        width: Val::Percent(100.0),
+                        ..default()
+                    });
+
+                    // Footer Actions moved to Sidebar (Bottom)
+                    spawn_battle_button(content);
+                    spawn_tutorial_button(content);
+                    spawn_settings_button(content);
+                    spawn_new_game_button(content);
+                });
+        });
+}
+
+fn spawn_sidebar_title(parent: &mut ChildSpawnerCommands) {
+    parent.spawn((
+        Text::new("MENU"),
+        TextFont {
+            font_size: 28.0,
+            ..default()
+        },
+        TextColor(Color::srgb(0.5, 0.5, 0.6)),
+        Node {
+            margin: UiRect::bottom(Val::Px(20.0)),
+            ..default()
+        },
+    ));
+}
+
+fn spawn_upgrade_tab_button(parent: &mut ChildSpawnerCommands) {
+    parent
+        .spawn((
+            Button,
+            Node {
+                width: Val::Percent(90.0),
+                height: Val::Px(60.0),
+                justify_content: JustifyContent::FlexStart,
+                align_items: AlignItems::Center,
+                padding: UiRect::left(Val::Px(20.0)),
+                border: UiRect::left(Val::Px(5.0)),
+                margin: UiRect::vertical(Val::Px(5.0)),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.15, 0.25, 0.35, 1.0)),
+            TabButton {
+                tab: WeaponMenuTab::Card,
+            },
+            ActiveTab,
+            BorderColor::all(Color::srgb(1.0, 0.8, 0.2)), // Active Gold Border
+            BorderRadius::all(Val::Px(5.0)),
+        ))
+        .observe(handle_tab_interaction)
+        .observe(handle_tab_hover)
+        .observe(handle_tab_out)
+        .with_children(|btn| {
+            btn.spawn((
+                Text::new("UPGRADES"),
                 TextFont {
-                    font_size: 28.0,
+                    font_size: 20.0,
                     ..default()
                 },
-                TextColor(Color::srgb(0.5, 0.5, 0.6)),
-                Node {
-                    margin: UiRect::bottom(Val::Px(20.0)),
+                TextColor(Color::WHITE),
+            ));
+        });
+}
+
+fn spawn_equip_tab_button(parent: &mut ChildSpawnerCommands) {
+    parent
+        .spawn((
+            Button,
+            Node {
+                width: Val::Percent(90.0),
+                height: Val::Px(60.0),
+                justify_content: JustifyContent::FlexStart,
+                align_items: AlignItems::Center,
+                padding: UiRect::left(Val::Px(20.0)),
+                border: UiRect::left(Val::Px(5.0)),
+                margin: UiRect::vertical(Val::Px(5.0)),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.1, 0.1, 0.12, 1.0)),
+            TabButton {
+                tab: WeaponMenuTab::Equip,
+            },
+            BorderColor::all(Color::NONE),
+            BorderRadius::all(Val::Px(5.0)),
+        ))
+        .observe(handle_tab_interaction)
+        .observe(handle_tab_hover)
+        .observe(handle_tab_out)
+        .with_children(|btn| {
+            btn.spawn((
+                Text::new("EQUIPMENT"),
+                TextFont {
+                    font_size: 20.0,
                     ..default()
                 },
             ));
-
-            // Card Tab Button
-            sidebar
-                .spawn((
-                    Button,
-                    Node {
-                        width: Val::Percent(90.0),
-                        height: Val::Px(60.0),
-                        justify_content: JustifyContent::FlexStart,
-                        align_items: AlignItems::Center,
-                        padding: UiRect::left(Val::Px(20.0)),
-                        border: UiRect::left(Val::Px(5.0)),
-                        margin: UiRect::vertical(Val::Px(5.0)),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgba(0.15, 0.25, 0.35, 1.0)),
-                    TabButton {
-                        tab: WeaponMenuTab::Card,
-                    },
-                    ActiveTab,
-                    BorderColor::all(Color::srgb(1.0, 0.8, 0.2)), // Active Gold Border
-                    BorderRadius::all(Val::Px(5.0)),
-                ))
-                .observe(handle_tab_interaction)
-                .observe(handle_tab_hover)
-                .observe(handle_tab_out)
-                .with_children(|btn| {
-                    btn.spawn((
-                        Text::new("UPGRADES"),
-                        TextFont {
-                            font_size: 20.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ));
-                });
-
-            // Equip Tab Button
-            sidebar
-                .spawn((
-                    Button,
-                    Node {
-                        width: Val::Percent(90.0),
-                        height: Val::Px(60.0),
-                        justify_content: JustifyContent::FlexStart,
-                        align_items: AlignItems::Center,
-                        padding: UiRect::left(Val::Px(20.0)),
-                        border: UiRect::left(Val::Px(5.0)),
-                        margin: UiRect::vertical(Val::Px(5.0)),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgba(0.1, 0.1, 0.12, 1.0)),
-                    TabButton {
-                        tab: WeaponMenuTab::Equip,
-                    },
-                    BorderColor::all(Color::NONE),
-                    BorderRadius::all(Val::Px(5.0)),
-                ))
-                .observe(handle_tab_interaction)
-                .observe(handle_tab_hover)
-                .observe(handle_tab_out)
-                .with_children(|btn| {
-                    btn.spawn((
-                        Text::new("EQUIPMENT"),
-                        TextFont {
-                            font_size: 20.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                    ));
-                });
         });
 }
 
@@ -186,31 +224,6 @@ pub fn spawn_header(parent: &mut ChildSpawnerCommands) {
         });
 }
 
-#[allow(clippy::too_many_lines)]
-pub fn spawn_footer(parent: &mut ChildSpawnerCommands) {
-    parent
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Px(80.0),
-                flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                column_gap: Val::Px(20.0),
-                border: UiRect::top(Val::Px(1.0)),
-                ..default()
-            },
-            BackgroundColor(Color::srgba(0.08, 0.08, 0.1, 0.95)),
-            BorderColor::all(Color::srgba(0.2, 0.2, 0.25, 0.5)),
-        ))
-        .with_children(|footer| {
-            spawn_battle_button(footer);
-            spawn_tutorial_button(footer);
-            spawn_settings_button(footer);
-            spawn_new_game_button(footer);
-        });
-}
-
 fn spawn_battle_button(parent: &mut ChildSpawnerCommands) {
     use crate::resources::game_state::GameState;
     use crate::resources::round::{RoundManager, RoundState};
@@ -219,10 +232,11 @@ fn spawn_battle_button(parent: &mut ChildSpawnerCommands) {
         .spawn((
             Button,
             Node {
-                width: Val::Px(200.0),
+                width: Val::Percent(90.0),
                 height: Val::Px(50.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                margin: UiRect::vertical(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.0)),
                 ..default()
             },
@@ -288,10 +302,11 @@ fn spawn_tutorial_button(parent: &mut ChildSpawnerCommands) {
         .spawn((
             Button,
             Node {
-                width: Val::Px(140.0),
+                width: Val::Percent(90.0),
                 height: Val::Px(50.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                margin: UiRect::vertical(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.0)),
                 ..default()
             },
@@ -341,10 +356,11 @@ fn spawn_settings_button(parent: &mut ChildSpawnerCommands) {
         .spawn((
             Button,
             Node {
-                width: Val::Px(140.0),
+                width: Val::Percent(90.0),
                 height: Val::Px(50.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                margin: UiRect::vertical(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.0)),
                 ..default()
             },
@@ -392,10 +408,11 @@ fn spawn_new_game_button(parent: &mut ChildSpawnerCommands) {
         .spawn((
             Button,
             Node {
-                width: Val::Px(140.0),
+                width: Val::Percent(90.0),
                 height: Val::Px(50.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                margin: UiRect::vertical(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.0)),
                 ..default()
             },
