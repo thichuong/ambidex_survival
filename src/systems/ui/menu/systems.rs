@@ -50,11 +50,14 @@ pub fn update_menu_magic_ui(
     mut text_query: Query<&mut Text>,
     loadout_query: Query<&MagicLoadout>,
     asset_server: Res<AssetServer>,
+    active_side: Res<super::resources::ActiveDescriptionSide>,
 ) {
     for (mut node, panel) in &mut panel_query {
-        let show = hand_query
-            .iter()
-            .any(|(h, weapon)| h.side == panel.side && weapon.kind == WeaponType::Magic);
+        let is_active_side = panel.side == active_side.0;
+        let show = is_active_side
+            && hand_query
+                .iter()
+                .any(|(h, weapon)| h.side == panel.side && weapon.kind == WeaponType::Magic);
         node.display = if show { Display::Flex } else { Display::None };
     }
 
@@ -125,9 +128,15 @@ pub fn update_menu_weapon_details_ui(
         &crate::components::weapon::Weapon,
         Option<&MagicLoadout>,
     )>,
+    active_side: Res<super::resources::ActiveDescriptionSide>,
 ) {
     use super::arsenal::get_weapon_description;
     for (mut panel_node, children, panel) in &mut panel_query {
+        if panel.side != active_side.0 {
+            panel_node.display = Display::None;
+            continue;
+        }
+
         let active_data = hand_query.iter().find(|(h, _, _)| h.side == panel.side);
 
         if let Some((_, weapon, loadout_opt)) = active_data {
