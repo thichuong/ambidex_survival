@@ -113,14 +113,31 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         @keyframes rotate-phone {
-            0%, 10% { transform: rotate(0deg); }
-            40%, 60% { transform: rotate(-90deg); }
-            90%, 100% { transform: rotate(0deg); }
+
+            0%,
+            10% {
+                transform: rotate(0deg);
+            }
+
+            40%,
+            60% {
+                transform: rotate(-90deg);
+            }
+
+            90%,
+            100% {
+                transform: rotate(0deg);
+            }
         }
 
         /* Force Landscape Logic */
@@ -128,20 +145,64 @@
             #landscape-warning {
                 display: flex;
             }
-            #loading-screen, canvas {
+
+            #loading-screen,
+            canvas {
                 display: none !important;
             }
         }
     </style>
     <!-- Service Worker Registration -->
     <script>
+        // Loading progress tracking
+        const loadingState = {
+            wasmLoaded: false,
+            wasmProgress: 0,
+            assetsLoaded: 0,
+            totalAssets: 13, // Number of asset files to track
+            initStarted: false
+        };
+
+        // Asset files to track (images, audio, etc.)
+        const trackedAssetExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.ogg', '.wav', '.mp3', '.ttf', '.woff', '.json'];
+
+        function updateProgressBar() {
+            const progressBar = document.getElementById('progress-bar');
+            const loadingText = document.getElementById('loading-text');
+            if (!progressBar || !loadingText) return;
+
+            let totalProgress = 0;
+            let statusText = '';
+
+            if (!loadingState.wasmLoaded) {
+                // Stage 1: WASM download (0-60%)
+                totalProgress = loadingState.wasmProgress * 0.6;
+                statusText = `Downloading Game... ${Math.round(loadingState.wasmProgress)}%`;
+            } else if (loadingState.assetsLoaded < loadingState.totalAssets) {
+                // Stage 2: Asset loading (60-90%)
+                const assetProgress = (loadingState.assetsLoaded / loadingState.totalAssets) * 100;
+                totalProgress = 60 + (assetProgress * 0.3);
+                statusText = `Loading Assets... ${loadingState.assetsLoaded}/${loadingState.totalAssets}`;
+            } else if (!loadingState.initStarted) {
+                // Stage 3: Initialization (90-100%)
+                totalProgress = 90;
+                statusText = 'Initializing Game...';
+            } else {
+                totalProgress = 100;
+                statusText = 'Starting...';
+            }
+
+            progressBar.style.width = `${totalProgress}%`;
+            loadingText.innerText = statusText;
+        }
+
         // Intercept fetch to track download progress
         const originalFetch = window.fetch;
         window.fetch = async (...args) => {
             const response = await originalFetch(...args);
-
-            // Only track the main WASM binary or large files if identified
             const url = args[0].toString();
+
+            // Track WASM binary download
             if (url.endsWith('.wasm')) {
                 const contentLength = response.headers.get('content-length');
                 if (!contentLength) return response;
@@ -157,16 +218,13 @@
                             if (done) break;
 
                             loaded += value.byteLength;
-                            const progress = (loaded / total) * 100;
-                            
-                            // Update UI
-                            const progressBar = document.getElementById('progress-bar');
-                            const loadingText = document.getElementById('loading-text');
-                            if (progressBar) progressBar.style.width = `${progress}%`;
-                            if (loadingText) loadingText.innerText = `Loading Assets... ${Math.round(progress)}%`;
+                            loadingState.wasmProgress = (loaded / total) * 100;
+                            updateProgressBar();
 
                             controller.enqueue(value);
                         }
+                        loadingState.wasmLoaded = true;
+                        updateProgressBar();
                         controller.close();
                     }
                 });
@@ -178,8 +236,24 @@
                 });
             }
 
+            // Track asset files
+            const isTrackedAsset = trackedAssetExtensions.some(ext => url.toLowerCase().includes(ext));
+            if (isTrackedAsset && loadingState.wasmLoaded) {
+                loadingState.assetsLoaded++;
+                updateProgressBar();
+            }
+
             return response;
         };
+
+        // Mark initialization started when canvas appears
+        const initObserver = new MutationObserver((mutations) => {
+            if (document.querySelector('canvas') && !loadingState.initStarted) {
+                loadingState.initStarted = true;
+                updateProgressBar();
+            }
+        });
+        initObserver.observe(document.body, { childList: true, subtree: true });
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

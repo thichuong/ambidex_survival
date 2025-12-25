@@ -93,10 +93,78 @@ pub fn setup_buy_button_observer(
     }
 }
 
+const fn get_progression_count(btn_type: ShopButton, progression: &Progression) -> u32 {
+    match btn_type {
+        ShopButton::Heal => progression.heal_count,
+        ShopButton::DamageUp => progression.damage_upgrades,
+        ShopButton::MaxHealthUp => progression.max_health_upgrades,
+        ShopButton::CritDamageUp => progression.crit_damage_upgrades,
+        ShopButton::CritChanceUp => progression.crit_chance_upgrades,
+        ShopButton::LifestealUp => progression.lifesteal_upgrades,
+        ShopButton::CooldownReductionUp => progression.cdr_upgrades,
+        ShopButton::NovaCore => progression.nova_core,
+    }
+}
+
+fn apply_upgrade_effect(
+    btn_type: ShopButton,
+    value: f32,
+    health: &mut Health,
+    stats: &mut PlayerStats,
+    combat: &mut CombatStats,
+    progression: &mut Progression,
+) -> bool {
+    match btn_type {
+        ShopButton::Heal => {
+            if health.current < health.max {
+                health.current = (health.current + value).min(health.max);
+                progression.heal_count += 1;
+                true
+            } else {
+                false
+            }
+        }
+        ShopButton::DamageUp => {
+            stats.damage_multiplier += value;
+            progression.damage_upgrades += 1;
+            true
+        }
+        ShopButton::MaxHealthUp => {
+            health.max += value;
+            health.current += value;
+            progression.max_health_upgrades += 1;
+            true
+        }
+        ShopButton::CritDamageUp => {
+            combat.crit_damage += value;
+            progression.crit_damage_upgrades += 1;
+            true
+        }
+        ShopButton::CritChanceUp => {
+            combat.crit_chance = (combat.crit_chance + value).min(1.0);
+            progression.crit_chance_upgrades += 1;
+            true
+        }
+        ShopButton::LifestealUp => {
+            combat.lifesteal = (combat.lifesteal + value).min(0.5);
+            progression.lifesteal_upgrades += 1;
+            true
+        }
+        ShopButton::CooldownReductionUp => {
+            combat.cooldown_reduction = (combat.cooldown_reduction + value).min(0.8);
+            progression.cdr_upgrades += 1;
+            true
+        }
+        ShopButton::NovaCore => {
+            progression.nova_core += 1;
+            true
+        }
+    }
+}
+
 #[allow(
     clippy::too_many_arguments,
     clippy::type_complexity,
-    clippy::too_many_lines,
     clippy::needless_pass_by_value
 )]
 pub fn handle_purchases(
@@ -123,76 +191,22 @@ pub fn handle_purchases(
     let mut success = false;
 
     // Check limit
-    let count = match event.btn_type {
-        ShopButton::Heal => Some(progression.heal_count),
-        ShopButton::DamageUp => Some(progression.damage_upgrades),
-        ShopButton::MaxHealthUp => Some(progression.max_health_upgrades),
-        ShopButton::CritDamageUp => Some(progression.crit_damage_upgrades),
-        ShopButton::CritChanceUp => Some(progression.crit_chance_upgrades),
-        ShopButton::LifestealUp => Some(progression.lifesteal_upgrades),
-        ShopButton::CooldownReductionUp => Some(progression.cdr_upgrades),
-        ShopButton::NovaCore => Some(progression.nova_core),
-    };
+    let count = get_progression_count(event.btn_type, &progression);
+    let is_maxed = config.limit.is_some_and(|limit| count >= limit);
 
-    let is_maxed = if let (Some(limit), Some(c)) = (config.limit, count) {
-        c >= limit
-    } else {
-        false
-    };
-
-    if !is_maxed && currency.gold >= config.price {
-        match event.btn_type {
-            ShopButton::Heal => {
-                if health.current < health.max {
-                    currency.gold -= config.price;
-                    health.current = (health.current + config.value).min(health.max);
-                    progression.heal_count += 1;
-                    success = true;
-                }
-            }
-            ShopButton::DamageUp => {
-                currency.gold -= config.price;
-                stats.damage_multiplier += config.value;
-                progression.damage_upgrades += 1;
-                success = true;
-            }
-            ShopButton::MaxHealthUp => {
-                currency.gold -= config.price;
-                health.max += config.value;
-                health.current += config.value;
-                progression.max_health_upgrades += 1;
-                success = true;
-            }
-            ShopButton::CritDamageUp => {
-                currency.gold -= config.price;
-                combat.crit_damage += config.value;
-                progression.crit_damage_upgrades += 1;
-                success = true;
-            }
-            ShopButton::CritChanceUp => {
-                currency.gold -= config.price;
-                combat.crit_chance = (combat.crit_chance + config.value).min(1.0);
-                progression.crit_chance_upgrades += 1;
-                success = true;
-            }
-            ShopButton::LifestealUp => {
-                currency.gold -= config.price;
-                combat.lifesteal = (combat.lifesteal + config.value).min(0.5);
-                progression.lifesteal_upgrades += 1;
-                success = true;
-            }
-            ShopButton::CooldownReductionUp => {
-                currency.gold -= config.price;
-                combat.cooldown_reduction = (combat.cooldown_reduction + config.value).min(0.8);
-                progression.cdr_upgrades += 1;
-                success = true;
-            }
-            ShopButton::NovaCore => {
-                currency.gold -= config.price;
-                progression.nova_core += 1;
-                success = true;
-            }
-        }
+    if !is_maxed
+        && currency.gold >= config.price
+        && apply_upgrade_effect(
+            event.btn_type,
+            config.value,
+            &mut health,
+            &mut stats,
+            &mut combat,
+            &mut progression,
+        )
+    {
+        currency.gold -= config.price;
+        success = true;
     }
 
     // Visual feedback on buy button
@@ -206,19 +220,9 @@ pub fn handle_purchases(
 
     // Check if card is now maxed after purchase - only then hide buy button
     if success {
-        // Get updated count after purchase
-        let new_count = match event.btn_type {
-            ShopButton::Heal => progression.heal_count,
-            ShopButton::DamageUp => progression.damage_upgrades,
-            ShopButton::MaxHealthUp => progression.max_health_upgrades,
-            ShopButton::CritDamageUp => progression.crit_damage_upgrades,
-            ShopButton::CritChanceUp => progression.crit_chance_upgrades,
-            ShopButton::LifestealUp => progression.lifesteal_upgrades,
-            ShopButton::CooldownReductionUp => progression.cdr_upgrades,
-            ShopButton::NovaCore => progression.nova_core,
-        };
-
-        let now_maxed = config.limit.is_some_and(|limit| new_count >= limit);
+        let now_maxed = config
+            .limit
+            .is_some_and(|limit| get_progression_count(event.btn_type, &progression) >= limit);
 
         // Only hide buy button if card is now maxed
         if now_maxed {

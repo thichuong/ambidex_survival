@@ -413,9 +413,135 @@ fn spawn_shuriken_group(
         });
 }
 
-#[allow(clippy::too_many_lines)]
-pub fn spawn_equipment_panel(parent: &mut ChildSpawnerCommands, asset_server: &AssetServer) {
+fn spawn_left_column(parent: &mut ChildSpawnerCommands) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            width: Val::Percent(30.0),
+            height: Val::Percent(100.0),
+            padding: UiRect::all(Val::Px(10.0)),
+            ..default()
+        })
+        .with_children(|col| {
+            col.spawn((
+                Text::new("LEFT HAND"),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.7, 0.7, 1.0)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(15.0)),
+                    ..default()
+                },
+            ));
+
+            spawn_weapon_button(col, HandType::Left, WeaponType::Shuriken, "Shuriken");
+            spawn_weapon_button(col, HandType::Left, WeaponType::Sword, "Sword");
+            spawn_weapon_button(col, HandType::Left, WeaponType::Gun, "Gun");
+            spawn_weapon_button(col, HandType::Left, WeaponType::Magic, "Magic");
+        });
+}
+
+fn spawn_center_column(parent: &mut ChildSpawnerCommands, asset_server: &AssetServer) {
     use super::components::DescriptionWrapper;
+
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            width: Val::Percent(40.0),
+            height: Val::Percent(100.0),
+            padding: UiRect::horizontal(Val::Px(10.0)),
+            ..default()
+        })
+        .with_children(|center| {
+            center.spawn((
+                Text::new("DESCRIPTION"),
+                TextFont {
+                    font_size: 18.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(10.0)),
+                    ..default()
+                },
+            ));
+
+            // Left Group: Magic (Selection) LEFT | Description RIGHT (Row)
+            center
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        width: Val::Percent(100.0),
+                        flex_grow: 1.0,
+                        display: Display::None,
+                        ..default()
+                    },
+                    DescriptionWrapper {
+                        side: HandType::Left,
+                    },
+                ))
+                .with_children(|row| {
+                    spawn_magic_panel(row, HandType::Left, asset_server);
+                    spawn_weapon_detail_panel(row, HandType::Left, asset_server);
+                });
+
+            // Right Group: Description LEFT | Magic (Selection) RIGHT (RowReverse)
+            center
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::RowReverse,
+                        width: Val::Percent(100.0),
+                        flex_grow: 1.0,
+                        display: Display::None,
+                        ..default()
+                    },
+                    DescriptionWrapper {
+                        side: HandType::Right,
+                    },
+                ))
+                .with_children(|row| {
+                    spawn_magic_panel(row, HandType::Right, asset_server);
+                    spawn_weapon_detail_panel(row, HandType::Right, asset_server);
+                });
+        });
+}
+
+fn spawn_right_column(parent: &mut ChildSpawnerCommands) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            width: Val::Percent(30.0),
+            height: Val::Percent(100.0),
+            padding: UiRect::all(Val::Px(10.0)),
+            ..default()
+        })
+        .with_children(|col| {
+            col.spawn((
+                Text::new("RIGHT HAND"),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 0.7, 0.7)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(15.0)),
+                    ..default()
+                },
+            ));
+
+            spawn_weapon_button(col, HandType::Right, WeaponType::Shuriken, "Shuriken");
+            spawn_weapon_button(col, HandType::Right, WeaponType::Sword, "Sword");
+            spawn_weapon_button(col, HandType::Right, WeaponType::Gun, "Gun");
+            spawn_weapon_button(col, HandType::Right, WeaponType::Magic, "Magic");
+        });
+}
+
+pub fn spawn_equipment_panel(parent: &mut ChildSpawnerCommands, asset_server: &AssetServer) {
     use super::components::EquipmentContainer;
 
     // === EQUIPMENT CONTAINER (Equip Tab) ===
@@ -433,129 +559,8 @@ pub fn spawn_equipment_panel(parent: &mut ChildSpawnerCommands, asset_server: &A
             EquipmentContainer,
         ))
         .with_children(|equip| {
-            // === LEFT COLUMN (Left Hand Buttons) ===
-            equip
-                .spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    width: Val::Percent(30.0),
-                    height: Val::Percent(100.0),
-                    padding: UiRect::all(Val::Px(10.0)),
-                    ..default()
-                })
-                .with_children(|col| {
-                    col.spawn((
-                        Text::new("LEFT HAND"),
-                        TextFont {
-                            font_size: 20.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.7, 0.7, 1.0)),
-                        Node {
-                            margin: UiRect::bottom(Val::Px(15.0)),
-                            ..default()
-                        },
-                    ));
-
-                    spawn_weapon_button(col, HandType::Left, WeaponType::Shuriken, "Shuriken");
-                    spawn_weapon_button(col, HandType::Left, WeaponType::Sword, "Sword");
-                    spawn_weapon_button(col, HandType::Left, WeaponType::Gun, "Gun");
-                    spawn_weapon_button(col, HandType::Left, WeaponType::Magic, "Magic");
-                });
-
-            // === CENTER COLUMN (Shared Details) ===
-            equip
-                .spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    width: Val::Percent(40.0),
-                    height: Val::Percent(100.0),
-                    padding: UiRect::horizontal(Val::Px(10.0)),
-                    ..default()
-                })
-                .with_children(|center| {
-                    center.spawn((
-                        Text::new("DESCRIPTION"),
-                        TextFont {
-                            font_size: 18.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.9, 0.9, 0.9)),
-                        Node {
-                            margin: UiRect::bottom(Val::Px(10.0)),
-                            ..default()
-                        },
-                    ));
-
-                    // Spawn Panels for both sides - Visibility controlled by system
-
-                    // Left Group: Magic (Selection) LEFT | Description RIGHT (Row)
-                    center
-                        .spawn((
-                            Node {
-                                flex_direction: FlexDirection::Row,
-                                width: Val::Percent(100.0),
-                                flex_grow: 1.0,
-                                display: Display::None,
-                                ..default()
-                            },
-                            DescriptionWrapper {
-                                side: HandType::Left,
-                            },
-                        ))
-                        .with_children(|row| {
-                            spawn_magic_panel(row, HandType::Left, asset_server);
-                            spawn_weapon_detail_panel(row, HandType::Left, asset_server);
-                        });
-
-                    // Right Group: Description LEFT | Magic (Selection) RIGHT (RowReverse)
-                    center
-                        .spawn((
-                            Node {
-                                flex_direction: FlexDirection::RowReverse,
-                                width: Val::Percent(100.0),
-                                flex_grow: 1.0,
-                                display: Display::None,
-                                ..default()
-                            },
-                            DescriptionWrapper {
-                                side: HandType::Right,
-                            },
-                        ))
-                        .with_children(|row| {
-                            spawn_magic_panel(row, HandType::Right, asset_server);
-                            spawn_weapon_detail_panel(row, HandType::Right, asset_server);
-                        });
-                });
-
-            // === RIGHT COLUMN (Right Hand Buttons) ===
-            equip
-                .spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    width: Val::Percent(30.0),
-                    height: Val::Percent(100.0),
-                    padding: UiRect::all(Val::Px(10.0)),
-                    ..default()
-                })
-                .with_children(|col| {
-                    col.spawn((
-                        Text::new("RIGHT HAND"),
-                        TextFont {
-                            font_size: 20.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(1.0, 0.7, 0.7)),
-                        Node {
-                            margin: UiRect::bottom(Val::Px(15.0)),
-                            ..default()
-                        },
-                    ));
-
-                    spawn_weapon_button(col, HandType::Right, WeaponType::Shuriken, "Shuriken");
-                    spawn_weapon_button(col, HandType::Right, WeaponType::Sword, "Sword");
-                    spawn_weapon_button(col, HandType::Right, WeaponType::Gun, "Gun");
-                    spawn_weapon_button(col, HandType::Right, WeaponType::Magic, "Magic");
-                });
+            spawn_left_column(equip);
+            spawn_center_column(equip, asset_server);
+            spawn_right_column(equip);
         });
 }
