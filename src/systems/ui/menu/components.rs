@@ -9,6 +9,9 @@ pub enum WeaponMenuTab {
 }
 
 #[derive(Component)]
+pub struct ActiveTab;
+
+#[derive(Component)]
 pub struct TabButton {
     pub tab: WeaponMenuTab,
 }

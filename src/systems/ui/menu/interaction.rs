@@ -1,5 +1,5 @@
 use super::components::{
-    EquipmentContainer, PurchaseEvent, SelectCardEvent, SelectedShopCard, ShopButton,
+    ActiveTab, EquipmentContainer, PurchaseEvent, SelectCardEvent, SelectedShopCard, ShopButton,
     ShopBuyButton, ShopBuyButtonPrice, ShopBuyButtonText, ShopContainer, TabButton, WeaponMenuTab,
 };
 use crate::components::player::{CombatStats, Currency, Health, Player, PlayerStats, Progression};
@@ -236,10 +236,49 @@ pub fn handle_purchases(
     }
 }
 
+const TAB_ACTIVE_BG: Color = Color::srgba(0.15, 0.25, 0.35, 1.0);
+const TAB_ACTIVE_BORDER: Color = Color::srgb(1.0, 0.8, 0.2);
+const TAB_INACTIVE_BG: Color = Color::srgba(0.1, 0.1, 0.12, 1.0);
+const TAB_INACTIVE_BORDER: Color = Color::NONE;
+
+const TAB_HOVER_ACTIVE_BG: Color = Color::srgba(0.2, 0.3, 0.45, 1.0);
+const TAB_HOVER_INACTIVE_BG: Color = Color::srgba(0.15, 0.15, 0.18, 1.0);
+
+#[allow(clippy::needless_pass_by_value)]
+pub fn handle_tab_hover(
+    trigger: On<Pointer<Over>>,
+    mut q_tabs: Query<(Entity, &mut BackgroundColor), With<TabButton>>,
+    q_active: Query<&ActiveTab>,
+) {
+    if let Ok((entity, mut bg)) = q_tabs.get_mut(trigger.entity) {
+        if q_active.contains(entity) {
+            *bg = BackgroundColor(TAB_HOVER_ACTIVE_BG);
+        } else {
+            *bg = BackgroundColor(TAB_HOVER_INACTIVE_BG);
+        }
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
+pub fn handle_tab_out(
+    trigger: On<Pointer<Out>>,
+    mut q_tabs: Query<(Entity, &mut BackgroundColor), With<TabButton>>,
+    q_active: Query<&ActiveTab>,
+) {
+    if let Ok((entity, mut bg)) = q_tabs.get_mut(trigger.entity) {
+        if q_active.contains(entity) {
+            *bg = BackgroundColor(TAB_ACTIVE_BG);
+        } else {
+            *bg = BackgroundColor(TAB_INACTIVE_BG);
+        }
+    }
+}
+
 /// Handle tab switching (Card <-> Equip)
 #[allow(clippy::needless_pass_by_value)]
 pub fn handle_tab_interaction(
     trigger: On<Pointer<Click>>,
+    mut commands: Commands,
     tab_query: Query<&TabButton>,
     mut all_tabs: Query<(Entity, &TabButton, &mut BackgroundColor, &mut BorderColor)>,
     mut shop_container: Single<&mut Node, (With<ShopContainer>, Without<EquipmentContainer>)>,
@@ -250,12 +289,15 @@ pub fn handle_tab_interaction(
         for (entity, _tab, mut bg, mut border) in &mut all_tabs {
             if entity == trigger.entity {
                 // Active Tab
-                *bg = BackgroundColor(Color::srgba(0.25, 0.25, 0.35, 1.0));
-                *border = BorderColor::all(Color::srgb(1.0, 0.8, 0.2));
+                commands.entity(entity).insert(ActiveTab);
+                // Since we just clicked, we are hovering
+                *bg = BackgroundColor(TAB_HOVER_ACTIVE_BG);
+                *border = BorderColor::all(TAB_ACTIVE_BORDER);
             } else {
                 // Inactive Tab
-                *bg = BackgroundColor(Color::srgba(0.15, 0.15, 0.2, 1.0));
-                *border = BorderColor::all(Color::NONE);
+                commands.entity(entity).remove::<ActiveTab>();
+                *bg = BackgroundColor(TAB_INACTIVE_BG);
+                *border = BorderColor::all(TAB_INACTIVE_BORDER);
             }
         }
 
