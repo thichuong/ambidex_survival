@@ -60,12 +60,14 @@ ambidex_survival/
 │   │   │   ├── components.rs
 │   │   │   ├── game_over.rs
 │   │   │   ├── hud.rs
-│   │   │   ├── interaction.rs
 │   │   │   ├── menu/
 │   │   │   │   ├── arsenal.rs
+│   │   │   │   ├── components.rs
 │   │   │   │   ├── confirmation.rs
+│   │   │   │   ├── interaction.rs
 │   │   │   │   ├── layout.rs
 │   │   │   │   ├── shop.rs
+│   │   │   │   ├── spawn.rs
 │   │   │   │   └── systems.rs
 │   │   │   ├── scaling.rs
 │   │   │   ├── settings.rs
@@ -131,8 +133,13 @@ Modularized UI systems:
 - `components.rs`: UI component definitions (markers, bundles).
 - `setup.rs`: Spawning the UI hierarchy.
 - `hud.rs`: Real-time updates for health, gold, and cooldowns.
-- `interaction.rs`: Reactive click handling and shop purchases via `Observer`.
-- `menu/`: Weapon selection menu, shop UI, and confirmation dialog logic.
+- `menu/`: Modularized Weapon Menu logic:
+    - `spawn.rs`: Main orchestrator calling sub-modules.
+    - `layout.rs`: Generic structure (Sidebar, Header, Footer).
+    - `shop.rs`: Shop upgrade panel logic.
+    - `arsenal.rs`: Equipment and weapon detail panels.
+    - `confirmation.rs`: "New Game" confirmation dialog.
+    - `interaction.rs`: Reactive handling of menu clicks and purchases.
 - `scaling.rs`: Dynamic global UI scaling based on window height.
 - `settings.rs`: Input rebinding UI and logic.
 - `game_over.rs`: Game Over screen and restart logic.

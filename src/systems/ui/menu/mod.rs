@@ -7,7 +7,6 @@ pub mod shop;
 pub mod spawn;
 pub mod systems;
 
-pub use arsenal::*;
 pub use components::*;
 pub use confirmation::*;
 pub use interaction::*;
