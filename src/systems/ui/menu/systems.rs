@@ -237,17 +237,35 @@ pub fn update_menu_cdr_text(
 }
 
 pub fn update_menu_weapon_buttons(
-    mut button_query: Query<(&ArsenalButton, &mut BackgroundColor)>,
+    mut button_query: Query<(
+        &Interaction,
+        &ArsenalButton,
+        &mut BackgroundColor,
+        &mut BorderColor,
+    )>,
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
 ) {
-    for (button, mut color) in &mut button_query {
+    for (interaction, button, mut color, mut border) in &mut button_query {
         let is_active = hand_query
             .iter()
             .any(|(h, weapon)| h.side == button.side && weapon.kind == button.kind);
+
         if is_active {
-            *color = BackgroundColor(Color::srgba(0.2, 0.8, 0.2, 1.0));
+            *color = BackgroundColor(Color::srgba(0.2, 0.2, 0.3, 1.0));
+            *border = BorderColor::from(Color::srgba(1.0, 0.84, 0.0, 1.0)); // Gold
         } else {
-            *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0));
+            *border = BorderColor::from(Color::srgba(0.3, 0.3, 0.4, 1.0)); // Default border
+            match *interaction {
+                Interaction::Hovered => {
+                    *color = BackgroundColor(Color::srgba(0.25, 0.25, 0.4, 1.0));
+                }
+                Interaction::Pressed => {
+                    *color = BackgroundColor(Color::srgba(0.3, 0.3, 0.5, 1.0));
+                }
+                Interaction::None => {
+                    *color = BackgroundColor(Color::srgba(0.16, 0.16, 0.24, 1.0));
+                }
+            }
         }
     }
 }

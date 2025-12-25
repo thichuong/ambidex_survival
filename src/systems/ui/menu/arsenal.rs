@@ -49,14 +49,17 @@ pub fn spawn_weapon_button(
         .spawn((
             Button,
             Node {
-                width: Val::Px(80.0),
-                height: Val::Px(40.0),
+                width: Val::Px(100.0),
+                height: Val::Px(45.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                margin: UiRect::all(Val::Px(5.0)),
+                margin: UiRect::all(Val::Px(6.0)),
+                border: UiRect::all(Val::Px(2.0)),
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 1.0)),
+            BackgroundColor(Color::srgba(0.16, 0.16, 0.24, 1.0)), // Dark slate
+            BorderColor::from(Color::srgba(0.3, 0.3, 0.4, 1.0)),
+            BorderRadius::all(Val::Px(6.0)),
             ArsenalButton { side, kind },
         ))
         .observe(
@@ -98,7 +101,7 @@ pub fn spawn_weapon_button(
             btn.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: 16.0,
                     ..default()
                 },
                 TextColor(Color::WHITE),
