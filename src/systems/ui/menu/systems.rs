@@ -41,7 +41,7 @@ pub fn magic_button_observer(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::too_many_arguments)]
 pub fn update_menu_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
@@ -119,6 +119,7 @@ pub fn update_menu_magic_ui(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_menu_weapon_details_ui(
     mut panel_query: Query<(&mut Node, &Children, &WeaponDetailPanel)>,
     mut group_query: Query<(&mut Node, &WeaponStateGroup), Without<WeaponDetailPanel>>,
@@ -270,6 +271,7 @@ pub fn update_menu_weapon_buttons(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_description_wrapper_visibility(
     mut query: Query<(&mut Node, &super::components::DescriptionWrapper)>,
     active_side: Res<super::resources::ActiveDescriptionSide>,

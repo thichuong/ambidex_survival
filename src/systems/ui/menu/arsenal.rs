@@ -415,6 +415,7 @@ fn spawn_shuriken_group(
 
 #[allow(clippy::too_many_lines)]
 pub fn spawn_equipment_panel(parent: &mut ChildSpawnerCommands, asset_server: &AssetServer) {
+    use super::components::DescriptionWrapper;
     use super::components::EquipmentContainer;
 
     // === EQUIPMENT CONTAINER (Equip Tab) ===
@@ -487,7 +488,6 @@ pub fn spawn_equipment_panel(parent: &mut ChildSpawnerCommands, asset_server: &A
                     ));
 
                     // Spawn Panels for both sides - Visibility controlled by system
-                    use super::components::DescriptionWrapper;
 
                     // Left Group: Magic (Selection) LEFT | Description RIGHT (Row)
                     center

@@ -66,9 +66,11 @@ ambidex_survival/
 │   │   │   │   ├── confirmation.rs
 │   │   │   │   ├── interaction.rs
 │   │   │   │   ├── layout.rs
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── resources.rs    # Menu-specific resources (ActiveDescriptionSide)
 │   │   │   │   ├── shop.rs
 │   │   │   │   ├── spawn.rs
-│   │   │   │   └── systems.rs
+│   │   │   │   └── systems.rs      # Update systems for menu UI
 │   │   │   ├── scaling.rs
 │   │   │   ├── settings.rs
 │   │   │   └── tutorial.rs
