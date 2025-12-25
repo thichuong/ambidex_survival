@@ -17,6 +17,7 @@
             background-color: black;
             width: 100vw;
             height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         canvas {
@@ -32,46 +33,159 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #1a1a1a;
+            background-color: #050505;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
             color: white;
-            font-family: monospace;
             transition: opacity 0.5s ease-out;
         }
 
+        .logo-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, #00ffaa, #00aaff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+        }
+
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #333;
-            border-top: 5px solid #00ff00;
-            /* Hacker green */
+            width: 60px;
+            height: 60px;
+            border: 4px solid #333;
+            border-top: 4px solid #00ffaa;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin-bottom: 30px;
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.2);
+        }
+
+        #progress-container {
+            width: 300px;
+            height: 6px;
+            background-color: #333;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ffaa, #00aaff);
+            transition: width 0.2s ease-out;
+            box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+        }
+
+        #loading-text {
+            margin-top: 15px;
+            color: #888;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        /* Landscape Warning Styles */
+        #landscape-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            z-index: 10000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+        .rotate-icon {
+            font-size: 4rem;
             margin-bottom: 20px;
+            animation: rotate-phone 2s infinite ease-in-out;
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-            100% {
-                transform: rotate(360deg);
+        @keyframes rotate-phone {
+            0%, 10% { transform: rotate(0deg); }
+            40%, 60% { transform: rotate(-90deg); }
+            90%, 100% { transform: rotate(0deg); }
+        }
+
+        /* Force Landscape Logic */
+        @media screen and (orientation: portrait) and (max-width: 1024px) {
+            #landscape-warning {
+                display: flex;
+            }
+            #loading-screen, canvas {
+                display: none !important;
             }
         }
     </style>
     <!-- Service Worker Registration -->
     <script>
+        // Intercept fetch to track download progress
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            const response = await originalFetch(...args);
+
+            // Only track the main WASM binary or large files if identified
+            const url = args[0].toString();
+            if (url.endsWith('.wasm')) {
+                const contentLength = response.headers.get('content-length');
+                if (!contentLength) return response;
+
+                const total = parseInt(contentLength, 10);
+                let loaded = 0;
+
+                const reader = response.body.getReader();
+                const stream = new ReadableStream({
+                    async start(controller) {
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+
+                            loaded += value.byteLength;
+                            const progress = (loaded / total) * 100;
+                            
+                            // Update UI
+                            const progressBar = document.getElementById('progress-bar');
+                            const loadingText = document.getElementById('loading-text');
+                            if (progressBar) progressBar.style.width = `${progress}%`;
+                            if (loadingText) loadingText.innerText = `Loading Assets... ${Math.round(progress)}%`;
+
+                            controller.enqueue(value);
+                        }
+                        controller.close();
+                    }
+                });
+
+                return new Response(stream, {
+                    headers: response.headers,
+                    status: response.status,
+                    statusText: response.statusText
+                });
+            }
+
+            return response;
+        };
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
                     .then(reg => {
                         console.log('Service Worker registered', reg);
-                        // Optional: Check for updates
                         reg.update();
                     })
                     .catch(err => console.error('Service Worker registration failed', err));
@@ -79,12 +193,22 @@
         }
     </script>
     
-<link rel="modulepreload" href="/ambidex_survival/ambidex_survival-eeebf277852eb904.js" crossorigin="anonymous"><link rel="preload" href="/ambidex_survival/ambidex_survival-eeebf277852eb904_bg.wasm" crossorigin="anonymous" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/ambidex_survival/ambidex_survival-f51ad46e04c9c130.js" crossorigin="anonymous"><link rel="preload" href="/ambidex_survival/ambidex_survival-f51ad46e04c9c130_bg.wasm" crossorigin="anonymous" as="fetch" type="application/wasm"></head>
 
 <body>
+    <div id="landscape-warning">
+        <div class="rotate-icon">📱</div>
+        <h2>Please Rotate Your Device</h2>
+        <p>This game requires landscape mode for the best experience.</p>
+    </div>
+
     <div id="loading-screen">
+        <div class="logo-text">AMBIDEX</div>
         <div class="spinner"></div>
-        <p>Loading Game Assets...</p>
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        <p id="loading-text">Initializing...</p>
     </div>
 
     <!-- Script to hide loading screen when Canvas appears (game starts) -->
@@ -103,8 +227,8 @@
     </script>
 
 <script type="module">
-import init, * as bindings from '/ambidex_survival/ambidex_survival-eeebf277852eb904.js';
-const wasm = await init({ module_or_path: '/ambidex_survival/ambidex_survival-eeebf277852eb904_bg.wasm' });
+import init, * as bindings from '/ambidex_survival/ambidex_survival-f51ad46e04c9c130.js';
+const wasm = await init({ module_or_path: '/ambidex_survival/ambidex_survival-f51ad46e04c9c130_bg.wasm' });
 
 
 window.wasmBindings = bindings;
