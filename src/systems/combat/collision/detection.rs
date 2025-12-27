@@ -109,7 +109,7 @@ pub fn collision_detection_system(
 
                         // Mark non-AoE projectiles for despawn immediately after first hit
                         if aoe_opt.is_none() {
-                            commands.entity(proj_entity).insert(PendingDespawn);
+                            commands.entity(proj_entity).try_insert(PendingDespawn);
                             break;
                         }
                     }
@@ -139,7 +139,7 @@ pub fn collision_detection_system(
             });
 
             if aoe_opt.is_none() {
-                commands.entity(proj_entity).insert(PendingDespawn);
+                commands.entity(proj_entity).try_insert(PendingDespawn);
             }
         }
     }
