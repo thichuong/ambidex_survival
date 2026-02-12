@@ -6,6 +6,15 @@ This document describes the directory and file organization of the **Ambidex Sur
 
 ```text
 ambidex_survival/
+├── .agent/             # AI Agent tooling (rules, workflows, skills)
+│   ├── rules/
+│   │   └── ecs-rule.md         # ECS architecture enforcement rules
+│   ├── workflows/
+│   │   └── game-workflow.md    # Game development workflow (8 steps)
+│   └── skills/
+│       ├── bevy-ecs/SKILL.md   # Bevy 0.17 ECS pattern templates
+│       ├── weapon-system/SKILL.md  # Add weapon/spell guide
+│       └── add-feature/SKILL.md    # Add feature guide (enemy, shop, etc.)
 ├── assets/             # Game assets (images, fonts, UI icons)
 ├── src/                # Root source directory
 │   ├── components/     # ECS Components used for game entities
@@ -190,3 +199,11 @@ Centralized visuals module for rendering game effects and UI elements.
     - `melee.rs`: Sword and physical weapon animations.
     - `projectiles.rs`: Gun bullets and shuriken visuals.
     - `spells.rs`: Energy bolt, laser, and nova visual effects.
+
+### `.agent/`
+AI Agent tooling for assisted development.
+- `rules/ecs-rule.md`: ECS architecture rules — enforces Bevy 0.17 patterns, `CombatContext` usage, `RequiredComponents`, faction system, code quality standards (clippy pedantic+nursery), and anti-patterns to avoid.
+- `workflows/game-workflow.md`: 8-step game development workflow (Plan → Implement → Check → Lint → Test → Manual Test → Format → Build) with auto-runnable commands.
+- `skills/bevy-ecs/SKILL.md`: Code templates for Components, Systems, Observers, Events, GameState scheduling, spatial partitioning, and unit testing.
+- `skills/weapon-system/SKILL.md`: Step-by-step guide to add new weapons (6 steps) or spells (5 steps) with checklists.
+- `skills/add-feature/SKILL.md`: Guides for adding new enemy types, shop upgrades, GameStates, and visual effects.

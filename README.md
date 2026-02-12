@@ -38,6 +38,17 @@ The game utilizes a **Decoupled ECS Design** powered by Bevy 0.17, organized int
 ## 📁 Project Structure
 For a detailed breakdown of the codebase organization, see [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md).
 
+## 🤖 AI Agent Tooling
+
+The project includes an `.agent/` directory with configurations for AI-assisted development:
+
+- **Rules** (`.agent/rules/`): ECS architecture rules that enforce Bevy 0.17 patterns, `CombatContext` usage, `RequiredComponents`, faction system, and code quality standards.
+- **Workflows** (`.agent/workflows/`): Step-by-step game development workflow (Plan → Implement → Check → Lint → Test → Manual Test → Format → Build).
+- **Skills** (`.agent/skills/`):
+    - **Bevy ECS Patterns**: Code templates for Components, Systems, Observers, Events, GameState scheduling, and unit testing.
+    - **Weapon & Spell System**: Step-by-step guide to add new weapons (6 steps) or spells (5 steps).
+    - **Add Feature Guide**: Checklists for adding enemies, shop upgrades, GameStates, and visual effects.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -160,7 +171,7 @@ Controls can be fully rebound in the **Settings** menu accessible from the Weapo
 ## 🛠️ Built With
 
 *   [Bevy Engine](https://bevyengine.org/) - A data-driven game engine built in Rust.
-*   [Bevy Rapier](https://github.com/dimforge/bevy_rapier) - 2D Physics engine.
+*   [Trunk](https://trunkrs.dev/) - WASM web bundler for Rust.
 
 ## 📝 License
 
