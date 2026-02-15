@@ -310,6 +310,8 @@ pub fn update_hud_indicators(
                         SpellType::Nova => "ui/icons/magic_nova.png",
                         SpellType::Blink => "ui/icons/magic_blink.png",
                         SpellType::Global => "ui/icons/magic_global.png",
+                        SpellType::ForcePush => "ui/icons/magic_push.png",
+                        SpellType::ForcePull => "ui/icons/magic_pull.png",
                     }
                 }
             };
@@ -384,6 +386,8 @@ pub fn update_hud_magic_ui(
             SpellType::Nova => "ui/icons/magic_nova.png",
             SpellType::Blink => "ui/icons/magic_blink.png",
             SpellType::Global => "ui/icons/magic_global.png",
+            SpellType::ForcePush => "ui/icons/magic_push.png",
+            SpellType::ForcePull => "ui/icons/magic_pull.png",
         };
         image.image = asset_server.load(icon_path);
     }

@@ -42,7 +42,15 @@ pub enum SpellType {
     Nova,
     Blink,
     Global,
+    ForcePush,
+    ForcePull,
 }
+
+#[derive(Component, Default)]
+pub struct ForcePush;
+
+#[derive(Component, Default)]
+pub struct ForcePull;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActiveSpellSlot {

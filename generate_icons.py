@@ -374,6 +374,69 @@ def draw_magic_global(draw, size):
     draw.arc([center-r*1.2, center-r*1.2, center+r*1.2, center+r*1.2], 0, 180, fill=(255, 255, 200, 200), width=int(size*0.01))
     draw.arc([center-r*1.2, center-r*1.2, center+r*1.2, center+r*1.2], 180, 240, fill=(255, 255, 200, 200), width=int(size*0.01))
 
+def draw_magic_push(draw, size):
+    """Draw an outward expansion effect (Push)."""
+    center = size // 2
+    
+    # Concentric arcs expanding outward
+    for i in range(3):
+        r = size * (0.15 + i * 0.12)
+        alpha = 255 - i * 60
+        # Draw arcs in 4 directions
+        for angle in [0, 90, 180, 270]:
+            draw.arc([center-r, center-r, center+r, center+r], angle-30, angle+30, 
+                     fill=(255, 165, 0, alpha), width=int(size*0.03))
+            
+    # Central core
+    r_core = size * 0.08
+    draw.ellipse([center-r_core, center-r_core, center+r_core, center+r_core], fill=(255, 200, 100, 255))
+    
+    # Arrows pointing out
+    for angle in [0, 90, 180, 270]:
+        rad = math.radians(angle)
+        tip_r = size * 0.45
+        tip_x = center + tip_r * math.cos(rad)
+        tip_y = center + tip_r * math.sin(rad)
+        
+        # Simple triangle arrow tip
+        side = size * 0.05
+        p1 = (tip_x, tip_y)
+        p2 = (tip_x - side * math.cos(rad-0.5), tip_y - side * math.sin(rad-0.5))
+        p3 = (tip_x - side * math.cos(rad+0.5), tip_y - side * math.sin(rad+0.5))
+        draw.polygon([p1, p2, p3], fill=(255, 255, 255, 200))
+
+def draw_magic_pull(draw, size):
+    """Draw an inward contraction effect (Pull)."""
+    center = size // 2
+    
+    # Spiral/Inward vortex
+    for i in range(5):
+        r = size * (0.45 - i * 0.08)
+        alpha = 255 - i * 40
+        start_angle = i * 45
+        draw.arc([center-r, center-r, center+r, center+r], start_angle, start_angle + 180, 
+                 fill=(100, 100, 255, alpha), width=int(size*0.02))
+    
+    # Central void/hole
+    r_core = size * 0.12
+    draw.ellipse([center-r_core, center-r_core, center+r_core, center+r_core], fill=(20, 20, 60, 255))
+    
+    # Arrows pointing in
+    for angle in [45, 135, 225, 315]:
+        rad = math.radians(angle)
+        start_r = size * 0.4
+        tip_r = size * 0.15
+        
+        tip_x = center + tip_r * math.cos(rad)
+        tip_y = center + tip_r * math.sin(rad)
+        
+        # Arrow tip pointing to center
+        side = size * 0.05
+        p1 = (tip_x, tip_y)
+        p2 = (tip_x + side * math.cos(rad-0.5), tip_y + side * math.sin(rad-0.5))
+        p3 = (tip_x + side * math.cos(rad+0.5), tip_y + side * math.sin(rad+0.5))
+        draw.polygon([p1, p2, p3], fill=(200, 200, 255, 200))
+
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     print("Generating improved icons...")
@@ -392,6 +455,8 @@ def main():
     create_icon(draw_magic_nova, "magic_nova.png")
     create_icon(draw_magic_blink, "magic_blink.png")
     create_icon(draw_magic_global, "magic_global.png")
+    create_icon(draw_magic_push, "magic_push.png")
+    create_icon(draw_magic_pull, "magic_pull.png")
     
     print(f"Done! Check {OUTPUT_DIR}")
 

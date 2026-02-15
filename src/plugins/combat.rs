@@ -15,6 +15,7 @@ impl Plugin for CombatPlugin {
         app.add_observer(enemy_death_system)
             .add_observer(damage_processing_system)
             .add_observer(projectile_effect_system)
+            .add_observer(crate::systems::combat::magic::force_logic::force_effect_observer)
             .add_systems(
                 Update,
                 (

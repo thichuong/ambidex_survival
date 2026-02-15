@@ -28,7 +28,9 @@ pub fn magic_button_observer(
                     SpellType::Laser => SpellType::Nova,
                     SpellType::Nova => SpellType::Blink,
                     SpellType::Blink => SpellType::Global,
-                    SpellType::Global => SpellType::EnergyBolt,
+                    SpellType::Global => SpellType::ForcePush,
+                    SpellType::ForcePush => SpellType::ForcePull,
+                    SpellType::ForcePull => SpellType::EnergyBolt,
                 };
 
                 if btn_data.is_primary {
@@ -88,6 +90,8 @@ pub fn update_menu_magic_ui(
                         SpellType::Nova => "Nova",
                         SpellType::Blink => "Blink",
                         SpellType::Global => "Global",
+                        SpellType::ForcePush => "Push",
+                        SpellType::ForcePull => "Pull",
                     };
                     let prefix = if btn_data.is_primary { "Pri" } else { "Sec" };
                     for &child in children {
@@ -111,6 +115,8 @@ pub fn update_menu_magic_ui(
                         SpellType::Nova => "ui/icons/magic_nova.png",
                         SpellType::Blink => "ui/icons/magic_blink.png",
                         SpellType::Global => "ui/icons/magic_global.png",
+                        SpellType::ForcePush => "ui/icons/magic_push.png",
+                        SpellType::ForcePull => "ui/icons/magic_pull.png",
                     };
                     image.image = asset_server.load(path);
                 }

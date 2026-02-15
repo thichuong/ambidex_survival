@@ -1,0 +1,8 @@
+pub const RADIUS: f32 = 800.0;
+pub const LIFETIME: f32 = 0.2;
+
+pub const PUSH_STRENGTH: f32 = 2500.0;
+pub const PULL_STRENGTH: f32 = 1800.0;
+
+pub const DAMAGE_BASE: f32 = 5.0;
+pub const DAMAGE_BONUS_MAX: f32 = 25.0;

@@ -7,6 +7,7 @@ use bevy::prelude::*;
 
 pub mod blink;
 pub mod energy_bolt;
+pub mod force_logic;
 pub mod global_spell;
 pub mod laser;
 pub mod nova;
@@ -146,6 +147,12 @@ fn cast_spell(params: &mut CombatInputParams, spell: SpellType, mut ctx: CombatC
         }
         SpellType::Global => {
             global_spell::spawn_global_spell(params, &ctx, Faction::Player);
+        }
+        SpellType::ForcePush => {
+            force_logic::spawn_force_push(params, &ctx, Faction::Player);
+        }
+        SpellType::ForcePull => {
+            force_logic::spawn_force_pull(params, &ctx, Faction::Player);
         }
     }
 }

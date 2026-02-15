@@ -2,7 +2,7 @@
 
 use crate::components::enemy::Enemy;
 use crate::components::player::{CombatStats, Health, Player};
-use crate::components::weapon::Projectile;
+use crate::components::weapon::{ForcePull, ForcePush, Projectile};
 use crate::resources::game_state::GameState;
 use crate::systems::combat::{CollisionEvent, DamageEvent};
 use bevy::prelude::*;
@@ -15,8 +15,8 @@ use rand::Rng;
 pub fn damage_processing_system(
     trigger: On<CollisionEvent>,
     mut commands: Commands,
-    projectile_query: Query<&Projectile>,
-    mut enemy_query: Query<&mut Enemy>,
+    projectile_query: Query<(&Projectile, &Transform, Option<&ForcePush>, Option<&ForcePull>)>,
+    mut enemy_query: Query<(&mut Enemy, &Transform)>,
     player: Single<(Entity, &mut Health, &CombatStats), With<Player>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
@@ -31,12 +31,12 @@ pub fn damage_processing_system(
     if event.target == player_entity {
         // Apply damage to player
         if player_health.invulnerability_timer.is_finished() {
-            let mut final_damage = projectile.damage;
+            let mut final_damage = projectile.0.damage;
             let mut is_crit = false;
 
             let mut rng = rand::thread_rng();
-            if rng.gen_range(0.0..1.0) < projectile.crit_chance {
-                final_damage *= projectile.crit_damage;
+            if rng.gen_range(0.0..1.0) < projectile.0.crit_chance {
+                final_damage *= projectile.0.crit_damage;
                 is_crit = true;
             }
 
@@ -58,11 +58,33 @@ pub fn damage_processing_system(
     }
 
     // Retrieve enemy data
-    let Ok(mut enemy) = enemy_query.get_mut(event.target) else {
+    let Ok((mut enemy, enemy_transform)) = enemy_query.get_mut(event.target) else {
         return; // Enemy might have been despawned
     };
 
+    let (projectile, proj_transform, push, pull) = projectile_query.get(event.projectile).unwrap();
+
     let mut final_damage = projectile.damage;
+
+    // Distance-based damage for Force spells
+    if push.is_some() || pull.is_some() {
+        let dist = proj_transform
+            .translation
+            .truncate()
+            .distance(enemy_transform.translation.truncate());
+        let radius = crate::configs::spells::force::RADIUS;
+        let t = (dist / radius).clamp(0.0, 1.0);
+
+        let bonus = if push.is_some() {
+            // Push: damage higher when close (t near 0)
+            (1.0 - t) * crate::configs::spells::force::DAMAGE_BONUS_MAX
+        } else {
+            // Pull: damage higher when far (t near 1)
+            t * crate::configs::spells::force::DAMAGE_BONUS_MAX
+        };
+        final_damage += bonus * (projectile.damage / crate::configs::spells::force::DAMAGE_BASE);
+    }
+
     let mut is_crit = false;
 
     let mut rng = rand::thread_rng();
