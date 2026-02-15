@@ -1,4 +1,5 @@
 use super::physics::{Collider, Velocity};
+use super::status::UnitStatus;
 use super::weapon::{GunState, MagicLoadout, SwordState, Weapon, WeaponType};
 use bevy::prelude::*;
 
@@ -88,7 +89,8 @@ pub struct Progression {
     Health,
     PlayerStats,
     CombatStats,
-    Progression
+    Progression,
+    UnitStatus
 )]
 pub struct Player;
 

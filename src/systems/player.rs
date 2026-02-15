@@ -4,6 +4,7 @@ use bevy::window::PrimaryWindow;
 
 use crate::components::physics::Velocity;
 use crate::components::player::{GameCamera, Hand, HandType, Player, PlayerStats};
+use crate::components::status::UnitStatus;
 use crate::components::weapon::{Weapon, WeaponType};
 
 pub fn spawn_player(
@@ -51,9 +52,15 @@ pub fn spawn_player(
 pub fn move_player(
     input: Res<ButtonInput<KeyCode>>,
     input_settings: Res<crate::resources::input_settings::InputSettings>,
-    mut player: Single<(&mut Velocity, &PlayerStats), With<Player>>,
+    mut player: Single<(&mut Velocity, &PlayerStats, &UnitStatus), With<Player>>,
 ) {
-    let (ref mut velocity, stats) = *player;
+    let (ref mut velocity, stats, status) = *player;
+    
+    if status.is_rooted {
+        velocity.linvel = Vec2::ZERO;
+        return;
+    }
+
     let mut direction = Vec2::ZERO;
 
     if input.pressed(input_settings.move_up) {

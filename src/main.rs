@@ -46,6 +46,7 @@ fn main() {
             plugins::physics::PhysicsPlugin,
             plugins::ui::UiPlugin,
             plugins::player::PlayerPlugin,
+            plugins::status::StatusPlugin,
             plugins::visuals::VisualsPlugin,
         ))
         .init_state::<GameState>()

@@ -5,6 +5,7 @@ use rand::Rng;
 use crate::components::enemy::Enemy;
 use crate::components::physics::{Collider, Velocity};
 use crate::components::player::Player;
+use crate::components::status::UnitStatus;
 use crate::resources::game_state::GameState;
 use crate::resources::round::{RoundManager, RoundState};
 
@@ -254,12 +255,16 @@ fn spawn_yellow_enemy(
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn enemy_chase_player(
-    mut enemy_query: Query<(&mut Velocity, &Transform, &Enemy)>,
+    mut enemy_query: Query<(&mut Velocity, &Transform, &Enemy, &UnitStatus)>,
     player: Single<&Transform, With<Player>>,
 ) {
     let player_pos = player.translation.truncate();
 
-    for (mut velocity, transform, enemy) in &mut enemy_query {
+    for (mut velocity, transform, enemy, status) in &mut enemy_query {
+        if status.is_rooted {
+            velocity.linvel = Vec2::ZERO;
+            continue;
+        }
         let pos = transform.translation.truncate();
         let dir = (player_pos - pos).normalize_or_zero();
         velocity.linvel = dir * enemy.speed;

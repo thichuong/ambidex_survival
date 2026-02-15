@@ -1,5 +1,6 @@
 use crate::components::enemy::Enemy;
 use crate::components::physics::{Collider, IgnoreGrid, Velocity};
+use crate::components::status::UnitStatus;
 use crate::components::weapon::{
     AoEProjectile, Faction, ForcePull, ForcePush, Lifetime, Projectile, WeaponType,
 };
@@ -73,7 +74,7 @@ pub fn spawn_force_pull(params: &mut CombatInputParams, ctx: &CombatContext, fac
 pub fn force_effect_observer(
     trigger: On<CollisionEvent>,
     projectile_query: Query<(Entity, Option<&ForcePush>, Option<&ForcePull>)>,
-    mut target_query: Query<(&Transform, &mut Velocity), With<Enemy>>,
+    mut target_query: Query<(&Transform, &mut Velocity, &mut UnitStatus), With<Enemy>>,
 ) {
     let event = trigger.event();
 
@@ -81,7 +82,7 @@ pub fn force_effect_observer(
         return;
     };
 
-    let Ok((target_transform, mut velocity)) = target_query.get_mut(event.target) else {
+    let Ok((target_transform, mut velocity, mut status)) = target_query.get_mut(event.target) else {
         return;
     };
 
@@ -89,6 +90,9 @@ pub fn force_effect_observer(
     let caster_pos = event.position; // Projectile center (where caster was)
     let to_target = target_pos - caster_pos;
     let dir = to_target.normalize_or_zero();
+    
+    // Apply Rooted status for 0.5s so they don't fight the push/pull
+    status.root(0.5);
 
     if push.is_some() {
         // Push away: strength reduces slightly with distance? 
