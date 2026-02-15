@@ -56,7 +56,7 @@ pub fn move_player(
 ) {
     let (ref mut velocity, stats, unit_status) = *player;
 
-    if unit_status.is_rooted {
+    if unit_status.is_rooted() {
         velocity.linvel = Vec2::ZERO;
         return;
     }

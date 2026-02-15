@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Event, Debug)]
+#[derive(Event, Message, Debug)]
 pub struct CollisionEvent {
     pub projectile: Entity,
     pub target: Entity, // Can be Enemy or Player

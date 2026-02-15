@@ -82,7 +82,7 @@ pub fn force_effect_observer(
         return;
     };
 
-    let Ok((target_transform, mut velocity, mut status)) = target_query.get_mut(event.target)
+    let Ok((target_transform, _velocity, mut status)) = target_query.get_mut(event.target)
     else {
         return;
     };
@@ -90,19 +90,40 @@ pub fn force_effect_observer(
     let target_pos = target_transform.translation.truncate();
     let caster_pos = proj_transform.translation.truncate(); // Projectile center
     let to_target = target_pos - caster_pos;
+    let distance = to_target.length();
     let dir = to_target.normalize_or_zero();
 
-    // Apply Rooted status for 0.5s so they don't fight the push/pull
-    status.root(0.5);
+    // Apply Rooted status for duration so they don't fight the push/pull
+    // Actually ForcedMovement implies no control, but let's be explicit if wanted.
+    // However, status system handles velocity override now.
 
     if push.is_some() {
         // Push away: strength reduces slightly with distance?
-        // User said: "càng đứng gần damage càng lớn".
-        // For physics, let's just apply a strong impulse.
-        velocity.linvel += dir * force::PUSH_STRENGTH;
+        // User said: "càng gần đẩy càng xa" -> Closer = Stronger
+        // Formula: Base * (1.0 + (1.0 - dist/Rad)) -> range [1.0, 2.0]
+        let factor = 1.0 + (1.0 - (distance / force::RADIUS).min(1.0)).max(0.0);
+        let speed = force::BASE_PUSH_SPEED * factor;
+        
+        status.add(crate::components::status::StatusEffect::ForcedMovement {
+            timer: Timer::from_seconds(force::PUSH_DURATION, TimerMode::Once),
+            direction: dir,
+            speed,
+            move_type: crate::components::status::ForceType::Push,
+        });
+        
     } else if pull.is_some() {
         // Pull towards:
-        velocity.linvel -= dir * force::PULL_STRENGTH;
+        // User said: "Cách càng xa kéo càng xa" -> Farther = Stronger
+        // Formula: Base * (1.0 + dist/Rad) -> range [1.0, 2.0]
+        let factor = 1.0 + (distance / force::RADIUS).min(1.0);
+        let speed = force::BASE_PULL_SPEED * factor;
+        
+        status.add(crate::components::status::StatusEffect::ForcedMovement {
+            timer: Timer::from_seconds(force::PULL_DURATION, TimerMode::Once),
+            direction: -dir, // Pull towards caster
+            speed,
+            move_type: crate::components::status::ForceType::Pull,
+        });
     }
 }
 
@@ -110,6 +131,7 @@ pub fn force_effect_observer(
 mod tests {
     use super::*;
     use crate::components::physics::Velocity;
+    use crate::components::status::StatusEffect;
 
     #[test]
     fn test_force_push_logic() {
@@ -126,7 +148,7 @@ mod tests {
                 Transform::from_xyz(100.0, 0.0, 0.0),
                 Velocity::default(),
                 UnitStatus::default(),
-                Enemy,
+                Enemy::default(),
             ))
             .id();
 
@@ -143,16 +165,20 @@ mod tests {
             position: Vec2::new(100.0, 0.0), // Hit position
         });
 
-        // Check Enemy Velocity
-        let velocity = app.world().get::<Velocity>(enemy).unwrap();
-
-        // Should be pushed right (positive X)
-        assert!(velocity.linvel.x > 0.0);
-        assert_eq!(velocity.linvel.y, 0.0);
-
-        // Check Rooted status
+        // Check Enemy Status
         let status = app.world().get::<UnitStatus>(enemy).unwrap();
-        assert!(status.is_rooted());
+        
+        // Should have ForcedMovement
+        let effect = status.effects.last().unwrap();
+        if let StatusEffect::ForcedMovement { direction, speed, move_type, .. } = effect {
+             assert_eq!(move_type, &crate::components::status::ForceType::Push);
+             assert!(direction.x > 0.0); // Pushed right
+             // Distance 100, Radius 800. Factor = 1 + (1 - 0.125) = 1.875
+             // Base 800 * 1.875 = 1500
+             assert!(speed > &800.0);
+        } else {
+            panic!("Expected ForcedMovement status");
+        }
     }
 
     #[test]
@@ -168,7 +194,7 @@ mod tests {
                 Transform::from_xyz(100.0, 0.0, 0.0),
                 Velocity::default(),
                 UnitStatus::default(),
-                Enemy,
+                Enemy::default(),
             ))
             .id();
 
@@ -185,11 +211,19 @@ mod tests {
             position: Vec2::new(100.0, 0.0),
         });
 
-        // Check Enemy Velocity
-        let velocity = app.world().get::<Velocity>(enemy).unwrap();
-
-        // Should be pulled left (negative X) towards origin
-        assert!(velocity.linvel.x < 0.0);
-        assert_eq!(velocity.linvel.y, 0.0);
+        // Check Enemy Status
+        let status = app.world().get::<UnitStatus>(enemy).unwrap();
+        
+        let effect = status.effects.last().unwrap();
+        if let StatusEffect::ForcedMovement { direction, speed, move_type, .. } = effect {
+             assert_eq!(move_type, &crate::components::status::ForceType::Pull);
+             assert!(direction.x < 0.0); // Pulled left
+             // Distance 100, Radius 800. Factor = 1 + 0.125 = 1.125
+             // Base 800 * 1.125 = 900
+             assert!(speed > &800.0);
+        } else {
+            panic!("Expected ForcedMovement status");
+        }
     }
 }
+

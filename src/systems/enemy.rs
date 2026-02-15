@@ -261,7 +261,7 @@ pub fn enemy_chase_player(
     let player_pos = player.translation.truncate();
 
     for (mut velocity, transform, enemy, status) in &mut enemy_query {
-        if status.is_rooted {
+        if status.is_rooted() {
             velocity.linvel = Vec2::ZERO;
             continue;
         }
