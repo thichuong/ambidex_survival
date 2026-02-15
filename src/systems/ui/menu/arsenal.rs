@@ -10,7 +10,9 @@ pub fn get_spell_description(spell_type: SpellType) -> String {
         SpellType::Nova => "Nova: Radial burst of high area damage.".to_string(),
         SpellType::Blink => "Blink: Teleport to cursor & Invulnerable.".to_string(),
         SpellType::Global => "Global: Massive strike hitting ALL enemies.".to_string(),
-        SpellType::ForcePush => "Force Push: Push enemies away. More damage when close.".to_string(),
+        SpellType::ForcePush => {
+            "Force Push: Push enemies away. More damage when close.".to_string()
+        }
         SpellType::ForcePull => "Force Pull: Pull enemies in. More damage when far.".to_string(),
     }
 }

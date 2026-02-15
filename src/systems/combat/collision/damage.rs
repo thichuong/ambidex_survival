@@ -15,7 +15,12 @@ use rand::Rng;
 pub fn damage_processing_system(
     trigger: On<CollisionEvent>,
     mut commands: Commands,
-    projectile_query: Query<(&Projectile, &Transform, Option<&ForcePush>, Option<&ForcePull>)>,
+    projectile_query: Query<(
+        &Projectile,
+        &Transform,
+        Option<&ForcePush>,
+        Option<&ForcePull>,
+    )>,
     mut enemy_query: Query<(&mut Enemy, &Transform)>,
     player: Single<(Entity, &mut Health, &CombatStats), With<Player>>,
     mut next_state: ResMut<NextState<GameState>>,

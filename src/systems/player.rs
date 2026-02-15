@@ -54,9 +54,9 @@ pub fn move_player(
     input_settings: Res<crate::resources::input_settings::InputSettings>,
     mut player: Single<(&mut Velocity, &PlayerStats, &UnitStatus), With<Player>>,
 ) {
-    let (ref mut velocity, stats, status) = *player;
-    
-    if status.is_rooted {
+    let (ref mut velocity, stats, unit_status) = *player;
+
+    if unit_status.is_rooted {
         velocity.linvel = Vec2::ZERO;
         return;
     }

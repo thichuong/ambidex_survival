@@ -72,22 +72,18 @@ pub fn spawn_force_pull(params: &mut CombatInputParams, ctx: &CombatContext, fac
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn force_effect_observer(
-    trigger: Trigger<CollisionEvent>,
-    projectile_query: Query<(
-        Entity,
-        Option<&ForcePush>,
-        Option<&ForcePull>,
-        &Transform,
-    )>,
+    trigger: On<CollisionEvent>,
+    projectile_query: Query<(Entity, Option<&ForcePush>, Option<&ForcePull>, &Transform)>,
     mut target_query: Query<(&Transform, &mut Velocity, &mut UnitStatus), With<Enemy>>,
 ) {
     let event = trigger.event();
 
-    let Ok((entity, push, pull, proj_transform)) = projectile_query.get(event.projectile) else {
+    let Ok((_entity, push, pull, proj_transform)) = projectile_query.get(event.projectile) else {
         return;
     };
 
-    let Ok((target_transform, mut velocity, mut status)) = target_query.get_mut(event.target) else {
+    let Ok((target_transform, mut velocity, mut status)) = target_query.get_mut(event.target)
+    else {
         return;
     };
 
@@ -95,17 +91,17 @@ pub fn force_effect_observer(
     let caster_pos = proj_transform.translation.truncate(); // Projectile center
     let to_target = target_pos - caster_pos;
     let dir = to_target.normalize_or_zero();
-    
+
     // Apply Rooted status for 0.5s so they don't fight the push/pull
     status.root(0.5);
 
     if push.is_some() {
-        // Push away: strength reduces slightly with distance? 
-        // User said: "càng đứng gần damage càng lớn". 
+        // Push away: strength reduces slightly with distance?
+        // User said: "càng đứng gần damage càng lớn".
         // For physics, let's just apply a strong impulse.
         velocity.linvel += dir * force::PUSH_STRENGTH;
     } else if pull.is_some() {
-        // Pull towards: 
+        // Pull towards:
         velocity.linvel -= dir * force::PULL_STRENGTH;
     }
 }
@@ -119,7 +115,7 @@ mod tests {
     fn test_force_push_logic() {
         let mut app = App::new();
         app.add_event::<CollisionEvent>();
-        
+
         // Mock the observer registration manually since we don't have the full plugin here
         app.add_observer(force_effect_observer);
 
@@ -137,10 +133,7 @@ mod tests {
         // Spawn Projectile (ForcePush) at Origin
         let projectile = app
             .world_mut()
-            .spawn((
-                Transform::from_xyz(0.0, 0.0, 0.0),
-                ForcePush,
-            ))
+            .spawn((Transform::from_xyz(0.0, 0.0, 0.0), ForcePush))
             .id();
 
         // Trigger Collision
@@ -152,11 +145,11 @@ mod tests {
 
         // Check Enemy Velocity
         let velocity = app.world().get::<Velocity>(enemy).unwrap();
-        
+
         // Should be pushed right (positive X)
         assert!(velocity.linvel.x > 0.0);
         assert_eq!(velocity.linvel.y, 0.0);
-        
+
         // Check Rooted status
         let status = app.world().get::<UnitStatus>(enemy).unwrap();
         assert!(status.is_rooted());
@@ -182,10 +175,7 @@ mod tests {
         // Spawn Projectile (ForcePull) at Origin
         let projectile = app
             .world_mut()
-            .spawn((
-                Transform::from_xyz(0.0, 0.0, 0.0),
-                ForcePull,
-            ))
+            .spawn((Transform::from_xyz(0.0, 0.0, 0.0), ForcePull))
             .id();
 
         // Trigger Collision
@@ -197,7 +187,7 @@ mod tests {
 
         // Check Enemy Velocity
         let velocity = app.world().get::<Velocity>(enemy).unwrap();
-        
+
         // Should be pulled left (negative X) towards origin
         assert!(velocity.linvel.x < 0.0);
         assert_eq!(velocity.linvel.y, 0.0);
