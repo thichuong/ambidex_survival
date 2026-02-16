@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ForceType {
     Push,
     Pull,
@@ -8,6 +8,7 @@ pub enum ForceType {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum StatusEffect {
+    #[allow(dead_code)]
     Rooted {
         timer: Timer,
     },
@@ -40,6 +41,7 @@ impl UnitStatus {
         self.effects.push(effect);
     }
 
+    #[allow(dead_code)]
     pub fn root(&mut self, duration: f32) {
         self.add(StatusEffect::Rooted {
             timer: Timer::from_seconds(duration, TimerMode::Once),

@@ -40,6 +40,7 @@ ambidex_survival/
 │   │   ├── cached_assets.rs
 │   │   ├── game_state.rs    # GameState and PreviousMenuState
 │   │   ├── input_settings.rs # Customizable key/mouse bindings
+│   │   ├── mod.rs
 │   │   ├── polish.rs
 │   │   └── round.rs
 │   ├── systems/        # Core game logic partitioned by domain
@@ -55,6 +56,7 @@ ambidex_survival/
 │   │   │   │   ├── energy_bolt.rs
 │   │   │   │   ├── global_spell.rs
 │   │   │   │   ├── laser.rs
+│   │   │   │   ├── meteor.rs
 │   │   │   │   └── nova.rs
 │   │   │   ├── mod.rs          # CombatContext, CombatInputParams, shared types
 │   │   │   ├── events.rs
@@ -86,7 +88,8 @@ ambidex_survival/
 │   │   ├── damage_text.rs
 │   │   ├── enemy.rs
 │   │   ├── physics.rs
-│   │   └── player.rs
+│   │   ├── player.rs
+│   │   └── status.rs
 │   ├── utils/          # Generic utility functions
 │   ├── visuals/        # Visual effects and UI drawing
 │   │   ├── mod.rs
@@ -109,7 +112,7 @@ Components are pure data structs that attach to entities.
 - `player.rs`: Player marker and stat components (Health, Currency, CombatStats).
 - `weapon.rs`: Weapon-specific components (MagicLoadout, SwordState, GunState) and the unified `Faction` enum.
 - `enemy.rs`: Enemy marker and stat components.
-- `physics.rs`: Velocity, Collider labels, sensor markers.
+- `physics.rs`: Velocity, Collider labels, sensor markers, and `UniformGrid` Resource.
 - `attack_effects.rs`: Components for projectiles and damage effects.
 
 ### `src/configs/`
@@ -191,6 +194,7 @@ Collision detection and damage processing pipeline:
 - `enemy.rs`: Enemy AI, movement, and wave spawning logic.
 - `physics.rs`: Decoupled movement and velocity integration systems.
 - `damage_text.rs`: Reactive floating numbers triggered by `On<DamageEvent>`.
+- `status.rs`: Status effect system (Rooted, Stunned, etc).
 
 ### `src/visuals/`
 Centralized visuals module for rendering game effects and UI elements.

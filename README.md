@@ -113,6 +113,8 @@ The most customizable weapon. Each Magic Hand has two spell slots: **Primary** a
     - **Nova**: A radial burst centered on the player for high area damage.
     - **Blink**: Short-range teleport to the cursor position.
     - **Global**: A massive strike that hits everything on screen.
+    - **Force Push**: Repels enemies away from the player.
+    - **Force Pull**: Draws enemies towards the player.
 
 ## 👺 Enemies & AI
 

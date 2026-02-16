@@ -106,11 +106,34 @@ pub fn spear_weapon_system(
 }
 
 fn fire_spear(ctx: &mut CombatContext, params: &mut CombatInputParams) {
-    // Weapon logic:
-    // 1. Spawn projectile entity
-    // 2. Set Velocity, Collider, Lifetime, Faction
-    // 3. Use configs for damage, speed, range
-    let _ = (ctx, params); // TODO: Implement
+    let direction = (ctx.cursor_pos - ctx.spawn_pos).normalize_or_zero();
+    
+    params.commands.spawn((
+        // Transform init
+        Transform::from_translation(ctx.spawn_pos.extend(0.0)),
+        Visibility::Visible, // Optional due to #[require] but explicit is fine
+        // Physics
+        Collider::line(direction, crate::configs::weapons::spear::SPEAR_RANGE, 5.0),
+        Velocity {
+            linvel: direction * crate::configs::weapons::spear::SPEAR_SPEED,
+            angvel: 0.0,
+        },
+        // Logic
+        Projectile {
+            kind: WeaponType::Spear,
+            damage: crate::configs::weapons::spear::SPEAR_DAMAGE * ctx.damage_multiplier,
+            speed: crate::configs::weapons::spear::SPEAR_SPEED,
+            direction,
+            owner_entity: ctx.owner_entity,
+            is_aoe: false,
+            faction: Faction::Player,
+            crit_chance: ctx.combat_stats.crit_chance,
+            crit_damage: ctx.combat_stats.crit_damage,
+        },
+        Lifetime {
+            timer: Timer::from_seconds(crate::configs::weapons::spear::SPEAR_RANGE / crate::configs::weapons::spear::SPEAR_SPEED, TimerMode::Once),
+        },
+    ));
 }
 ```
 
@@ -199,11 +222,32 @@ pub fn cast_meteor(
     ctx: &mut CombatContext,
     params: &mut CombatInputParams,
 ) {
-    // 1. Spawn meteor entity at cursor_pos hoặc target position
-    // 2. Dùng Lifetime timer cho fall duration
-    // 3. On impact: spawn AoE explosion (ExplodingProjectile)
-    // 4. Set Faction::Player
-    let _ = (ctx, params); // TODO: Implement
+    params.commands.spawn((
+        Transform::from_translation(ctx.cursor_pos.extend(0.0)),
+        // Meteor falls from sky? Or just spawns? 
+        // For simplicity: Spawn at cursor with explosion timer
+        ExplodingProjectile {
+            radius: METEOR_RADIUS,
+            damage: METEOR_DAMAGE * ctx.damage_multiplier,
+        },
+        Lifetime {
+            timer: Timer::from_seconds(METEOR_FALL_DURATION, TimerMode::Once),
+        },
+        Faction::Player,
+        // Marker for visual system to attach meteor mesh
+        Projectile {
+            kind: WeaponType::Magic, // Or add WeaponType::Meteor if you prefer
+            damage: 0.0, // Damage is dealt by explosion
+            speed: 0.0,
+            direction: Vec2::ZERO,
+            owner_entity: ctx.owner_entity,
+            is_aoe: true,
+            faction: Faction::Player,
+            crit_chance: ctx.combat_stats.crit_chance,
+            crit_damage: ctx.combat_stats.crit_damage,
+        },
+    ));
+    // Visuals are handled by `src/visuals/world/spells.rs` monitoring Added<Projectile> or similar.
 }
 ```
 

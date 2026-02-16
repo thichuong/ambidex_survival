@@ -24,19 +24,19 @@ pub fn tick_status_system(
                     move_type: _,
                 } => {
                     timer.tick(time.delta());
-                    if !timer.is_finished() {
+                    if timer.is_finished() {
+                        false
+                    } else {
                         forced_velocity = *direction * *speed;
                         has_forced_movement = true;
                         true
-                    } else {
-                        false
                     }
                 }
             }
         });
 
-        if has_forced_movement {
-            if let Some(vel) = &mut velocity {
+        if let Some(vel) = &mut velocity {
+            if has_forced_movement {
                 vel.linvel = forced_velocity;
             }
         }

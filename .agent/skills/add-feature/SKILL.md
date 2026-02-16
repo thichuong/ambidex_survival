@@ -24,8 +24,10 @@ Component (data) → Config (balance) → System (AI logic) → Plugin (register
 
 ```rust
 /// Marker cho enemy type mới
-#[derive(Component)]
+#[derive(Component, Default)]
+#[require(Transform, Visibility, Collider, EnemyStats)]
 pub struct BossEnemy;
+
 ```
 
 #### 1.2 Config
@@ -88,10 +90,11 @@ app.add_systems(
 Thêm visual mesh/color cho enemy trong hệ thống spawn.
 
 ### Checklist Enemy Mới
-- [ ] Marker component trong `components/enemy.rs`
+- [ ] Marker component trong `components/enemy.rs` với `#[require(...)]`
 - [ ] Config constants trong `configs/enemy.rs`
 - [ ] AI system trong `systems/combat/`
-- [ ] Spawn logic trong `systems/enemy.rs`
+- [ ] Spawn logic trong `systems/enemy.rs` (Spawn `BossEnemy` struct, dependencies tự động thêm)
+
 - [ ] Plugin registration trong `plugins/combat.rs`
 - [ ] Visual appearance (color, size, mesh)
 - [ ] HP scaling per round
