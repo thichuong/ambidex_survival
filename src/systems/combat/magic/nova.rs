@@ -21,6 +21,7 @@ pub fn spawn_nova(params: &mut CombatInputParams, ctx: &CombatContext, explosion
                 faction: Faction::Player,
                 crit_chance: ctx.combat_stats.crit_chance,
                 crit_damage: ctx.combat_stats.crit_damage,
+                lifesteal_efficiency: 0.5,
             },
             Lifetime {
                 timer: Timer::from_seconds(nova::LIFETIME, TimerMode::Once),

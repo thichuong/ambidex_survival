@@ -7,7 +7,7 @@ pub struct CollisionEvent {
     pub position: Vec2,
 }
 
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Event, Message, Debug, Clone, Copy)]
 pub struct EnemyDeathEvent {
     pub entity: Entity,
     pub position: Vec2,

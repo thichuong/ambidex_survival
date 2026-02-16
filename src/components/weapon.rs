@@ -110,6 +110,14 @@ pub struct Projectile {
     pub faction: Faction,
     pub crit_chance: f32,
     pub crit_damage: f32,
+    pub lifesteal_efficiency: f32,
+}
+
+#[derive(Component, Default)]
+pub struct DistanceDamageBonus {
+    pub max_bonus: f32,
+    pub optimal_distance: f32, // 0.0 for close, 1.0 (relative) for far
+    pub radius: f32,           // Reference distance
 }
 
 #[derive(Component)]

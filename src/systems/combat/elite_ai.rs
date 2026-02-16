@@ -125,6 +125,7 @@ fn elite_fire_shuriken(
                 faction: Faction::Enemy,
                 crit_chance: ctx.player_crit_chance * crate::configs::enemy::ELITE_CRIT_CHANCE,
                 crit_damage: ctx.player_crit_damage * crate::configs::enemy::ELITE_CRIT_DAMAGE,
+                lifesteal_efficiency: 1.0,
             },
             Lifetime {
                 timer: Timer::from_seconds(shuriken::LIFETIME, TimerMode::Once),

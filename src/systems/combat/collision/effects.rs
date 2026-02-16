@@ -53,6 +53,7 @@ pub fn projectile_effect_system(
                     faction: projectile.faction,
                     crit_chance: projectile.crit_chance,
                     crit_damage: projectile.crit_damage,
+                    lifesteal_efficiency: 0.5,
                 },
                 AoEProjectile::default(),         // Reset hit list
                 Collider::ball(exploding.radius), // Set correct explosion size

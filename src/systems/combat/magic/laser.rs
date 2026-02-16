@@ -28,6 +28,7 @@ pub fn spawn_laser(
                 faction: Faction::Player,
                 crit_chance: ctx.combat_stats.crit_chance,
                 crit_damage: ctx.combat_stats.crit_damage,
+                lifesteal_efficiency: 0.5,
             },
             Lifetime {
                 timer: Timer::from_seconds(laser::LIFETIME, TimerMode::Once),

@@ -9,9 +9,7 @@ pub enum ForceType {
 #[derive(Debug, Clone, PartialEq)]
 pub enum StatusEffect {
     #[allow(dead_code)]
-    Rooted {
-        timer: Timer,
-    },
+    Rooted { timer: Timer },
     ForcedMovement {
         timer: Timer,
         direction: Vec2,
@@ -32,11 +30,13 @@ impl UnitStatus {
         // Let's just push for now, but usually you might want only one forced movement at a time.
         // If we want to replace existing forced movement:
         if let StatusEffect::ForcedMovement { .. } = effect {
-            self.effects.retain(|e| !matches!(e, StatusEffect::ForcedMovement { .. }));
+            self.effects
+                .retain(|e| !matches!(e, StatusEffect::ForcedMovement { .. }));
         }
-         // If Rooted, maybe we don't want to stack multiple roots, just refresh timer?
+        // If Rooted, maybe we don't want to stack multiple roots, just refresh timer?
         if let StatusEffect::Rooted { .. } = effect {
-             self.effects.retain(|e| !matches!(e, StatusEffect::Rooted { .. }));
+            self.effects
+                .retain(|e| !matches!(e, StatusEffect::Rooted { .. }));
         }
         self.effects.push(effect);
     }
@@ -49,7 +49,11 @@ impl UnitStatus {
     }
 
     pub fn is_rooted(&self) -> bool {
-        self.effects.iter().any(|e| matches!(e, StatusEffect::Rooted { .. } | StatusEffect::ForcedMovement { .. }))
+        self.effects.iter().any(|e| {
+            matches!(
+                e,
+                StatusEffect::Rooted { .. } | StatusEffect::ForcedMovement { .. }
+            )
+        })
     }
 }
-

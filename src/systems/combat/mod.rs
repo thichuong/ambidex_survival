@@ -26,7 +26,7 @@ pub use shuriken::*;
 pub use sword::*;
 pub use sword_mechanics::*;
 
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Event, Message, Debug, Clone, Copy)]
 pub struct DamageEvent {
     pub entity: Entity,
     pub damage: f32,

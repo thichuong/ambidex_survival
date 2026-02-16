@@ -11,34 +11,32 @@ pub fn tick_status_system(
         let mut forced_velocity = Vec2::ZERO;
         let mut has_forced_movement = false;
 
-        status.effects.retain_mut(|effect| {
-            match effect {
-                StatusEffect::Rooted { timer } => {
-                    timer.tick(time.delta());
-                    !timer.is_finished()
-                }
-                StatusEffect::ForcedMovement {
-                    timer,
-                    direction,
-                    speed,
-                    move_type: _,
-                } => {
-                    timer.tick(time.delta());
-                    if timer.is_finished() {
-                        false
-                    } else {
-                        forced_velocity = *direction * *speed;
-                        has_forced_movement = true;
-                        true
-                    }
+        status.effects.retain_mut(|effect| match effect {
+            StatusEffect::Rooted { timer } => {
+                timer.tick(time.delta());
+                !timer.is_finished()
+            }
+            StatusEffect::ForcedMovement {
+                timer,
+                direction,
+                speed,
+                move_type: _,
+            } => {
+                timer.tick(time.delta());
+                if timer.is_finished() {
+                    false
+                } else {
+                    forced_velocity = *direction * *speed;
+                    has_forced_movement = true;
+                    true
                 }
             }
         });
 
-        if let Some(vel) = &mut velocity {
-            if has_forced_movement {
-                vel.linvel = forced_velocity;
-            }
+        if let Some(vel) = &mut velocity
+            && has_forced_movement
+        {
+            vel.linvel = forced_velocity;
         }
     }
 }
@@ -87,18 +85,18 @@ mod tests {
             assert!(!status.is_rooted());
         }
     }
-    
+
     #[test]
     fn test_forced_movement() {
         let mut app = App::new();
         app.add_systems(Update, tick_status_system);
         app.init_resource::<Time>();
 
-        let entity = app.world_mut().spawn((
-            UnitStatus::default(),
-            Velocity::default(),
-        )).id();
-        
+        let entity = app
+            .world_mut()
+            .spawn((UnitStatus::default(), Velocity::default()))
+            .id();
+
         let direction = Vec2::new(1.0, 0.0);
         let speed = 100.0;
 
@@ -112,27 +110,27 @@ mod tests {
                 move_type: crate::components::status::ForceType::Push,
             });
         }
-        
+
         // Tick 0.1s
         {
             let mut time = app.world_mut().resource_mut::<Time>();
             time.advance_by(Duration::from_millis(100));
         }
         app.update();
-        
+
         // Check Velocity
         {
             let velocity = app.world().get::<Velocity>(entity).unwrap();
             assert_eq!(velocity.linvel, direction * speed);
         }
-        
+
         // Tick past 1.0s
         {
             let mut time = app.world_mut().resource_mut::<Time>();
             time.advance_by(Duration::from_secs(1));
         }
         app.update();
-        
+
         // Check effect removed
         {
             let status = app.world().get::<UnitStatus>(entity).unwrap();

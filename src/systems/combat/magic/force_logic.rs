@@ -26,6 +26,7 @@ pub fn spawn_force_push(params: &mut CombatInputParams, ctx: &CombatContext, fac
                 faction,
                 crit_chance: ctx.combat_stats.crit_chance,
                 crit_damage: ctx.combat_stats.crit_damage,
+                lifesteal_efficiency: 0.5,
             },
             Lifetime {
                 timer: Timer::from_seconds(force::LIFETIME, TimerMode::Once),
@@ -33,6 +34,11 @@ pub fn spawn_force_push(params: &mut CombatInputParams, ctx: &CombatContext, fac
             AoEProjectile::default(),
             IgnoreGrid,
             ForcePush,
+            crate::components::weapon::DistanceDamageBonus {
+                max_bonus: force::DAMAGE_BONUS_MAX,
+                optimal_distance: 0.0,
+                radius: force::RADIUS,
+            },
         ))
         .with_children(|parent| {
             // Reusing global visuals for now, maybe customize later
@@ -57,6 +63,7 @@ pub fn spawn_force_pull(params: &mut CombatInputParams, ctx: &CombatContext, fac
                 faction,
                 crit_chance: ctx.combat_stats.crit_chance,
                 crit_damage: ctx.combat_stats.crit_damage,
+                lifesteal_efficiency: 0.5,
             },
             Lifetime {
                 timer: Timer::from_seconds(force::LIFETIME, TimerMode::Once),
@@ -64,6 +71,11 @@ pub fn spawn_force_pull(params: &mut CombatInputParams, ctx: &CombatContext, fac
             AoEProjectile::default(),
             IgnoreGrid,
             ForcePull,
+            crate::components::weapon::DistanceDamageBonus {
+                max_bonus: force::DAMAGE_BONUS_MAX,
+                optimal_distance: 1.0,
+                radius: force::RADIUS,
+            },
         ))
         .with_children(|parent| {
             spawn_global_visuals(parent, &params.cached_assets);
@@ -82,8 +94,7 @@ pub fn force_effect_observer(
         return;
     };
 
-    let Ok((target_transform, _velocity, mut status)) = target_query.get_mut(event.target)
-    else {
+    let Ok((target_transform, _velocity, mut status)) = target_query.get_mut(event.target) else {
         return;
     };
 
@@ -102,20 +113,19 @@ pub fn force_effect_observer(
         // Formula: (Range - Distance) * ScalingFactor
         // Closer to caster = Stronger push
         let speed = (force::RADIUS - distance).max(0.0) * force::PUSH_SPEED_FACTOR;
-        
+
         status.add(crate::components::status::StatusEffect::ForcedMovement {
             timer: Timer::from_seconds(force::PUSH_DURATION, TimerMode::Once),
             direction: dir,
             speed,
             move_type: crate::components::status::ForceType::Push,
         });
-        
     } else if pull.is_some() {
         // Pull towards:
         // Formula: Distance * ScalingFactor
         // Farther from caster = Stronger pull
         let speed = distance * force::PULL_SPEED_FACTOR;
-        
+
         status.add(crate::components::status::StatusEffect::ForcedMovement {
             timer: Timer::from_seconds(force::PULL_DURATION, TimerMode::Once),
             direction: -dir, // Pull towards caster
@@ -134,7 +144,7 @@ mod tests {
     #[test]
     fn test_force_push_logic() {
         let mut app = App::new();
-        app.add_event::<CollisionEvent>();
+        app.add_message::<CollisionEvent>();
 
         // Mock the observer registration manually since we don't have the full plugin here
         app.add_observer(force_effect_observer);
@@ -165,16 +175,22 @@ mod tests {
 
         // Check Enemy Status
         let status = app.world().get::<UnitStatus>(enemy).unwrap();
-        
+
         // Should have ForcedMovement
         let effect = status.effects.last().unwrap();
-        if let StatusEffect::ForcedMovement { direction, speed, move_type, .. } = effect {
-             assert_eq!(move_type, &crate::components::status::ForceType::Push);
-             assert!(direction.x > 0.0); // Pushed right
-             assert!(direction.x > 0.0); // Pushed right
-             // Distance 100, Radius 800. 
-             // Speed = (800 - 100) * 1.0 = 700
-             assert!(speed > &650.0 && speed < &750.0);
+        if let StatusEffect::ForcedMovement {
+            direction,
+            speed,
+            move_type,
+            ..
+        } = effect
+        {
+            assert_eq!(move_type, &crate::components::status::ForceType::Push);
+            assert!(direction.x > 0.0); // Pushed right
+            assert!(direction.x > 0.0); // Pushed right
+            // Distance 100, Radius 800.
+            // Speed = (800 - 100) * 1.0 = 700
+            assert!(speed > &650.0 && speed < &750.0);
         } else {
             panic!("Expected ForcedMovement status");
         }
@@ -183,7 +199,7 @@ mod tests {
     #[test]
     fn test_force_pull_logic() {
         let mut app = App::new();
-        app.add_event::<CollisionEvent>();
+        app.add_message::<CollisionEvent>();
         app.add_observer(force_effect_observer);
 
         // Spawn Enemy at (100, 0)
@@ -212,18 +228,23 @@ mod tests {
 
         // Check Enemy Status
         let status = app.world().get::<UnitStatus>(enemy).unwrap();
-        
+
         let effect = status.effects.last().unwrap();
-        if let StatusEffect::ForcedMovement { direction, speed, move_type, .. } = effect {
-             assert_eq!(move_type, &crate::components::status::ForceType::Pull);
-             assert!(direction.x < 0.0); // Pulled left
-             assert!(direction.x < 0.0); // Pulled left
-             // Distance 100, Radius 800.
-             // Speed = 100 * 1.0 = 100
-             assert!(speed > &90.0 && speed < &110.0);
+        if let StatusEffect::ForcedMovement {
+            direction,
+            speed,
+            move_type,
+            ..
+        } = effect
+        {
+            assert_eq!(move_type, &crate::components::status::ForceType::Pull);
+            assert!(direction.x < 0.0); // Pulled left
+            assert!(direction.x < 0.0); // Pulled left
+            // Distance 100, Speed Factor 1.4.
+            // Speed = 100 * 1.4 = 140
+            assert!(speed > &135.0 && speed < &145.0);
         } else {
             panic!("Expected ForcedMovement status");
         }
     }
 }
-

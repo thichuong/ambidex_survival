@@ -167,6 +167,7 @@ fn fire_gun(params: &mut CombatInputParams, gun_mode: GunMode, ctx: &CombatConte
                     faction: Faction::Player,
                     crit_chance: ctx.combat_stats.crit_chance,
                     crit_damage: ctx.combat_stats.crit_damage,
+                    lifesteal_efficiency: 1.0,
                 },
                 Lifetime {
                     timer: Timer::from_seconds(gun::BULLET_LIFETIME, TimerMode::Once),
