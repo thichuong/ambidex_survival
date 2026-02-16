@@ -98,11 +98,10 @@ pub fn force_effect_observer(
     // However, status system handles velocity override now.
 
     if push.is_some() {
-        // Push away: strength reduces slightly with distance?
-        // User said: "càng gần đẩy càng xa" -> Closer = Stronger
-        // Formula: Base * (1.0 + (1.0 - dist/Rad)) -> range [1.0, 2.0]
-        let factor = 1.0 + (1.0 - (distance / force::RADIUS).min(1.0)).max(0.0);
-        let speed = force::BASE_PUSH_SPEED * factor;
+        // Push away:
+        // Formula: (Range - Distance) * ScalingFactor
+        // Closer to caster = Stronger push
+        let speed = (force::RADIUS - distance).max(0.0) * force::PUSH_SPEED_FACTOR;
         
         status.add(crate::components::status::StatusEffect::ForcedMovement {
             timer: Timer::from_seconds(force::PUSH_DURATION, TimerMode::Once),
@@ -113,10 +112,9 @@ pub fn force_effect_observer(
         
     } else if pull.is_some() {
         // Pull towards:
-        // User said: "Cách càng xa kéo càng xa" -> Farther = Stronger
-        // Formula: Base * (1.0 + dist/Rad) -> range [1.0, 2.0]
-        let factor = 1.0 + (distance / force::RADIUS).min(1.0);
-        let speed = force::BASE_PULL_SPEED * factor;
+        // Formula: Distance * ScalingFactor
+        // Farther from caster = Stronger pull
+        let speed = distance * force::PULL_SPEED_FACTOR;
         
         status.add(crate::components::status::StatusEffect::ForcedMovement {
             timer: Timer::from_seconds(force::PULL_DURATION, TimerMode::Once),
@@ -173,9 +171,10 @@ mod tests {
         if let StatusEffect::ForcedMovement { direction, speed, move_type, .. } = effect {
              assert_eq!(move_type, &crate::components::status::ForceType::Push);
              assert!(direction.x > 0.0); // Pushed right
-             // Distance 100, Radius 800. Factor = 1 + (1 - 0.125) = 1.875
-             // Base 800 * 1.875 = 1500
-             assert!(speed > &800.0);
+             assert!(direction.x > 0.0); // Pushed right
+             // Distance 100, Radius 800. 
+             // Speed = (800 - 100) * 1.0 = 700
+             assert!(speed > &650.0 && speed < &750.0);
         } else {
             panic!("Expected ForcedMovement status");
         }
@@ -218,9 +217,10 @@ mod tests {
         if let StatusEffect::ForcedMovement { direction, speed, move_type, .. } = effect {
              assert_eq!(move_type, &crate::components::status::ForceType::Pull);
              assert!(direction.x < 0.0); // Pulled left
-             // Distance 100, Radius 800. Factor = 1 + 0.125 = 1.125
-             // Base 800 * 1.125 = 900
-             assert!(speed > &800.0);
+             assert!(direction.x < 0.0); // Pulled left
+             // Distance 100, Radius 800.
+             // Speed = 100 * 1.0 = 100
+             assert!(speed > &90.0 && speed < &110.0);
         } else {
             panic!("Expected ForcedMovement status");
         }
