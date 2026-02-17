@@ -137,6 +137,8 @@ pub struct ShopBuyButtonText;
 /// Marker for buy button price text
 #[derive(Component)]
 pub struct ShopBuyButtonPrice;
+#[derive(Component)]
+pub struct SpellListDescriptionText;
 
 /// Event fired when a shop card is clicked (selection, not purchase)
 #[derive(Event, Debug)]

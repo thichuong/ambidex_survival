@@ -309,63 +309,87 @@ fn spawn_spell_list_panel(
     use super::components::{SpellListButton, WeaponStateGroup};
     use super::systems::spell_list_observer;
 
+    // Container for List + Description
     parent
-        .spawn((
-            Node {
-                flex_direction: FlexDirection::Row,
-                flex_wrap: FlexWrap::Wrap,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                margin: UiRect::top(Val::Px(20.0)),
-                row_gap: Val::Px(10.0),
-                column_gap: Val::Px(10.0),
-                display: Display::None, // Default hidden, toggled by system
-                ..default()
-            },
-            WeaponStateGroup {
-                side,
-                weapon_type: WeaponType::Magic,
-            },
-        ))
-        .with_children(|container| {
-            let spells = vec![
-                (SpellType::EnergyBolt, "ui/icons/magic_bolt.png"),
-                (SpellType::Laser, "ui/icons/magic_laser.png"),
-                (SpellType::Nova, "ui/icons/magic_nova.png"),
-                (SpellType::Blink, "ui/icons/magic_blink.png"),
-                (SpellType::Global, "ui/icons/magic_global.png"),
-                (SpellType::ForcePush, "ui/icons/magic_push.png"),
-                (SpellType::ForcePull, "ui/icons/magic_pull.png"),
-            ];
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            margin: UiRect::top(Val::Px(20.0)),
+            display: Display::None,
+            ..default()
+        })
+        .insert(WeaponStateGroup {
+            side,
+            weapon_type: WeaponType::Magic,
+        })
+        .with_children(|wrapper| {
+            // Button Grid
+            wrapper
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    flex_wrap: FlexWrap::Wrap,
+                    justify_content: JustifyContent::Center,
+                    row_gap: Val::Px(10.0),
+                    column_gap: Val::Px(10.0),
+                    max_width: Val::Px(220.0), // Force wrap
+                    ..default()
+                })
+                .with_children(|grid| {
+                    let spells = vec![
+                        (SpellType::EnergyBolt, "ui/icons/magic_bolt.png"),
+                        (SpellType::Laser, "ui/icons/magic_laser.png"),
+                        (SpellType::Nova, "ui/icons/magic_nova.png"),
+                        (SpellType::Blink, "ui/icons/magic_blink.png"),
+                        (SpellType::Global, "ui/icons/magic_global.png"),
+                        (SpellType::ForcePush, "ui/icons/magic_push.png"),
+                        (SpellType::ForcePull, "ui/icons/magic_pull.png"),
+                    ];
 
-            for (spell, icon_path) in spells {
-                container
-                    .spawn((
-                        Button,
-                        Node {
-                            width: Val::Px(50.0),
-                            height: Val::Px(50.0),
-                            border: UiRect::all(Val::Px(2.0)),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::srgba(0.2, 0.2, 0.3, 1.0)),
-                        BorderColor::all(Color::NONE),
-                        SpellListButton(spell),
-                    ))
-                    .observe(spell_list_observer)
-                    .with_children(|btn| {
-                        btn.spawn((
-                            ImageNode::new(asset_server.load(icon_path)),
+                    for (spell, icon_path) in spells {
+                        grid.spawn((
+                            Button,
                             Node {
-                                width: Val::Px(40.0),
-                                height: Val::Px(40.0),
+                                width: Val::Px(50.0),
+                                height: Val::Px(50.0),
+                                border: UiRect::all(Val::Px(2.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
                                 ..default()
                             },
-                        ));
-                    });
-            }
+                            BackgroundColor(Color::srgba(0.2, 0.2, 0.3, 1.0)),
+                            BorderColor::all(Color::NONE),
+                            SpellListButton(spell),
+                        ))
+                        .observe(spell_list_observer)
+                        .with_children(|btn| {
+                            btn.spawn((
+                                ImageNode::new(asset_server.load(icon_path)),
+                                Node {
+                                    width: Val::Px(40.0),
+                                    height: Val::Px(40.0),
+                                    ..default()
+                                },
+                            ));
+                        });
+                    }
+                });
+
+            // Description Text
+            use super::components::SpellListDescriptionText;
+            wrapper.spawn((
+                Text::new("Select a spell to see details..."),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                Node {
+                    margin: UiRect::top(Val::Px(15.0)),
+                    max_width: Val::Px(250.0),
+                    ..default()
+                },
+                SpellListDescriptionText,
+            ));
         });
 }
 

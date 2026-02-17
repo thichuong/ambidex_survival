@@ -62,6 +62,7 @@ impl Plugin for UiPlugin {
             .add_systems(
                 Update,
                 (
+                    crate::systems::ui::menu::systems::update_spell_list_description,
                     update_menu_magic_ui,
                     crate::systems::ui::menu::systems::update_description_wrapper_visibility,
                     update_menu_weapon_details_ui,

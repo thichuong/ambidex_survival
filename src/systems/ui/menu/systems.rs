@@ -49,6 +49,23 @@ pub fn magic_button_observer(
     }
 }
 
+pub fn update_spell_list_description(
+    mut query: Query<&mut Text, With<super::components::SpellListDescriptionText>>,
+    selected_spell: Res<super::components::SelectedSpell>,
+) {
+    use super::arsenal::get_spell_description;
+
+    let text_content = if let Some(spell) = selected_spell.0 {
+        get_spell_description(spell)
+    } else {
+        "Select a spell to see details...".to_string()
+    };
+
+    for mut text in &mut query {
+        text.0 = text_content.clone();
+    }
+}
+
 #[allow(clippy::needless_pass_by_value, clippy::too_many_arguments)]
 pub fn update_menu_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
