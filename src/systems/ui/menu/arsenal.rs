@@ -1,6 +1,7 @@
 use super::systems::WeaponDescriptionText;
 use crate::components::player::HandType;
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
+use crate::configs::visuals::*;
 use bevy::prelude::*;
 
 pub fn get_spell_description(spell_type: SpellType) -> String {
@@ -113,148 +114,274 @@ pub fn spawn_weapon_button(
         });
 }
 
-pub fn spawn_magic_panel(
+pub fn spawn_magic_editor(
     parent: &mut ChildSpawnerCommands,
     side: HandType,
     asset_server: &AssetServer,
 ) {
-    use super::components::{MagicPanel, MagicSlotButton};
+    use super::components::{MagicUnifiedContainer, MagicPanel};
 
     parent
         .spawn((
             Node {
-                width: Val::Percent(50.0),
-                height: Val::Auto,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                margin: UiRect::vertical(Val::Px(20.0)),
                 padding: UiRect::all(Val::Px(10.0)),
                 display: Display::None,
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.2, 0.0, 0.2, 0.8)),
+            MagicUnifiedContainer,
             MagicPanel { side },
         ))
-        .with_children(|panel| {
-            panel.spawn((
-                Text::new("Select Spell"),
-                TextFont {
-                    font_size: 18.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(1.0, 0.5, 1.0)),
-                Node {
-                    margin: UiRect::bottom(Val::Px(10.0)),
-                    ..default()
-                },
-            ));
+        .with_children(|container| {
+            // 1. Top Section: Active Slots
+            spawn_magic_slots_section(container, side, asset_server);
 
-            let label = match side {
-                HandType::Left => "Left Magic (Q): ",
-                HandType::Right => "Right Magic (E): ",
-            };
-            panel.spawn((
-                Text::new(label),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-            ));
+            // 2. Middle Section: Spell Palette
+            spawn_spell_palette_section(container, side, asset_server);
 
-            panel
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    margin: UiRect::vertical(Val::Px(10.0)),
-                    ..default()
-                })
-                .with_children(|icons| {
-                    icons.spawn((
-                        ImageNode::new(asset_server.load("ui/icons/magic_bolt.png")),
-                        Node {
-                            width: Val::Px(80.0),
-                            height: Val::Px(80.0),
-                            margin: UiRect::right(Val::Px(10.0)),
-                            ..default()
-                        },
-                        MagicSlotButton {
-                            side,
-                            is_primary: true,
-                        },
-                    ));
-
-                    icons.spawn((
-                        ImageNode::new(asset_server.load("ui/icons/magic_blink.png")),
-                        Node {
-                            width: Val::Px(60.0),
-                            height: Val::Px(60.0),
-                            ..default()
-                        },
-                        MagicSlotButton {
-                            side,
-                            is_primary: false,
-                        },
-                    ));
-                });
-
-            spawn_magic_slot_button(panel, side, true, "Primary: Bolt");
-            spawn_magic_slot_button(panel, side, false, "Secondary: Blink");
+            // 3. Bottom Section: Info/Description
+            spawn_magic_info_section(container);
         });
 }
 
-fn spawn_magic_slot_button(
+fn spawn_magic_slots_section(
+    parent: &mut ChildSpawnerCommands,
+    side: HandType,
+    asset_server: &AssetServer,
+) {
+    parent
+        .spawn(Node {
+            width: Val::Percent(100.0),
+            height: Val::Auto,
+            flex_direction: FlexDirection::Row,
+            justify_content: JustifyContent::SpaceEvenly,
+            align_items: AlignItems::Center,
+            margin: UiRect::bottom(Val::Px(20.0)),
+            ..default()
+        })
+        .with_children(|section| {
+             // Primary Slot
+             spawn_magic_slot_card(section, side, true, asset_server, "Primary (LMB/Q)");
+             
+             // Visual Divider or Icon
+             // Visual Divider or Icon
+             section.spawn((
+                Text::new("⚡"),
+                TextFont { font_size: 32.0, ..default() },
+                TextColor(MAGIC_DIVIDER_COLOR),
+             ));
+
+             // Secondary Slot
+             spawn_magic_slot_card(section, side, false, asset_server, "Secondary (RMB/E)");
+        });
+}
+
+fn spawn_magic_slot_card(
     parent: &mut ChildSpawnerCommands,
     side: HandType,
     is_primary: bool,
-    text: &str,
+    asset_server: &AssetServer,
+    label: &str,
 ) {
-    use super::components::MagicSlotButton;
+    use super::components::{MagicSlotButton, MagicSlotIcon};
     use super::systems::magic_button_observer;
+
+    let default_icon = if is_primary {
+        "ui/icons/magic_bolt.png"
+    } else {
+        "ui/icons/magic_blink.png"
+    };
 
     parent
         .spawn((
             Button,
             Node {
-                width: Val::Percent(90.0),
-                height: Val::Px(35.0),
-                justify_content: JustifyContent::Center,
+                width: Val::Px(160.0),
+                height: Val::Px(200.0),
+                flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
-                margin: UiRect::vertical(Val::Px(5.0)),
+                justify_content: JustifyContent::SpaceBetween,
+                padding: UiRect::all(Val::Px(10.0)),
                 border: UiRect::all(Val::Px(2.0)),
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
-            BorderColor::all(Color::NONE),
+            BackgroundColor(MAGIC_SLOT_BG),
+            BorderColor::from(MAGIC_SLOT_BORDER_DEFAULT),
             MagicSlotButton { side, is_primary },
         ))
         .observe(magic_button_observer)
-        .observe(
-            |trigger: On<Pointer<Over>>, mut color: Query<&mut BackgroundColor>| {
-                if let Ok(mut color) = color.get_mut(trigger.entity) {
-                    *color = BackgroundColor(Color::srgba(0.5, 0.0, 0.5, 1.0));
-                }
-            },
-        )
-        .observe(
-            |trigger: On<Pointer<Out>>, mut color: Query<&mut BackgroundColor>| {
-                if let Ok(mut color) = color.get_mut(trigger.entity) {
-                    *color = BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0));
-                }
-            },
-        )
-        .with_children(|btn| {
-            btn.spawn((
-                Text::new(text),
-                TextFont {
-                    font_size: 14.0,
+        .observe(|trigger: On<Pointer<Over>>, mut border: Query<&mut BorderColor>| {
+            if let Ok(mut border) = border.get_mut(trigger.entity) {
+                *border = BorderColor::from(MAGIC_SLOT_BORDER_HIGHLIGHT);
+            }
+        })
+        .observe(|trigger: On<Pointer<Out>>, mut border: Query<&mut BorderColor>| {
+            if let Ok(mut border) = border.get_mut(trigger.entity) {
+                *border = BorderColor::from(MAGIC_SLOT_BORDER_DEFAULT);
+            }
+        })
+        .with_children(|card| {
+            // Label
+            card.spawn((
+                Text::new(label),
+                TextFont { font_size: 14.0, ..default() },
+                TextColor(Color::srgb(0.8, 0.8, 0.9)),
+            ));
+
+            // Icon Container
+            card.spawn((
+                Node {
+                    width: Val::Px(96.0),
+                    height: Val::Px(96.0),
+                    margin: UiRect::vertical(Val::Px(10.0)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    border: UiRect::all(Val::Px(1.0)),
                     ..default()
                 },
+                BorderColor::from(MAGIC_SLOT_BORDER_DEFAULT),
+            )).with_children(|icon_container| {
+                icon_container.spawn((
+                    ImageNode::new(asset_server.load(default_icon)),
+                    Node {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        ..default()
+                    },
+                    MagicSlotIcon,
+                ));
+            });
+
+            // Spell Name (Dynamic)
+            card.spawn((
+                Text::new("Spell Name"),
+                TextFont { font_size: 18.0, ..default() },
                 TextColor(Color::WHITE),
             ));
         });
+}
+
+
+fn spawn_spell_palette_section(
+    parent: &mut ChildSpawnerCommands,
+    side: HandType,
+    asset_server: &AssetServer,
+) {
+    use super::components::{SpellListButton, MagicPaletteContainer};
+    use super::systems::spell_list_observer;
+
+    parent
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                width: Val::Percent(100.0),
+                flex_grow: 1.0, 
+                ..default()
+            },
+            MagicPaletteContainer,
+        ))
+        .with_children(|container| {
+            container.spawn((
+                Text::new("SPELL PALETTE"),
+                TextFont { font_size: 16.0, ..default() },
+                TextColor(Color::srgb(0.6, 0.6, 0.7)),
+                Node { margin: UiRect::bottom(Val::Px(10.0)), ..default() },
+            ));
+
+             container
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    flex_wrap: FlexWrap::Wrap,
+                    justify_content: JustifyContent::Center,
+                    row_gap: Val::Px(15.0),
+                    column_gap: Val::Px(15.0),
+                    width: Val::Percent(100.0),
+                    ..default()
+                })
+                .with_children(|grid| {
+                    let spells = vec![
+                        (SpellType::EnergyBolt, "ui/icons/magic_bolt.png"),
+                        (SpellType::Laser, "ui/icons/magic_laser.png"),
+                        (SpellType::Nova, "ui/icons/magic_nova.png"),
+                        (SpellType::Blink, "ui/icons/magic_blink.png"),
+                        (SpellType::Global, "ui/icons/magic_global.png"),
+                        (SpellType::ForcePush, "ui/icons/magic_push.png"),
+                        (SpellType::ForcePull, "ui/icons/magic_pull.png"),
+                    ];
+
+                    for (spell, icon_path) in spells {
+                        grid.spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(64.0),
+                                height: Val::Px(64.0),
+                                border: UiRect::all(Val::Px(2.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            BackgroundColor(MAGIC_SLOT_BG),
+                            BorderColor::all(Color::NONE),
+                            SpellListButton(spell),
+                        ))
+                        .observe(spell_list_observer)
+                         .observe(|trigger: On<Pointer<Over>>, mut bg: Query<&mut BackgroundColor>| {
+                            if let Ok(mut bg) = bg.get_mut(trigger.entity) {
+                                *bg = BackgroundColor(MAGIC_SLOT_BG_HOVER);
+                            }
+                        })
+                        .observe(|trigger: On<Pointer<Out>>, mut bg: Query<&mut BackgroundColor>| {
+                             if let Ok(mut bg) = bg.get_mut(trigger.entity) {
+                                *bg = BackgroundColor(MAGIC_SLOT_BG);
+                            }
+                        })
+                        .with_children(|btn| {
+                            btn.spawn((
+                                ImageNode::new(asset_server.load(icon_path)),
+                                Node {
+                                    width: Val::Px(48.0),
+                                    height: Val::Px(48.0),
+                                    ..default()
+                                },
+                            ));
+                        });
+                    }
+                });
+        });
+}
+
+fn spawn_magic_info_section(parent: &mut ChildSpawnerCommands) {
+    use super::components::{SpellListDescriptionText, MagicInfoContainer};
+
+    parent.spawn((
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Px(80.0),
+            padding: UiRect::all(Val::Px(10.0)),
+            margin: UiRect::top(Val::Px(20.0)),
+            border: UiRect::top(Val::Px(1.0)),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        BorderColor::from(MAGIC_SLOT_BORDER_DEFAULT),
+        BackgroundColor(MAGIC_INFO_BG),
+        MagicInfoContainer,
+    )).with_children(|info| {
+         info.spawn((
+            Text::new("Select a spell to see details..."),
+            TextFont {
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.8, 0.8, 0.8)),
+            SpellListDescriptionText,
+        ));
+    });
 }
 
 pub fn spawn_weapon_detail_panel(
@@ -297,101 +424,11 @@ pub fn spawn_weapon_detail_panel(
             spawn_shuriken_group(panel, side, asset_server);
 
             // Magic Spell List (Only visible for Magic)
-            spawn_spell_list_panel(panel, side, asset_server);
+            // Removed: spawn_spell_list_panel(panel, side, asset_server);
         });
 }
 
-fn spawn_spell_list_panel(
-    parent: &mut ChildSpawnerCommands,
-    side: HandType,
-    asset_server: &AssetServer,
-) {
-    use super::components::{SpellListButton, WeaponStateGroup};
-    use super::systems::spell_list_observer;
-
-    // Container for List + Description
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
-            margin: UiRect::top(Val::Px(20.0)),
-            display: Display::None,
-            ..default()
-        })
-        .insert(WeaponStateGroup {
-            side,
-            weapon_type: WeaponType::Magic,
-        })
-        .with_children(|wrapper| {
-            // Button Grid
-            wrapper
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    flex_wrap: FlexWrap::Wrap,
-                    justify_content: JustifyContent::Center,
-                    row_gap: Val::Px(10.0),
-                    column_gap: Val::Px(10.0),
-                    max_width: Val::Px(220.0), // Force wrap
-                    ..default()
-                })
-                .with_children(|grid| {
-                    let spells = vec![
-                        (SpellType::EnergyBolt, "ui/icons/magic_bolt.png"),
-                        (SpellType::Laser, "ui/icons/magic_laser.png"),
-                        (SpellType::Nova, "ui/icons/magic_nova.png"),
-                        (SpellType::Blink, "ui/icons/magic_blink.png"),
-                        (SpellType::Global, "ui/icons/magic_global.png"),
-                        (SpellType::ForcePush, "ui/icons/magic_push.png"),
-                        (SpellType::ForcePull, "ui/icons/magic_pull.png"),
-                    ];
-
-                    for (spell, icon_path) in spells {
-                        grid.spawn((
-                            Button,
-                            Node {
-                                width: Val::Px(50.0),
-                                height: Val::Px(50.0),
-                                border: UiRect::all(Val::Px(2.0)),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            },
-                            BackgroundColor(Color::srgba(0.2, 0.2, 0.3, 1.0)),
-                            BorderColor::all(Color::NONE),
-                            SpellListButton(spell),
-                        ))
-                        .observe(spell_list_observer)
-                        .with_children(|btn| {
-                            btn.spawn((
-                                ImageNode::new(asset_server.load(icon_path)),
-                                Node {
-                                    width: Val::Px(40.0),
-                                    height: Val::Px(40.0),
-                                    ..default()
-                                },
-                            ));
-                        });
-                    }
-                });
-
-            // Description Text
-            use super::components::SpellListDescriptionText;
-            wrapper.spawn((
-                Text::new("Select a spell to see details..."),
-                TextFont {
-                    font_size: 14.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                Node {
-                    margin: UiRect::top(Val::Px(15.0)),
-                    max_width: Val::Px(250.0),
-                    ..default()
-                },
-                SpellListDescriptionText,
-            ));
-        });
-}
+// Function spawn_spell_list_panel removed and replaced by spawn_magic_editor
 
 fn spawn_sword_group(
     parent: &mut ChildSpawnerCommands,
@@ -586,7 +623,7 @@ fn spawn_center_column(parent: &mut ChildSpawnerCommands, asset_server: &AssetSe
                     },
                 ))
                 .with_children(|row| {
-                    spawn_magic_panel(row, HandType::Left, asset_server);
+                    spawn_magic_editor(row, HandType::Left, asset_server);
                     spawn_weapon_detail_panel(row, HandType::Left, asset_server);
                 });
 
@@ -605,7 +642,7 @@ fn spawn_center_column(parent: &mut ChildSpawnerCommands, asset_server: &AssetSe
                     },
                 ))
                 .with_children(|row| {
-                    spawn_magic_panel(row, HandType::Right, asset_server);
+                    spawn_magic_editor(row, HandType::Right, asset_server);
                     spawn_weapon_detail_panel(row, HandType::Right, asset_server);
                 });
         });

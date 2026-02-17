@@ -65,6 +65,9 @@ pub struct MagicPanel {
 }
 
 #[derive(Component)]
+pub struct MagicSlotIcon;
+
+#[derive(Component)]
 pub struct MagicSlotButton {
     pub side: HandType,
     pub is_primary: bool, // true = primary, false = secondary
@@ -139,6 +142,15 @@ pub struct ShopBuyButtonText;
 pub struct ShopBuyButtonPrice;
 #[derive(Component)]
 pub struct SpellListDescriptionText;
+
+#[derive(Component)]
+pub struct MagicUnifiedContainer;
+
+#[derive(Component)]
+pub struct MagicPaletteContainer;
+
+#[derive(Component)]
+pub struct MagicInfoContainer;
 
 /// Event fired when a shop card is clicked (selection, not purchase)
 #[derive(Event, Debug)]

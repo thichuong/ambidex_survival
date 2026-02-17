@@ -13,4 +13,4 @@ pub const PUSH_SPEED_FACTOR: f32 = 1.0;
 pub const PULL_SPEED_FACTOR: f32 = 1.4;
 
 pub const DAMAGE_BASE: f32 = 5.0;
-pub const DAMAGE_BONUS_MAX: f32 = 25.0;
+pub const DAMAGE_BONUS_MAX: f32 = 30.0;

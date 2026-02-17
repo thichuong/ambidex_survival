@@ -5,6 +5,7 @@ use super::components::{
 };
 use crate::components::player::{CombatStats, Currency, Hand, Health, Player, PlayerStats};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
+use crate::configs::visuals::*;
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -71,12 +72,12 @@ pub fn update_menu_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
     mut button_node_query: Query<(&Children, &MagicSlotButton, &mut BorderColor), With<Button>>,
-    mut icon_query: Query<(&mut ImageNode, &MagicSlotButton), Without<Button>>,
+    mut icon_query: Query<&mut ImageNode, With<super::components::MagicSlotIcon>>, 
+    children_query: Query<&Children>,
     mut text_query: Query<&mut Text>,
     loadout_query: Query<&MagicLoadout>,
     asset_server: Res<AssetServer>,
     active_side: Res<super::resources::ActiveDescriptionSide>,
-    // New queries for spell list
     mut spell_list_query: Query<(&SpellListButton, &mut BackgroundColor, &mut BorderColor), Without<MagicSlotButton>>,
     selected_spell: Res<super::components::SelectedSpell>,
 ) {
@@ -113,6 +114,7 @@ pub fn update_menu_magic_ui(
                     } else {
                         loadout.secondary
                     };
+                    
                     let spell_name = match spell {
                         SpellType::EnergyBolt => "Bolt",
                         SpellType::Laser => "Laser",
@@ -122,31 +124,7 @@ pub fn update_menu_magic_ui(
                         SpellType::ForcePush => "Push",
                         SpellType::ForcePull => "Pull",
                     };
-                    let prefix = if btn_data.is_primary { "Pri" } else { "Sec" };
-                    for &child in children {
-                        if let Ok(mut text) = text_query.get_mut(child) {
-                            **text = format!("{prefix}: {spell_name}");
-                        }
-                    }
-
-                    // Highlight slot if ready to receive selection (optional visual cue)
-                     if selected_spell.0.is_some() {
-                        *border = BorderColor::from(Color::srgba(1.0, 1.0, 1.0, 0.5));
-                    } else {
-                        *border = BorderColor::from(Color::NONE);
-                    }
-                }
-            }
-
-            // Update Icons
-            for (mut image, icon_data) in &mut icon_query {
-                if icon_data.side == hand.side {
-                    let spell = if icon_data.is_primary {
-                        loadout.primary
-                    } else {
-                        loadout.secondary
-                    };
-                    let path = match spell {
+                    let icon_path = match spell {
                         SpellType::EnergyBolt => "ui/icons/magic_bolt.png",
                         SpellType::Laser => "ui/icons/magic_laser.png",
                         SpellType::Nova => "ui/icons/magic_nova.png",
@@ -155,7 +133,39 @@ pub fn update_menu_magic_ui(
                         SpellType::ForcePush => "ui/icons/magic_push.png",
                         SpellType::ForcePull => "ui/icons/magic_pull.png",
                     };
-                    image.image = asset_server.load(path);
+
+                    let prefix = if btn_data.is_primary { "Pri" } else { "Sec" };
+                    
+                    // Iterate children to find Text and Icon
+                    for &child in children {
+                        // Update Text
+                        if let Ok(mut text) = text_query.get_mut(child) {
+                            **text = format!("{prefix}: {spell_name}");
+                        }
+                        // Update Icon - Note: In new layout, Icon is deeper, but we can still try to find it
+                        // if the child path is direct. However, in new layout, Icon is inside a container.
+                        // We need recursive generic query or specific structure knowledge.
+                        // The simplified `children` loop above only checks direct children of the Button.
+                        // In new layout: Button -> [Text, IconContainer -> [Icon]]
+                        
+                        // Check direct icon (old way) or IconContainer's child (new way)
+                        if let Ok(mut image) = icon_query.get_mut(child) {
+                             image.image = asset_server.load(icon_path);
+                        } else if let Ok(grandchildren) = children_query.get(child) {
+                             for &grandchild in grandchildren {
+                                  if let Ok(mut image) = icon_query.get_mut(grandchild) {
+                                      image.image = asset_server.load(icon_path);
+                                  }
+                             }
+                        }
+                    }
+
+                    // Highlight slot if ready to receive selection (optional visual cue)
+                     if selected_spell.0.is_some() {
+                        *border = BorderColor::from(MAGIC_SLOT_BORDER_HIGHLIGHT);
+                    } else {
+                        *border = BorderColor::from(Color::NONE);
+                    }
                 }
             }
         }
@@ -164,10 +174,10 @@ pub fn update_menu_magic_ui(
     // 3. Update Spell List Selection
     for (btn_data, mut bg, mut border) in &mut spell_list_query {
         if Some(btn_data.0) == selected_spell.0 {
-            *bg = BackgroundColor(Color::srgba(0.4, 0.2, 0.6, 1.0));
-            *border = BorderColor::from(Color::srgb(1.0, 0.8, 0.2));
+            *bg = BackgroundColor(MAGIC_SELECTION_BG);
+            *border = BorderColor::from(MAGIC_SLOT_BORDER_SELECTED);
         } else {
-            *bg = BackgroundColor(Color::srgba(0.2, 0.2, 0.3, 1.0));
+            *bg = BackgroundColor(MAGIC_SLOT_BG);
             *border = BorderColor::from(Color::NONE);
         }
     }
