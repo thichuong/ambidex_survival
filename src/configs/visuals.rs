@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use bevy::prelude::*;
 
 // Damage Text Settings

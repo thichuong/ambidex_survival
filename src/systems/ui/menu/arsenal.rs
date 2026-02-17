@@ -1,7 +1,10 @@
 use super::systems::WeaponDescriptionText;
 use crate::components::player::HandType;
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
-use crate::configs::visuals::*;
+use crate::configs::visuals::{
+    MAGIC_DIVIDER_COLOR, MAGIC_INFO_BG, MAGIC_SLOT_BG, MAGIC_SLOT_BG_HOVER,
+    MAGIC_SLOT_BORDER_DEFAULT, MAGIC_SLOT_BORDER_HIGHLIGHT,
+};
 use bevy::prelude::*;
 
 pub fn get_spell_description(spell_type: SpellType) -> String {
@@ -267,7 +270,7 @@ fn spawn_magic_slot_card(
 
 fn spawn_spell_palette_section(
     parent: &mut ChildSpawnerCommands,
-    side: HandType,
+    _side: HandType,
     asset_server: &AssetServer,
 ) {
     use super::components::{SpellListButton, MagicPaletteContainer};

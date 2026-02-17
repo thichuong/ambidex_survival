@@ -5,7 +5,9 @@ use super::components::{
 };
 use crate::components::player::{CombatStats, Currency, Hand, Health, Player, PlayerStats};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
-use crate::configs::visuals::*;
+use crate::configs::visuals::{
+    MAGIC_SELECTION_BG, MAGIC_SLOT_BG, MAGIC_SLOT_BORDER_HIGHLIGHT, MAGIC_SLOT_BORDER_SELECTED,
+};
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -28,7 +30,7 @@ pub fn spell_list_observer(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::collapsible_if)]
 pub fn magic_button_observer(
     trigger: On<Pointer<Click>>,
     btn_query: Query<&MagicSlotButton>,
@@ -50,20 +52,20 @@ pub fn magic_button_observer(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn update_spell_list_description(
     mut query: Query<&mut Text, With<super::components::SpellListDescriptionText>>,
     selected_spell: Res<super::components::SelectedSpell>,
 ) {
     use super::arsenal::get_spell_description;
 
-    let text_content = if let Some(spell) = selected_spell.0 {
-        get_spell_description(spell)
-    } else {
-        "Select a spell to see details...".to_string()
-    };
+    let text_content = selected_spell.0.map_or_else(
+        || "Select a spell to see details...".to_string(),
+        get_spell_description,
+    );
 
     for mut text in &mut query {
-        text.0 = text_content.clone();
+        text.0.clone_from(&text_content);
     }
 }
 
