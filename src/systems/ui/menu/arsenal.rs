@@ -118,7 +118,7 @@ pub fn spawn_magic_panel(
     side: HandType,
     asset_server: &AssetServer,
 ) {
-    use super::components::{MagicCycleButton, MagicPanel};
+    use super::components::{MagicPanel, MagicSlotButton};
 
     parent
         .spawn((
@@ -180,7 +180,7 @@ pub fn spawn_magic_panel(
                             margin: UiRect::right(Val::Px(10.0)),
                             ..default()
                         },
-                        MagicCycleButton {
+                        MagicSlotButton {
                             side,
                             is_primary: true,
                         },
@@ -193,25 +193,25 @@ pub fn spawn_magic_panel(
                             height: Val::Px(60.0),
                             ..default()
                         },
-                        MagicCycleButton {
+                        MagicSlotButton {
                             side,
                             is_primary: false,
                         },
                     ));
                 });
 
-            spawn_magic_cycle_button(panel, side, true, "Primary: Bolt");
-            spawn_magic_cycle_button(panel, side, false, "Secondary: Blink");
+            spawn_magic_slot_button(panel, side, true, "Primary: Bolt");
+            spawn_magic_slot_button(panel, side, false, "Secondary: Blink");
         });
 }
 
-fn spawn_magic_cycle_button(
+fn spawn_magic_slot_button(
     parent: &mut ChildSpawnerCommands,
     side: HandType,
     is_primary: bool,
     text: &str,
 ) {
-    use super::components::MagicCycleButton;
+    use super::components::MagicSlotButton;
     use super::systems::magic_button_observer;
 
     parent
@@ -223,10 +223,12 @@ fn spawn_magic_cycle_button(
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 margin: UiRect::vertical(Val::Px(5.0)),
+                border: UiRect::all(Val::Px(2.0)),
                 ..default()
             },
             BackgroundColor(Color::srgba(0.4, 0.0, 0.4, 1.0)),
-            MagicCycleButton { side, is_primary },
+            BorderColor::all(Color::NONE),
+            MagicSlotButton { side, is_primary },
         ))
         .observe(magic_button_observer)
         .observe(
@@ -293,6 +295,77 @@ pub fn spawn_weapon_detail_panel(
             spawn_sword_group(panel, side, asset_server);
             spawn_gun_group(panel, side, asset_server);
             spawn_shuriken_group(panel, side, asset_server);
+
+            // Magic Spell List (Only visible for Magic)
+            spawn_spell_list_panel(panel, side, asset_server);
+        });
+}
+
+fn spawn_spell_list_panel(
+    parent: &mut ChildSpawnerCommands,
+    side: HandType,
+    asset_server: &AssetServer,
+) {
+    use super::components::{SpellListButton, WeaponStateGroup};
+    use super::systems::spell_list_observer;
+
+    parent
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Row,
+                flex_wrap: FlexWrap::Wrap,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                margin: UiRect::top(Val::Px(20.0)),
+                row_gap: Val::Px(10.0),
+                column_gap: Val::Px(10.0),
+                display: Display::None, // Default hidden, toggled by system
+                ..default()
+            },
+            WeaponStateGroup {
+                side,
+                weapon_type: WeaponType::Magic,
+            },
+        ))
+        .with_children(|container| {
+            let spells = vec![
+                (SpellType::EnergyBolt, "ui/icons/magic_bolt.png"),
+                (SpellType::Laser, "ui/icons/magic_laser.png"),
+                (SpellType::Nova, "ui/icons/magic_nova.png"),
+                (SpellType::Blink, "ui/icons/magic_blink.png"),
+                (SpellType::Global, "ui/icons/magic_global.png"),
+                (SpellType::ForcePush, "ui/icons/magic_push.png"),
+                (SpellType::ForcePull, "ui/icons/magic_pull.png"),
+            ];
+
+            for (spell, icon_path) in spells {
+                container
+                    .spawn((
+                        Button,
+                        Node {
+                            width: Val::Px(50.0),
+                            height: Val::Px(50.0),
+                            border: UiRect::all(Val::Px(2.0)),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.2, 0.2, 0.3, 1.0)),
+                        BorderColor::all(Color::NONE),
+                        SpellListButton(spell),
+                    ))
+                    .observe(spell_list_observer)
+                    .with_children(|btn| {
+                        btn.spawn((
+                            ImageNode::new(asset_server.load(icon_path)),
+                            Node {
+                                width: Val::Px(40.0),
+                                height: Val::Px(40.0),
+                                ..default()
+                            },
+                        ));
+                    });
+            }
         });
 }
 

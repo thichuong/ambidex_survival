@@ -52,6 +52,12 @@ pub struct WeaponMenuUI;
 #[derive(Component)]
 pub struct MenuButton;
 
+#[derive(Resource, Default)]
+pub struct SelectedSpell(pub Option<crate::components::weapon::SpellType>);
+
+#[derive(Component)]
+pub struct SpellListButton(pub crate::components::weapon::SpellType);
+
 #[derive(Component)]
 pub struct MagicPanel {
     #[allow(dead_code)]
@@ -59,7 +65,7 @@ pub struct MagicPanel {
 }
 
 #[derive(Component)]
-pub struct MagicCycleButton {
+pub struct MagicSlotButton {
     pub side: HandType,
     pub is_primary: bool, // true = primary, false = secondary
 }

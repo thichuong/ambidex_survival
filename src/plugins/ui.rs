@@ -21,6 +21,7 @@ impl Plugin for UiPlugin {
         app.init_resource::<SelectedShopCard>()
             .init_resource::<RebindState>()
             .init_resource::<ActiveDescriptionSide>()
+            .init_resource::<crate::systems::ui::menu::components::SelectedSpell>()
             .add_observer(handle_card_selection)
             .add_observer(handle_purchases)
             // Settings

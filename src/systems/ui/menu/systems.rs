@@ -1,6 +1,7 @@
 use super::components::{
-    ArsenalButton, MagicCycleButton, MagicPanel, MenuCDRText, MenuCritText, MenuDamageText,
-    MenuGoldText, MenuHealthText, MenuLifestealText, WeaponDetailPanel, WeaponStateGroup,
+    ArsenalButton, MagicPanel, MagicSlotButton, MenuCDRText, MenuCritText, MenuDamageText,
+    MenuGoldText, MenuHealthText, MenuLifestealText, SpellListButton, WeaponDetailPanel,
+    WeaponStateGroup,
 };
 use crate::components::player::{CombatStats, Currency, Hand, Health, Player, PlayerStats};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
@@ -10,33 +11,38 @@ use bevy::prelude::*;
 pub struct WeaponDescriptionText;
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn magic_button_observer(
+pub fn spell_list_observer(
     trigger: On<Pointer<Click>>,
-    btn_query: Query<&MagicCycleButton>,
-    mut loadout_query: Query<(&Hand, &mut MagicLoadout)>,
+    btn_query: Query<&SpellListButton>,
+    mut selected_spell: ResMut<super::components::SelectedSpell>,
+    // loadout_query: Query<(&Hand, &mut MagicLoadout)>, // Unused for now
 ) {
     if let Ok(btn_data) = btn_query.get(trigger.entity) {
-        for (hand, mut loadout) in &mut loadout_query {
-            if hand.side == btn_data.side {
-                let current = if btn_data.is_primary {
-                    loadout.primary
-                } else {
-                    loadout.secondary
-                };
-                let next = match current {
-                    SpellType::EnergyBolt => SpellType::Laser,
-                    SpellType::Laser => SpellType::Nova,
-                    SpellType::Nova => SpellType::Blink,
-                    SpellType::Blink => SpellType::Global,
-                    SpellType::Global => SpellType::ForcePush,
-                    SpellType::ForcePush => SpellType::ForcePull,
-                    SpellType::ForcePull => SpellType::EnergyBolt,
-                };
+        // Toggle selection
+        if selected_spell.0 == Some(btn_data.0) {
+            selected_spell.0 = None;
+        } else {
+            selected_spell.0 = Some(btn_data.0);
+        }
+    }
+}
 
-                if btn_data.is_primary {
-                    loadout.primary = next;
-                } else {
-                    loadout.secondary = next;
+#[allow(clippy::needless_pass_by_value)]
+pub fn magic_button_observer(
+    trigger: On<Pointer<Click>>,
+    btn_query: Query<&MagicSlotButton>,
+    mut loadout_query: Query<(&Hand, &mut MagicLoadout)>,
+    selected_spell: Res<super::components::SelectedSpell>,
+) {
+    if let Ok(btn_data) = btn_query.get(trigger.entity) {
+        if let Some(spell) = selected_spell.0 {
+            for (hand, mut loadout) in &mut loadout_query {
+                if hand.side == btn_data.side {
+                    if btn_data.is_primary {
+                        loadout.primary = spell;
+                    } else {
+                        loadout.secondary = spell;
+                    }
                 }
             }
         }
@@ -47,13 +53,17 @@ pub fn magic_button_observer(
 pub fn update_menu_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
-    button_node_query: Query<(&Children, &MagicCycleButton), With<Button>>,
-    mut icon_query: Query<(&mut ImageNode, &MagicCycleButton), Without<Button>>,
+    mut button_node_query: Query<(&Children, &MagicSlotButton, &mut BorderColor), With<Button>>,
+    mut icon_query: Query<(&mut ImageNode, &MagicSlotButton), Without<Button>>,
     mut text_query: Query<&mut Text>,
     loadout_query: Query<&MagicLoadout>,
     asset_server: Res<AssetServer>,
     active_side: Res<super::resources::ActiveDescriptionSide>,
+    // New queries for spell list
+    mut spell_list_query: Query<(&SpellListButton, &mut BackgroundColor, &mut BorderColor), Without<MagicSlotButton>>,
+    selected_spell: Res<super::components::SelectedSpell>,
 ) {
+    // 1. Panel Visibility
     for (mut node, panel) in &mut panel_query {
         let is_active_side = panel.side == active_side.0;
         let show = is_active_side
@@ -63,6 +73,7 @@ pub fn update_menu_magic_ui(
         node.display = if show { Display::Flex } else { Display::None };
     }
 
+    // 2. Button Updates (Text & Icons & Selection Border)
     for (hand, _) in &hand_query {
         let loadout_opt =
             loadout_query
@@ -77,7 +88,8 @@ pub fn update_menu_magic_ui(
                 });
 
         if let Some(loadout) = loadout_opt {
-            for (children, btn_data) in &button_node_query {
+            // Update Slot Buttons
+            for (children, btn_data, mut border) in &mut button_node_query {
                 if btn_data.side == hand.side {
                     let spell = if btn_data.is_primary {
                         loadout.primary
@@ -99,9 +111,17 @@ pub fn update_menu_magic_ui(
                             **text = format!("{prefix}: {spell_name}");
                         }
                     }
+
+                    // Highlight slot if ready to receive selection (optional visual cue)
+                     if selected_spell.0.is_some() {
+                        *border = BorderColor::from(Color::srgba(1.0, 1.0, 1.0, 0.5));
+                    } else {
+                        *border = BorderColor::from(Color::NONE);
+                    }
                 }
             }
 
+            // Update Icons
             for (mut image, icon_data) in &mut icon_query {
                 if icon_data.side == hand.side {
                     let spell = if icon_data.is_primary {
@@ -121,6 +141,17 @@ pub fn update_menu_magic_ui(
                     image.image = asset_server.load(path);
                 }
             }
+        }
+    }
+
+    // 3. Update Spell List Selection
+    for (btn_data, mut bg, mut border) in &mut spell_list_query {
+        if Some(btn_data.0) == selected_spell.0 {
+            *bg = BackgroundColor(Color::srgba(0.4, 0.2, 0.6, 1.0));
+            *border = BorderColor::from(Color::srgb(1.0, 0.8, 0.2));
+        } else {
+            *bg = BackgroundColor(Color::srgba(0.2, 0.2, 0.3, 1.0));
+            *border = BorderColor::from(Color::NONE);
         }
     }
 }
