@@ -6,7 +6,7 @@ use crate::components::weapon::{
 };
 use crate::configs::spells::force;
 use crate::systems::combat::{CollisionEvent, CombatContext, CombatInputParams};
-use crate::visuals::world::spawn_global_visuals;
+use crate::visuals::world::{spawn_force_pull_visuals, spawn_force_push_visuals};
 use bevy::prelude::*;
 
 pub fn spawn_force_push(params: &mut CombatInputParams, ctx: &CombatContext, faction: Faction) {
@@ -41,8 +41,7 @@ pub fn spawn_force_push(params: &mut CombatInputParams, ctx: &CombatContext, fac
             },
         ))
         .with_children(|parent| {
-            // Reusing global visuals for now, maybe customize later
-            spawn_global_visuals(parent, &params.cached_assets);
+            spawn_force_push_visuals(parent, &params.cached_assets);
         });
 }
 
@@ -78,7 +77,7 @@ pub fn spawn_force_pull(params: &mut CombatInputParams, ctx: &CombatContext, fac
             },
         ))
         .with_children(|parent| {
-            spawn_global_visuals(parent, &params.cached_assets);
+            spawn_force_pull_visuals(parent, &params.cached_assets);
         });
 }
 

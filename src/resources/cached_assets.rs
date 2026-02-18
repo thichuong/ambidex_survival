@@ -44,6 +44,8 @@ pub struct CachedAssets {
     pub mat_gun_black: Handle<ColorMaterial>,     // Gun Dark Parts
     pub mat_bolt_core: Handle<ColorMaterial>,     // Energy Bolt
     pub mat_bolt_glow: Handle<ColorMaterial>,     // Energy Bolt Glow
+    pub mat_blue_50: Handle<ColorMaterial>,       // Force Pull Spiral
+    pub mat_blue_dark: Handle<ColorMaterial>,     // Force Pull Void
 }
 
 impl CachedAssets {
@@ -86,6 +88,8 @@ impl CachedAssets {
             mat_gun_black: materials.add(Color::srgba(0.15, 0.15, 0.15, 1.0)), // Near Black
             mat_bolt_core: materials.add(Color::srgba(1.0, 0.94, 1.0, 1.0)),   // White/Pink tint
             mat_bolt_glow: materials.add(Color::srgba(0.7, 0.0, 1.0, 0.4)),    // Purple Glow
+            mat_blue_50: materials.add(Color::srgba(0.4, 0.4, 1.0, 0.5)),      // Blue/Indigo
+            mat_blue_dark: materials.add(Color::srgba(0.08, 0.08, 0.24, 1.0)), // Dark Blue Void
         }
     }
 }

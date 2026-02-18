@@ -74,13 +74,16 @@ pub fn update_menu_magic_ui(
     mut panel_query: Query<(&mut Node, &MagicPanel)>,
     hand_query: Query<(&Hand, &crate::components::weapon::Weapon)>,
     mut button_node_query: Query<(&Children, &MagicSlotButton, &mut BorderColor), With<Button>>,
-    mut icon_query: Query<&mut ImageNode, With<super::components::MagicSlotIcon>>, 
+    mut icon_query: Query<&mut ImageNode, With<super::components::MagicSlotIcon>>,
     children_query: Query<&Children>,
     mut text_query: Query<&mut Text>,
     loadout_query: Query<&MagicLoadout>,
     asset_server: Res<AssetServer>,
     active_side: Res<super::resources::ActiveDescriptionSide>,
-    mut spell_list_query: Query<(&SpellListButton, &mut BackgroundColor, &mut BorderColor), Without<MagicSlotButton>>,
+    mut spell_list_query: Query<
+        (&SpellListButton, &mut BackgroundColor, &mut BorderColor),
+        Without<MagicSlotButton>,
+    >,
     selected_spell: Res<super::components::SelectedSpell>,
 ) {
     // 1. Panel Visibility
@@ -116,7 +119,7 @@ pub fn update_menu_magic_ui(
                     } else {
                         loadout.secondary
                     };
-                    
+
                     let spell_name = match spell {
                         SpellType::EnergyBolt => "Bolt",
                         SpellType::Laser => "Laser",
@@ -137,7 +140,7 @@ pub fn update_menu_magic_ui(
                     };
 
                     let prefix = if btn_data.is_primary { "Pri" } else { "Sec" };
-                    
+
                     // Iterate children to find Text and Icon
                     for &child in children {
                         // Update Text
@@ -149,21 +152,21 @@ pub fn update_menu_magic_ui(
                         // We need recursive generic query or specific structure knowledge.
                         // The simplified `children` loop above only checks direct children of the Button.
                         // In new layout: Button -> [Text, IconContainer -> [Icon]]
-                        
+
                         // Check direct icon (old way) or IconContainer's child (new way)
                         if let Ok(mut image) = icon_query.get_mut(child) {
-                             image.image = asset_server.load(icon_path);
+                            image.image = asset_server.load(icon_path);
                         } else if let Ok(grandchildren) = children_query.get(child) {
-                             for &grandchild in grandchildren {
-                                  if let Ok(mut image) = icon_query.get_mut(grandchild) {
-                                      image.image = asset_server.load(icon_path);
-                                  }
-                             }
+                            for &grandchild in grandchildren {
+                                if let Ok(mut image) = icon_query.get_mut(grandchild) {
+                                    image.image = asset_server.load(icon_path);
+                                }
+                            }
                         }
                     }
 
                     // Highlight slot if ready to receive selection (optional visual cue)
-                     if selected_spell.0.is_some() {
+                    if selected_spell.0.is_some() {
                         *border = BorderColor::from(MAGIC_SLOT_BORDER_HIGHLIGHT);
                     } else {
                         *border = BorderColor::from(Color::NONE);

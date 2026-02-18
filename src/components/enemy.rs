@@ -21,19 +21,23 @@ impl Default for Enemy {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
+#[require(Transform, Visibility)]
 pub struct EliteEnemy;
 
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct EliteAi {
     pub shuriken_timer: Timer,
     pub teleport_timer: Timer,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
+#[require(Transform, Visibility)]
 pub struct YellowEnemy;
 
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct YellowAi {
     pub blink_timer: Timer,
     pub global_timer: Timer,
