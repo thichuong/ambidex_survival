@@ -2,7 +2,7 @@ use crate::components::enemy::{YellowAi, YellowEnemy};
 use crate::components::player::{CombatStats, Player, PlayerStats, Progression};
 use crate::components::weapon::Faction;
 use crate::configs::enemy;
-use crate::systems::combat::magic::{blink, global_spell};
+use crate::systems::combat::magic::{blink, force_logic};
 use crate::systems::combat::{CombatContext, CombatInputParams};
 use bevy::prelude::*;
 use rand::Rng;
@@ -32,7 +32,7 @@ pub fn yellow_ai_system(
     for (enemy_entity, mut enemy_transform, mut ai, combat_stats, enemy_stats) in &mut yellow_query
     {
         ai.blink_timer.tick(params.time.delta());
-        ai.global_timer.tick(params.time.delta());
+        ai.force_timer.tick(params.time.delta());
 
         let enemy_pos = enemy_transform.translation.truncate();
 
@@ -56,8 +56,8 @@ pub fn yellow_ai_system(
             blink::perform_blink(&mut ctx);
         }
 
-        // Global Spell logic
-        if ai.global_timer.just_finished() {
+        // Force Push / Pull logic (Smarter choice based on damage/distance)
+        if ai.force_timer.just_finished() {
             let ctx = CombatContext {
                 owner_entity: enemy_entity,
                 transform: &mut enemy_transform,
@@ -67,7 +67,19 @@ pub fn yellow_ai_system(
                 combat_stats,
                 progression,
             };
-            global_spell::spawn_global_spell(&mut params, &ctx, Faction::Enemy);
+
+            let dist = enemy_pos.distance(player_pos);
+
+            // Based on formula in damage.rs:
+            // RADIUS = 800.
+            // Push damage: base + (1 - d/800) * bonus
+            // Pull damage: base + (d/800) * bonus
+            // Tipping point is d = 400.
+            if dist < 400.0 {
+                force_logic::spawn_force_push(&mut params, &ctx, Faction::Enemy);
+            } else {
+                force_logic::spawn_force_pull(&mut params, &ctx, Faction::Enemy);
+            }
         }
     }
 }

@@ -262,7 +262,7 @@ fn spawn_battle_button(parent: &mut ChildSpawnerCommands) {
                     );
                     round_manager.elites_to_spawn = round_manager.current_round;
                     round_manager.yellow_enemies_to_spawn =
-                        u32::from(round_manager.current_round >= 5);
+                        u32::from(round_manager.current_round >= 1);
                     round_manager.round_state = RoundState::Spawning;
                 }
                 round_manager.has_started = true;

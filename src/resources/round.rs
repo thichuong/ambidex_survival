@@ -30,7 +30,7 @@ impl Default for RoundManager {
             ),
             enemies_to_spawn: crate::configs::enemy::BASE_ENEMY_COUNT,
             elites_to_spawn: 1,
-            yellow_enemies_to_spawn: 0,
+            yellow_enemies_to_spawn: 1,
 
             round_state: RoundState::Spawning,
             has_started: false,

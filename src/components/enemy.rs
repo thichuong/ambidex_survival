@@ -40,5 +40,5 @@ pub struct YellowEnemy;
 #[require(Transform, Visibility)]
 pub struct YellowAi {
     pub blink_timer: Timer,
-    pub global_timer: Timer,
+    pub force_timer: Timer,
 }

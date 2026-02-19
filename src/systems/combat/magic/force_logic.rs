@@ -1,4 +1,4 @@
-use crate::components::enemy::Enemy;
+// use crate::components::enemy::Enemy; // Removed unused import
 use crate::components::physics::{Collider, IgnoreGrid, Velocity};
 use crate::components::status::UnitStatus;
 use crate::components::weapon::{
@@ -85,7 +85,7 @@ pub fn spawn_force_pull(params: &mut CombatInputParams, ctx: &CombatContext, fac
 pub fn force_effect_observer(
     trigger: On<CollisionEvent>,
     projectile_query: Query<(Entity, Option<&ForcePush>, Option<&ForcePull>, &Transform)>,
-    mut target_query: Query<(&Transform, &mut Velocity, &mut UnitStatus), With<Enemy>>,
+    mut target_query: Query<(&Transform, &mut Velocity, &mut UnitStatus)>,
 ) {
     let event = trigger.event();
 
@@ -137,6 +137,7 @@ pub fn force_effect_observer(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::components::enemy::Enemy;
     use crate::components::physics::Velocity;
     use crate::components::status::StatusEffect;
 

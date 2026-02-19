@@ -236,8 +236,8 @@ fn spawn_yellow_enemy(
                 crate::configs::enemy::YELLOW_BLINK_COOLDOWN,
                 TimerMode::Repeating,
             ),
-            global_timer: Timer::from_seconds(
-                crate::configs::enemy::YELLOW_GLOBAL_COOLDOWN,
+            force_timer: Timer::from_seconds(
+                crate::configs::enemy::YELLOW_FORCE_COOLDOWN,
                 TimerMode::Repeating,
             ),
         },
