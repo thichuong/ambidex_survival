@@ -51,8 +51,11 @@ pub fn spawn_tutorial_ui(mut commands: Commands) {
                 ))
                 .with_children(|box_node| {
                     spawn_tutorial_line(box_node, "MOVEMENT", "W, A, S, D");
-                    spawn_tutorial_line(box_node, "LEFT HAND ATTACK", "Mouse Left");
-                    spawn_tutorial_line(box_node, "RIGHT HAND ATTACK", "Mouse Right");
+                    spawn_tutorial_line(
+                        box_node,
+                        "AUTO-ATTACK",
+                        "Weapons & Spells fire automatically towards cursor.",
+                    );
                     spawn_tutorial_line(
                         box_node,
                         "LEFT HAND SKILL",
