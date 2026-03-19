@@ -69,8 +69,6 @@ pub enum Action {
     MoveDown,
     MoveLeft,
     MoveRight,
-    LeftFire,
-    RightFire,
     LeftSkill,
     RightSkill,
 }

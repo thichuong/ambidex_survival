@@ -7,8 +7,6 @@ pub struct InputSettings {
     pub move_left: KeyCode,
     pub move_right: KeyCode,
 
-    pub left_fire: ActionInput,
-    pub right_fire: ActionInput,
     pub left_skill: ActionInput,
     pub right_skill: ActionInput,
 }
@@ -27,8 +25,6 @@ impl Default for InputSettings {
             move_left: KeyCode::KeyA,
             move_right: KeyCode::KeyD,
 
-            left_fire: ActionInput::Mouse(MouseButton::Left),
-            right_fire: ActionInput::Mouse(MouseButton::Right),
             left_skill: ActionInput::Keyboard(KeyCode::KeyQ),
             right_skill: ActionInput::Keyboard(KeyCode::KeyE),
         }
@@ -36,17 +32,6 @@ impl Default for InputSettings {
 }
 
 impl ActionInput {
-    pub fn is_pressed(
-        &self,
-        input: &ButtonInput<KeyCode>,
-        mouse: &ButtonInput<MouseButton>,
-    ) -> bool {
-        match self {
-            Self::Keyboard(key) => input.pressed(*key),
-            Self::Mouse(button) => mouse.pressed(*button),
-        }
-    }
-
     pub fn is_just_pressed(
         &self,
         input: &ButtonInput<KeyCode>,

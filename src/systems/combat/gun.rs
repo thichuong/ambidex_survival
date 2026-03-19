@@ -42,23 +42,6 @@ pub fn gun_weapon_system(
     let progression = player.4;
     let player_transform = &mut *player.1;
 
-    let left_pressed = params
-        .input_settings
-        .left_fire
-        .is_pressed(&params.key_input, &params.mouse_input);
-    let right_pressed = params
-        .input_settings
-        .right_fire
-        .is_pressed(&params.key_input, &params.mouse_input);
-    let left_just_pressed = params
-        .input_settings
-        .left_fire
-        .is_just_pressed(&params.key_input, &params.mouse_input);
-    let right_just_pressed = params
-        .input_settings
-        .right_fire
-        .is_just_pressed(&params.key_input, &params.mouse_input);
-
     let q_just_pressed = params
         .input_settings
         .left_skill
@@ -75,9 +58,9 @@ pub fn gun_weapon_system(
 
         let hand_pos = hand_transform.translation().truncate();
 
-        let (is_pressed, is_just_pressed, skill_pressed) = match hand.side {
-            HandType::Left => (left_pressed, left_just_pressed, q_just_pressed),
-            HandType::Right => (right_pressed, right_just_pressed, e_just_pressed),
+        let skill_pressed = match hand.side {
+            HandType::Left => q_just_pressed,
+            HandType::Right => e_just_pressed,
         };
 
         let now = params.time.elapsed_secs();
@@ -88,11 +71,7 @@ pub fn gun_weapon_system(
             _ => gun::STANDARD_COOLDOWN,
         };
 
-        let should_fire = if gun_state.mode == GunMode::Rapid {
-            is_pressed && now - weapon_data.last_shot >= cooldown
-        } else {
-            is_just_pressed && now - weapon_data.last_shot >= cooldown
-        };
+        let should_fire = now - weapon_data.last_shot >= cooldown;
 
         if should_fire {
             fire_gun(

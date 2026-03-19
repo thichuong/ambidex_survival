@@ -47,23 +47,6 @@ pub fn sword_weapon_system(
     let progression = player.4;
     let player_transform = &mut *player.1;
 
-    let left_pressed = params
-        .input_settings
-        .left_fire
-        .is_pressed(&params.key_input, &params.mouse_input);
-    let right_pressed = params
-        .input_settings
-        .right_fire
-        .is_pressed(&params.key_input, &params.mouse_input);
-    let left_just_pressed = params
-        .input_settings
-        .left_fire
-        .is_just_pressed(&params.key_input, &params.mouse_input);
-    let right_just_pressed = params
-        .input_settings
-        .right_fire
-        .is_just_pressed(&params.key_input, &params.mouse_input);
-
     let q_just_pressed = params
         .input_settings
         .left_skill
@@ -80,15 +63,15 @@ pub fn sword_weapon_system(
 
         let hand_pos = hand_transform.translation().truncate();
 
-        let (_, is_just_pressed, skill_pressed) = match hand.side {
-            HandType::Left => (left_pressed, left_just_pressed, q_just_pressed),
-            HandType::Right => (right_pressed, right_just_pressed, e_just_pressed),
+        let skill_pressed = match hand.side {
+            HandType::Left => q_just_pressed,
+            HandType::Right => e_just_pressed,
         };
 
         let now = params.time.elapsed_secs();
 
         // Fire logic (Swing)
-        if is_just_pressed && now - weapon_data.last_shot >= weapon_data.cooldown {
+        if now - weapon_data.last_shot >= weapon_data.cooldown {
             fire_sword(
                 &mut params,
                 hand_entity,

@@ -66,18 +66,6 @@ pub fn spawn_settings_menu(mut commands: Commands, input_settings: Res<InputSett
             spawn_section_header(parent, "COMBAT/SKILLS");
             spawn_rebind_row(
                 parent,
-                "Left Fire",
-                Action::LeftFire,
-                format_action(input_settings.left_fire),
-            );
-            spawn_rebind_row(
-                parent,
-                "Right Fire",
-                Action::RightFire,
-                format_action(input_settings.right_fire),
-            );
-            spawn_rebind_row(
-                parent,
                 "Left Skill",
                 Action::LeftSkill,
                 format_action(input_settings.left_skill),
@@ -258,8 +246,6 @@ pub fn rebind_system(
                     input_settings.move_right = k;
                 }
             }
-            Action::LeftFire => input_settings.left_fire = input,
-            Action::RightFire => input_settings.right_fire = input,
             Action::LeftSkill => input_settings.left_skill = input,
             Action::RightSkill => input_settings.right_skill = input,
         }
@@ -285,8 +271,6 @@ pub fn update_rebind_ui(
                 Action::MoveDown => format!("{0:?}", input_settings.move_down),
                 Action::MoveLeft => format!("{0:?}", input_settings.move_left),
                 Action::MoveRight => format!("{0:?}", input_settings.move_right),
-                Action::LeftFire => format_action(input_settings.left_fire),
-                Action::RightFire => format_action(input_settings.right_fire),
                 Action::LeftSkill => format_action(input_settings.left_skill),
                 Action::RightSkill => format_action(input_settings.right_skill),
             };
