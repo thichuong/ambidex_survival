@@ -63,6 +63,9 @@ pub struct SettingsUI;
 #[derive(Component)]
 pub struct SettingsBackButton;
 
+#[derive(Component)]
+pub struct TouchToggleButton;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Action {
     MoveUp,

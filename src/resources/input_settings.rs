@@ -9,6 +9,7 @@ pub struct InputSettings {
 
     pub left_skill: ActionInput,
     pub right_skill: ActionInput,
+    pub touch_support: bool,
 }
 
 #[derive(Resource, Debug, Clone, Default)]
@@ -18,6 +19,7 @@ pub struct VirtualInput {
     pub is_active: bool,
     pub left_skill: bool,
     pub right_skill: bool,
+    pub joystick_start: Option<Vec2>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -36,6 +38,7 @@ impl Default for InputSettings {
 
             left_skill: ActionInput::Keyboard(KeyCode::KeyQ),
             right_skill: ActionInput::Keyboard(KeyCode::KeyE),
+            touch_support: false,
         }
     }
 }

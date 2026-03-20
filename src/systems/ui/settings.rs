@@ -77,6 +77,14 @@ pub fn spawn_settings_menu(mut commands: Commands, input_settings: Res<InputSett
                 format_action(input_settings.right_skill),
             );
 
+            // Touch Support Toggle
+            spawn_section_header(parent, "MODES");
+            spawn_toggle_row(
+                parent,
+                "Touch Support",
+                input_settings.touch_support,
+            );
+
             // Back Button
             parent
                 .spawn((
@@ -174,6 +182,61 @@ fn spawn_rebind_row(parent: &mut ChildSpawnerCommands, label: &str, action: Acti
         });
 }
 
+fn spawn_toggle_row(parent: &mut ChildSpawnerCommands, label: &str, is_on: bool) {
+    parent
+        .spawn(Node {
+            width: Val::Px(400.0),
+            justify_content: JustifyContent::SpaceBetween,
+            align_items: AlignItems::Center,
+            margin: UiRect::bottom(Val::Px(5.0)),
+            ..default()
+        })
+        .with_children(|row| {
+            row.spawn((
+                Text::new(label),
+                TextFont {
+                    font_size: 18.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.5, 0.5, 0.5)),
+            ));
+
+            row.spawn((
+                Button,
+                Node {
+                    width: Val::Px(150.0),
+                    height: Val::Px(30.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    border: UiRect::all(Val::Px(1.0)),
+                    ..default()
+                },
+                BorderColor::all(Color::srgb(0.4, 0.4, 0.4)),
+                BackgroundColor(if is_on {
+                    Color::srgba(0.0, 0.5, 0.5, 1.0)
+                } else {
+                    Color::srgba(0.1, 0.1, 0.1, 1.0)
+                }),
+                crate::systems::ui::components::TouchToggleButton,
+            ))
+            .observe(
+                |_: On<Pointer<Click>>, mut input_settings: ResMut<InputSettings>| {
+                    input_settings.touch_support = !input_settings.touch_support;
+                },
+            )
+            .with_children(|btn| {
+                btn.spawn((
+                    Text::new(if is_on { "ON" } else { "OFF" }),
+                    TextFont {
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(Color::WHITE),
+                ));
+            });
+        });
+}
+
 fn format_action(action: ActionInput) -> String {
     match action {
         ActionInput::Keyboard(k) => format!("{k:?}"),
@@ -261,19 +324,38 @@ pub fn update_rebind_ui(
     mut text_query: Query<&mut Text>,
 ) {
     for (rebind, children) in &mut query {
-        let mut text = text_query.get_mut(children[0]).unwrap();
+        if let Ok(mut text) = text_query.get_mut(children[0]) {
+            if rebind_state.active_action == Some(rebind.0) {
+                text.0 = "...".to_string();
+            } else {
+                text.0 = match rebind.0 {
+                    Action::MoveUp => format!("{0:?}", input_settings.move_up),
+                    Action::MoveDown => format!("{0:?}", input_settings.move_down),
+                    Action::MoveLeft => format!("{0:?}", input_settings.move_left),
+                    Action::MoveRight => format!("{0:?}", input_settings.move_right),
+                    Action::LeftSkill => format_action(input_settings.left_skill),
+                    Action::RightSkill => format_action(input_settings.right_skill),
+                };
+            }
+        }
+    }
+}
 
-        if rebind_state.active_action == Some(rebind.0) {
-            text.0 = "...".to_string();
-        } else {
-            text.0 = match rebind.0 {
-                Action::MoveUp => format!("{0:?}", input_settings.move_up),
-                Action::MoveDown => format!("{0:?}", input_settings.move_down),
-                Action::MoveLeft => format!("{0:?}", input_settings.move_left),
-                Action::MoveRight => format!("{0:?}", input_settings.move_right),
-                Action::LeftSkill => format_action(input_settings.left_skill),
-                Action::RightSkill => format_action(input_settings.right_skill),
-            };
+#[allow(clippy::needless_pass_by_value)]
+pub fn update_toggle_ui(
+    input_settings: Res<InputSettings>,
+    mut query: Query<(&mut BackgroundColor, &Children), With<crate::systems::ui::components::TouchToggleButton>>,
+    mut text_query: Query<&mut Text>,
+) {
+    for (mut bg, children) in &mut query {
+        if let Ok(mut text) = text_query.get_mut(children[0]) {
+            let is_on = input_settings.touch_support;
+            text.0 = (if is_on { "ON" } else { "OFF" }).to_string();
+            *bg = BackgroundColor(if is_on {
+                Color::srgba(0.0, 0.5, 0.5, 1.0)
+            } else {
+                Color::srgba(0.1, 0.1, 0.1, 1.0)
+            });
         }
     }
 }
