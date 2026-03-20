@@ -77,12 +77,12 @@ pub fn spawn_settings_menu(mut commands: Commands, input_settings: Res<InputSett
                 format_action(input_settings.right_skill),
             );
 
-            // Touch Support Toggle
-            spawn_section_header(parent, "MODES");
-            spawn_toggle_row(
+            // Cursor Sensitivity Adjustment
+            spawn_section_header(parent, "TOUCH SETTINGS");
+            spawn_sensitivity_row(
                 parent,
-                "Touch Support",
-                input_settings.touch_support,
+                "Cursor Sensitivity",
+                input_settings.touch_cursor_sensitivity,
             );
 
             // Back Button
@@ -182,7 +182,7 @@ fn spawn_rebind_row(parent: &mut ChildSpawnerCommands, label: &str, action: Acti
         });
 }
 
-fn spawn_toggle_row(parent: &mut ChildSpawnerCommands, label: &str, is_on: bool) {
+fn spawn_sensitivity_row(parent: &mut ChildSpawnerCommands, label: &str, value: f32) {
     parent
         .spawn(Node {
             width: Val::Px(400.0),
@@ -201,38 +201,74 @@ fn spawn_toggle_row(parent: &mut ChildSpawnerCommands, label: &str, is_on: bool)
                 TextColor(Color::srgb(0.5, 0.5, 0.5)),
             ));
 
-            row.spawn((
-                Button,
-                Node {
-                    width: Val::Px(150.0),
-                    height: Val::Px(30.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    border: UiRect::all(Val::Px(1.0)),
-                    ..default()
-                },
-                BorderColor::all(Color::srgb(0.4, 0.4, 0.4)),
-                BackgroundColor(if is_on {
-                    Color::srgba(0.0, 0.5, 0.5, 1.0)
-                } else {
-                    Color::srgba(0.1, 0.1, 0.1, 1.0)
-                }),
-                crate::systems::ui::components::TouchToggleButton,
-            ))
-            .observe(
-                |_: On<Pointer<Click>>, mut input_settings: ResMut<InputSettings>| {
-                    input_settings.touch_support = !input_settings.touch_support;
-                },
-            )
-            .with_children(|btn| {
-                btn.spawn((
-                    Text::new(if is_on { "ON" } else { "OFF" }),
-                    TextFont {
-                        font_size: 16.0,
+            row.spawn(Node {
+                width: Val::Px(150.0),
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                ..default()
+            })
+            .with_children(|ctrl| {
+                // Minus Button
+                ctrl.spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(30.0),
+                        height: Val::Px(30.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border: UiRect::all(Val::Px(1.0)),
                         ..default()
                     },
+                    BorderColor::all(Color::srgb(0.4, 0.4, 0.4)),
+                    BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 1.0)),
+                ))
+                .observe(
+                    |_: On<Pointer<Click>>, mut input_settings: ResMut<InputSettings>| {
+                        input_settings.touch_cursor_sensitivity = (input_settings.touch_cursor_sensitivity - 0.1).max(0.1);
+                    },
+                )
+                .with_children(|btn| {
+                    btn.spawn((
+                        Text::new("-"),
+                        TextFont { font_size: 20.0, ..default() },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+
+                // Value Text
+                ctrl.spawn((
+                    Text::new(format!("{value:.1}")),
+                    TextFont { font_size: 16.0, ..default() },
                     TextColor(Color::WHITE),
+                    crate::systems::ui::components::SensitivityValueText,
                 ));
+
+                // Plus Button
+                ctrl.spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(30.0),
+                        height: Val::Px(30.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border: UiRect::all(Val::Px(1.0)),
+                        ..default()
+                    },
+                    BorderColor::all(Color::srgb(0.4, 0.4, 0.4)),
+                    BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 1.0)),
+                ))
+                .observe(
+                    |_: On<Pointer<Click>>, mut input_settings: ResMut<InputSettings>| {
+                        input_settings.touch_cursor_sensitivity = (input_settings.touch_cursor_sensitivity + 0.1).min(5.0);
+                    },
+                )
+                .with_children(|btn| {
+                    btn.spawn((
+                        Text::new("+"),
+                        TextFont { font_size: 20.0, ..default() },
+                        TextColor(Color::WHITE),
+                    ));
+                });
             });
         });
 }
@@ -342,20 +378,11 @@ pub fn update_rebind_ui(
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn update_toggle_ui(
+pub fn update_sensitivity_ui(
     input_settings: Res<InputSettings>,
-    mut query: Query<(&mut BackgroundColor, &Children), With<crate::systems::ui::components::TouchToggleButton>>,
-    mut text_query: Query<&mut Text>,
+    mut query: Query<&mut Text, With<crate::systems::ui::components::SensitivityValueText>>,
 ) {
-    for (mut bg, children) in &mut query {
-        if let Ok(mut text) = text_query.get_mut(children[0]) {
-            let is_on = input_settings.touch_support;
-            text.0 = (if is_on { "ON" } else { "OFF" }).to_string();
-            *bg = BackgroundColor(if is_on {
-                Color::srgba(0.0, 0.5, 0.5, 1.0)
-            } else {
-                Color::srgba(0.1, 0.1, 0.1, 1.0)
-            });
-        }
+    for mut text in &mut query {
+        text.0 = format!("{:.1}", input_settings.touch_cursor_sensitivity);
     }
 }

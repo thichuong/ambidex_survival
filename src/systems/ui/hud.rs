@@ -4,6 +4,7 @@ use super::components::{
 };
 use crate::components::player::{CombatStats, Currency, Hand, HandType, Health, Player};
 use crate::components::weapon::{MagicLoadout, SpellType, WeaponType};
+use crate::resources::input_settings::VirtualInput;
 use crate::systems::ui::MenuButton;
 
 use bevy::prelude::*;
@@ -120,6 +121,11 @@ pub fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
                         side: HandType::Left,
                     },
                 ))
+                .observe(
+                    |_: On<Pointer<Click>>, mut virtual_input: ResMut<VirtualInput>| {
+                        virtual_input.left_skill_clicked = true;
+                    },
+                )
                 .with_children(|btn| {
                     btn.spawn((
                         ImageNode::new(asset_server.load("ui/icons/shuriken.png")),
@@ -218,6 +224,11 @@ pub fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
                         side: HandType::Right,
                     },
                 ))
+                .observe(
+                    |_: On<Pointer<Click>>, mut virtual_input: ResMut<VirtualInput>| {
+                        virtual_input.right_skill_clicked = true;
+                    },
+                )
                 .with_children(|btn| {
                     btn.spawn((
                         ImageNode::new(asset_server.load("ui/icons/shuriken.png")),

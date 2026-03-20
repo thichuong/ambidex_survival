@@ -10,7 +10,7 @@ use crate::systems::ui::{
     update_menu_crit_text, update_menu_damage_text, update_menu_gold_text, update_menu_health_text,
     update_menu_lifesteal_text, update_menu_magic_ui, update_menu_weapon_buttons,
     update_menu_weapon_details_ui, update_rebind_ui, update_round_text, update_shop_cards_ui,
-    update_shuriken_count_ui, update_toggle_ui, update_ui_scale,
+    update_shuriken_count_ui, update_sensitivity_ui, update_ui_scale,
 };
 use bevy::prelude::*;
 
@@ -29,7 +29,7 @@ impl Plugin for UiPlugin {
             .add_systems(OnExit(GameState::Settings), despawn_settings_menu)
             .add_systems(
                 Update,
-                (handle_rebind_clicks, rebind_system, update_rebind_ui, update_toggle_ui)
+                (handle_rebind_clicks, rebind_system, update_rebind_ui, update_sensitivity_ui)
                     .run_if(in_state(GameState::Settings)),
             )
             // Main Menu / Weapon Menu

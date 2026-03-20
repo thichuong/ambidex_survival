@@ -64,7 +64,7 @@ pub struct SettingsUI;
 pub struct SettingsBackButton;
 
 #[derive(Component)]
-pub struct TouchToggleButton;
+pub struct SensitivityValueText;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Action {

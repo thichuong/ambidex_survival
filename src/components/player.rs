@@ -111,3 +111,7 @@ pub struct Hand {
 
 #[derive(Component)]
 pub struct GameCamera;
+
+#[derive(Component)]
+#[require(Transform, Visibility)]
+pub struct VirtualCursor;

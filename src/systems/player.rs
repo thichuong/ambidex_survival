@@ -44,6 +44,13 @@ pub fn spawn_player(
                 },
             ));
         });
+
+    // Spawn Virtual Cursor
+    commands.spawn((
+        Mesh2d(meshes.add(Annulus::new(5.0, 7.0))),
+        MeshMaterial2d(materials.add(Color::srgba(0.0, 1.0, 1.0, 0.5))),
+        crate::components::player::VirtualCursor,
+    ));
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -67,10 +74,16 @@ pub fn move_player(
 #[allow(clippy::needless_pass_by_value)]
 pub fn aim_player(
     virtual_input: Res<crate::resources::input_settings::VirtualInput>,
-    mut player: Single<&mut Transform, With<Player>>,
+    mut player: Single<&mut Transform, (With<Player>, Without<crate::components::player::VirtualCursor>)>,
+    mut cursor: Single<&mut Transform, (With<crate::components::player::VirtualCursor>, Without<Player>)>,
 ) {
     let world_position = virtual_input.cursor_world;
+
+    // Update Player Rotation
     let diff = world_position - player.translation.truncate();
     let angle = diff.y.atan2(diff.x);
     player.rotation = Quat::from_rotation_z(angle);
+
+    // Update Virtual Cursor Position
+    cursor.translation = world_position.extend(100.0); // Above everything
 }
