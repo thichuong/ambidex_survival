@@ -29,17 +29,7 @@ pub fn sword_weapon_system(
         &mut Weapon,
     )>,
 ) {
-    let (camera, camera_transform) = *params.camera;
-    let window = *params.window;
-
-    let cursor_pos = window
-        .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
-        .map(|ray| ray.get_point(0.0).truncate());
-
-    let Some(cursor_pos) = cursor_pos else {
-        return;
-    };
+    let cursor_pos = params.virtual_input.cursor_world;
 
     let player_entity = player.0;
     let stats = player.2;
@@ -47,14 +37,8 @@ pub fn sword_weapon_system(
     let progression = player.4;
     let player_transform = &mut *player.1;
 
-    let q_just_pressed = params
-        .input_settings
-        .left_skill
-        .is_just_pressed(&params.key_input, &params.mouse_input);
-    let e_just_pressed = params
-        .input_settings
-        .right_skill
-        .is_just_pressed(&params.key_input, &params.mouse_input);
+    let q_just_pressed = params.virtual_input.left_skill;
+    let e_just_pressed = params.virtual_input.right_skill;
 
     for (hand_entity, hand_transform, hand, mut sword_state, mut weapon_data) in &mut hand_query {
         if hand.equipped_weapon != Some(WeaponType::Sword) {

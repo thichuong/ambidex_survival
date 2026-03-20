@@ -1,9 +1,8 @@
 // use bevy::prelude::*; // Was: use bevy::color::palettes::css::AQUA; - Removed unused import
 use bevy::prelude::*;
-use bevy::window::PrimaryWindow;
 
 use crate::components::physics::Velocity;
-use crate::components::player::{GameCamera, Hand, HandType, Player, PlayerStats};
+use crate::components::player::{Hand, HandType, Player, PlayerStats};
 use crate::components::status::UnitStatus;
 use crate::components::weapon::{Weapon, WeaponType};
 
@@ -50,8 +49,7 @@ pub fn spawn_player(
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::unnecessary_wraps)]
 pub fn move_player(
-    input: Res<ButtonInput<KeyCode>>,
-    input_settings: Res<crate::resources::input_settings::InputSettings>,
+    virtual_input: Res<crate::resources::input_settings::VirtualInput>,
     mut player: Single<(&mut Velocity, &PlayerStats, &UnitStatus), With<Player>>,
 ) {
     let (ref mut velocity, stats, unit_status) = *player;
@@ -61,43 +59,18 @@ pub fn move_player(
         return;
     }
 
-    let mut direction = Vec2::ZERO;
-
-    if input.pressed(input_settings.move_up) {
-        direction.y += 1.0;
-    }
-    if input.pressed(input_settings.move_down) {
-        direction.y -= 1.0;
-    }
-    if input.pressed(input_settings.move_left) {
-        direction.x -= 1.0;
-    }
-    if input.pressed(input_settings.move_right) {
-        direction.x += 1.0;
-    }
-
-    if direction != Vec2::ZERO {
-        direction = direction.normalize();
-    }
+    let direction = virtual_input.axis;
 
     velocity.linvel = direction * stats.speed;
 }
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn aim_player(
-    window: Single<&Window, With<PrimaryWindow>>,
-    camera: Single<(&Camera, &GlobalTransform), With<GameCamera>>,
+    virtual_input: Res<crate::resources::input_settings::VirtualInput>,
     mut player: Single<&mut Transform, With<Player>>,
 ) {
-    let (camera, camera_transform) = *camera;
-
-    if let Some(world_position) = window
-        .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
-        .map(|ray| ray.origin.truncate())
-    {
-        let diff = world_position - player.translation.truncate();
-        let angle = diff.y.atan2(diff.x);
-        player.rotation = Quat::from_rotation_z(angle);
-    }
+    let world_position = virtual_input.cursor_world;
+    let diff = world_position - player.translation.truncate();
+    let angle = diff.y.atan2(diff.x);
+    player.rotation = Quat::from_rotation_z(angle);
 }

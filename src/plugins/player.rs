@@ -8,6 +8,14 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_player)
             .add_systems(
+                PreUpdate,
+                (
+                    crate::systems::input::update_virtual_input,
+                    crate::systems::input::handle_touch_input,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
+            .add_systems(
                 Update,
                 move_player
                     .run_if(in_state(GameState::Playing))

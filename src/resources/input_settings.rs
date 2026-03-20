@@ -11,6 +11,15 @@ pub struct InputSettings {
     pub right_skill: ActionInput,
 }
 
+#[derive(Resource, Debug, Clone, Default)]
+pub struct VirtualInput {
+    pub axis: Vec2,
+    pub cursor_world: Vec2,
+    pub is_active: bool,
+    pub left_skill: bool,
+    pub right_skill: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActionInput {
     Keyboard(KeyCode),

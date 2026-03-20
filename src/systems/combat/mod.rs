@@ -1,10 +1,9 @@
 use crate::components::enemy::Enemy;
 use crate::components::physics::UniformGrid;
-use crate::components::player::{CombatStats, GameCamera, Player, Progression};
+use crate::components::player::{CombatStats, Player, Progression};
 use crate::components::weapon::{Lifetime, Projectile};
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
-use bevy::window::PrimaryWindow;
 
 pub mod collision;
 pub mod elite_ai;
@@ -42,11 +41,7 @@ pub struct PendingDespawn;
 pub struct CombatInputParams<'w, 's> {
     pub commands: Commands<'w, 's>,
     pub time: Res<'w, Time>,
-    pub mouse_input: Res<'w, ButtonInput<MouseButton>>,
-    pub key_input: Res<'w, ButtonInput<KeyCode>>,
-    pub input_settings: Res<'w, crate::resources::input_settings::InputSettings>,
-    pub window: Single<'w, 's, &'static Window, With<PrimaryWindow>>,
-    pub camera: Single<'w, 's, (&'static Camera, &'static GlobalTransform), With<GameCamera>>,
+    pub virtual_input: Res<'w, crate::resources::input_settings::VirtualInput>,
     pub cached_assets: Res<'w, crate::resources::cached_assets::CachedAssets>,
     pub projectile_query: Query<
         'w,
