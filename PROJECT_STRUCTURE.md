@@ -136,7 +136,7 @@ Modular plugins that encapsulate system registration.
 ECS Resources for global game state.
 - `cached_assets.rs`: Asset handles cache to avoid redundant loads.
 - `game_state.rs`: GameState enum (Playing, Paused, GameOver, WeaponMenu, Tutorial, Settings) and `PreviousMenuState` resource.
-- `input_settings.rs`: Centralized resource for customizable keyboard and mouse bindings.
+- `input_settings.rs`: Customizable keyboard/mouse bindings and the `VirtualInput` abstraction resource.
 - `round.rs`: Wave progression and round management.
 - `polish.rs`: Screen shake and particle trail effects.
 
@@ -155,7 +155,7 @@ Modularized UI systems:
     - `confirmation.rs`: "New Game" confirmation dialog.
     - `interaction.rs`: Reactive handling of menu clicks and purchases.
 - `scaling.rs`: Dynamic global UI scaling based on window height.
-- `settings.rs`: Input rebinding UI and logic.
+- `settings.rs`: Input rebinding UI and Touch Support toggle logic.
 - `game_over.rs`: Game Over screen and restart logic.
 - `tutorial.rs`: Interaction guide and skill descriptions with contextual navigation.
 
@@ -190,7 +190,8 @@ Collision detection and damage processing pipeline:
 - `yellow_ai.rs`: AI for tactical yellow enemies (Mirror Mages) featuring blink mobility and screen-wide global attacks.
 
 ### `src/systems/` (Root Level)
-- `player.rs`: Player spawning and movement using `Single<Window>`.
+- `input.rs`: The "Input Abstraction Layer" that translates hardware events (Winit) into a unified `VirtualInput` resource, enabling seamless switching between Keyboard/Mouse and Touch.
+- `player.rs`: Player spawning and movement using `VirtualInput`.
 - `enemy.rs`: Enemy AI, movement, and wave spawning logic.
 - `physics.rs`: Decoupled movement and velocity integration systems.
 - `damage_text.rs`: Reactive floating numbers triggered by `On<DamageEvent>`.
